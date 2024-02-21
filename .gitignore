@@ -1,0 +1,9 @@
+build/bin
+node_modules
+frontend/dist
+/frontend/wailsjs/go/backend/App.d.ts
+/frontend/wailsjs/go/backend/App.js
+/.idea/local-track-journal.iml
+/.idea/modules.xml
+/.idea/vcs.xml
+/.idea/workspace.xml
