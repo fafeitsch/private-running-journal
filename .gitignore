@@ -2,7 +2,4 @@ build/bin
 node_modules
 frontend/dist
 /frontend/wailsjs/go
-/.idea/local-track-journal.iml
-/.idea/modules.xml
-/.idea/vcs.xml
-/.idea/workspace.xml
+/.idea
