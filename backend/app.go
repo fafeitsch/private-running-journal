@@ -30,29 +30,31 @@ func (a *App) Greet(name string) string {
 }
 
 type JournalListEntry struct {
-	Id           string `json:"id"`
-	Date         string `json:"date"`
-	TrackName    string `json:"trackName"`
-	TrackVariant string `json:"trackVariant"`
-	Length       int    `json:"length"`
+	Id            string `json:"id"`
+	Date          string `json:"date"`
+	TrackBaseName string `json:"trackBaseName"`
+	TrackVariant  string `json:"trackVariant"`
+	Length        int    `json:"length"`
 }
 
 type JournalEntry struct {
-	Id    string `json:"id"`
-	Date  string `json:"date"`
-	Track Track  `json:"track"`
+	Id      string `json:"id"`
+	Date    string `json:"date"`
+	Track   Track  `json:"track"`
+	Comment string `json:"comment"`
+	Time    string `json:"time"`
 }
 
 type Track struct {
 	Id           string `json:"id"`
 	Length       int    `json:"length"`
-	Name         string `json:"name"`
+	BaseName     string `json:"baseName"`
+	BaseId       string `json:"baseId"`
 	Variant      string `json:"variant"`
 	WaypointData string `json:"waypointData"`
-	Comment      string `json:"comment"`
 }
 
-type TrackListEntry struct {
+type TrackListEntryOld struct {
 	Name   string  `json:"name"`
 	Length float64 `json:"length"`
 }
@@ -65,14 +67,14 @@ func (a *App) GetJournalEntry() JournalEntry {
 	return JournalEntry{}
 }
 
-func (a *App) GetTracks() []TrackListEntry {
+func (a *App) GetTracks() []TrackListEntryOld {
 	log.Printf("getting tracks")
 	files, err := os.ReadDir("appdata/geojson")
 	if err != nil {
 		log.Printf("could not read appdata/geojson: %v", err)
 	}
 
-	result := make([]TrackListEntry, 0, len(files))
+	result := make([]TrackListEntryOld, 0, len(files))
 	for _, file := range files {
 		path := fmt.Sprintf("./appdata/geojson/%s", file.Name())
 		fileContent, err := os.Open(path)
@@ -85,7 +87,7 @@ func (a *App) GetTracks() []TrackListEntry {
 		}
 		for _, track := range tracks.Trk {
 			result = append(
-				result, TrackListEntry{Name: track.Name, Length: distance(track.TrkSeg[0].TrkPt)},
+				result, TrackListEntryOld{Name: track.Name, Length: distance(track.TrkSeg[0].TrkPt)},
 			)
 		}
 	}

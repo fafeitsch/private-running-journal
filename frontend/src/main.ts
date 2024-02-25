@@ -14,7 +14,7 @@ const router = createRouter({
   routes: [
     { path: "/", redirect: 'journal'},
     {
-      path: "/journal/:trackId?",
+      path: "/journal/:entryId?",
       component: JournalPage,
     },
   ],
@@ -26,5 +26,6 @@ const i18n = createI18n({
   fallbackLocale: "en", // set fallback locale
   messages: { en, de },
 });
+
 
 createApp(App).use(PrimeVue).use(i18n).use(router).directive("ripple", Ripple).mount("#app");

@@ -5,6 +5,16 @@
   },
   "journal": {
     "entries": "Einträge",
-    "loadingError": "Die Einträge konnten nicht geladen werden. Versuchen Sie es später erneut."
+    "loadingError": "Die Einträge konnten nicht geladen werden. Versuchen Sie es später erneut.",
+    "emptyState": "Kein Eintrag ausgewählt. Bitte wählen Sie einen Eintrag in der Liste links aus, oder erstellen Sie einen.",
+    "loadEntryError": "Der Eintrag konnte nicht geladen werden.",
+    "details": {
+      "length": "Länge",
+      "comment": "Kommentar",
+      "time": "Zeit",
+      "track": "Strecke",
+      "date": "Datum",
+      "pace": "Pace"
+    }
   }
 }

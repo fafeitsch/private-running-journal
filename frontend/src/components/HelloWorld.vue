@@ -2,7 +2,7 @@
 import {reactive, ref} from 'vue'
 import {Greet, GetTracks} from '../../wailsjs/go/backend/App'
 import {backend} from '../../wailsjs/go/models';
-import Track = backend.TrackListEntry;
+import Track = backend.TrackListEntryOld;
 
 const data = reactive({
   name: "",

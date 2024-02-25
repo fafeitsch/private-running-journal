@@ -5,6 +5,16 @@
   },
   "journal": {
     "entries": "Entries",
-    "loadingError": "The entries could not be loaded. Please try again later."
+    "loadingError": "The entries could not be loaded. Please try again later.",
+    "emptyState": "No entry selected. Please select an entry on the left or create an entry.",
+    "loadEntryError": "The entry could not be loaded.",
+    "details": {
+      "length": "Length",
+      "comment": "Comment",
+      "time": "Time",
+      "track": "Track",
+      "date": "Date",
+      "pace": "Pace"
+    }
   }
 }
