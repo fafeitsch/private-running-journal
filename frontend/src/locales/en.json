@@ -1,3 +1,10 @@
 {
-  "sidenav": { "menu": "Menu" }
+  "sidenav": {
+    "menu": "Menu",
+    "journal": "Journal"
+  },
+  "journal": {
+    "entries": "Entries",
+    "loadingError": "The entries could not be loaded. Please try again later."
+  }
 }

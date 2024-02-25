@@ -1,3 +1,10 @@
 {
-  "sidenav": { "menu": "Menü" }
+  "sidenav": {
+    "menu": "Menü",
+    "journal": "Tagebuch"
+  },
+  "journal": {
+    "entries": "Einträge",
+    "loadingError": "Die Einträge konnten nicht geladen werden. Versuchen Sie es später erneut."
+  }
 }
