@@ -1,11 +1,14 @@
 package backend
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/twpayne/go-gpx"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 // App struct
@@ -67,29 +70,115 @@ func (a *App) GetJournalEntry() JournalEntry {
 	return JournalEntry{}
 }
 
-func (a *App) GetTracks() []TrackListEntryOld {
-	log.Printf("getting tracks")
-	files, err := os.ReadDir("appdata/geojson")
+type trackDescriptor struct {
+	Name string `json:"name"`
+}
+
+func (a *App) GetTracks() []Track {
+	baseDirEntries, err := os.ReadDir("appdata/tracks")
 	if err != nil {
 		log.Printf("could not read appdata/geojson: %v", err)
 	}
 
-	result := make([]TrackListEntryOld, 0, len(files))
-	for _, file := range files {
-		path := fmt.Sprintf("./appdata/geojson/%s", file.Name())
+	result := make([]Track, 0, len(baseDirEntries))
+	for _, baseTrack := range baseDirEntries {
+		if !baseTrack.IsDir() {
+			continue
+		}
+		path := fmt.Sprintf("./appdata/tracks/%s/info.json", baseTrack.Name())
+		var baseDescriptor trackDescriptor
 		fileContent, err := os.Open(path)
 		if err != nil {
-			log.Printf("could not read file %s: %v", path, err)
+			log.Printf("could not open %s, skipping %s", path, baseTrack.Name())
+			continue
 		}
-		tracks, err := gpx.Read(fileContent)
+		err = json.NewDecoder(fileContent).Decode(&baseDescriptor)
 		if err != nil {
-			log.Printf("could not parse file %s: %v", file, err)
+			log.Printf("could not read baseTrack %s: %v", path, err)
+			continue
 		}
-		for _, track := range tracks.Trk {
-			result = append(
-				result, TrackListEntryOld{Name: track.Name, Length: distance(track.TrkSeg[0].TrkPt)},
+
+		variantsPath := fmt.Sprintf("./appdata/tracks/%s", baseTrack.Name())
+		variants, err := os.ReadDir(variantsPath)
+		if err != nil {
+			log.Printf("could not read variants of %s, skipping: %v", baseTrack.Name(), err)
+			continue
+		}
+		for _, variant := range variants {
+			if !variant.IsDir() && variant.Name() == "track.gpx" {
+				data, length, err := a.readGpx(filepath.Join("appdata/tracks", baseTrack.Name(), variant.Name()))
+				if err != nil {
+					log.Printf("could not read gpx data: %v", err)
+					continue
+				}
+				result = append(
+					result,
+					Track{
+						BaseName:     baseDescriptor.Name,
+						Variant:      "",
+						BaseId:       baseTrack.Name(),
+						Length:       length,
+						WaypointData: data,
+					},
+				)
+			}
+			if !variant.IsDir() {
+				continue
+			}
+			variantTrack, err := a.readTrackVariant(
+				"appdata/tracks", baseTrack.Name(), baseDescriptor.Name, variant.Name(),
 			)
+			if err != nil {
+				log.Printf("could not read track variant %s of base %s: %v", variant.Name(), baseTrack.Name(), err)
+				continue
+			}
+			result = append(result, variantTrack)
 		}
 	}
 	return result
+}
+
+func (a *App) readTrackVariant(pathPrefix string, baseId string, baseName string, variantId string) (Track, error) {
+	descriptorPath := fmt.Sprintf("%s/%s/%s/info.json", pathPrefix, baseId, variantId)
+	var baseDescriptor trackDescriptor
+	fileContent, err := os.Open(descriptorPath)
+	if err != nil {
+		return Track{}, fmt.Errorf("could not open track descriptor %s: %v", descriptorPath, err)
+	}
+	err = json.NewDecoder(fileContent).Decode(&baseDescriptor)
+	if err != nil {
+		return Track{}, fmt.Errorf("could not decode track descriptor %s: %v", descriptorPath, err)
+	}
+	gpxPath := fmt.Sprintf("%s/%s/%s/track.gpx", pathPrefix, baseId, variantId)
+	data, length, err := a.readGpx(gpxPath)
+	if err != nil {
+		return Track{}, fmt.Errorf("could not read gpx data: %v", err)
+	}
+	return Track{
+		Id:           variantId,
+		Length:       length,
+		BaseId:       baseId,
+		BaseName:     baseName,
+		Variant:      baseDescriptor.Name,
+		WaypointData: data,
+	}, nil
+}
+
+func (a *App) readGpx(path string) (string, int, error) {
+	gpxFileContent, err := os.ReadFile(path)
+	if err != nil {
+		return "", 0, fmt.Errorf("ocould not read gpx track %s: %v", path, err)
+	}
+	tracks, err := gpx.Read(bytes.NewReader(gpxFileContent))
+	if err != nil {
+		return "", 0, fmt.Errorf("could not parse gpx %s: %v", path, err)
+	}
+	if len(tracks.Trk) != 1 {
+		return "", 0, fmt.Errorf("%s must contain one track only, but contains %d tracks", path, len(tracks.Trk))
+	}
+	length := 0.0
+	for _, segment := range tracks.Trk[0].TrkSeg {
+		length = length + distance(segment.TrkPt)
+	}
+	return string(gpxFileContent), int(1000 * length), nil
 }

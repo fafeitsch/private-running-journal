@@ -214,10 +214,10 @@ const mockEntries = [
 ];
 
 export function useJournalApi() {
-  async function getListEntries(): Promise<backend.JournalListEntry[]> {
+  async function getJournalEntries(): Promise<backend.JournalListEntry[]> {
     return Promise.resolve(mockEntries);
   }
-  async function getListEntry(id: string): Promise<backend.JournalEntry> {
+  async function getJournalEntry(id: string): Promise<backend.JournalEntry> {
     const listEntry = mockEntries.find((entry) => entry.id === id);
     if (!listEntry) {
       throw new Error("not found");
@@ -240,5 +240,5 @@ export function useJournalApi() {
     );
     return Promise.resolve(result);
   }
-  return { getListEntries, getListEntry };
+  return { getListEntries: getJournalEntries, getListEntry: getJournalEntry };
 }

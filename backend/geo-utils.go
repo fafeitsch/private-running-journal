@@ -2,7 +2,6 @@ package backend
 
 import (
 	"github.com/twpayne/go-gpx"
-	"log"
 	"math"
 )
 
@@ -24,7 +23,6 @@ func distanceBetweenTwoPoints(coord1, coord2 *gpx.WptType) float64 {
 	a := math.Sin(dLat/2)*math.Sin(dLat/2) + math.Cos(lat1)*math.Cos(lat2)*math.Sin(dLon/2)*math.Sin(dLon/2)
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 	distance := earthRadius * c
-	log.Printf("%f", dLat)
 
 	return distance
 }
