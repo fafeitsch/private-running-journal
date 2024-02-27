@@ -34,7 +34,6 @@ const tracksApi = useTracksApi();
 
 onMounted(async () => {
   tracks.value = await tracksApi.getTracks();
-  console.log(tracks.value);
   // todo error handling
 });
 
@@ -95,7 +94,7 @@ const trackSelection = computed<TreeNode[]>(() => {
       label: names[key],
       children: children.length > 0 ? children : undefined,
       data: parentTracks[key],
-      selectedLabel: names[key]
+      selectedLabel: names[key],
     };
   });
 });
@@ -113,6 +112,27 @@ const pace = computed(() => {
   rawPace = Math.ceil(rawPace) % 60;
   return `${paceHours.toString().padStart(2, "0")}:${paceMinutes.toString().padStart(2, "0")}:${rawPace.toFixed(0).toString().padStart(2, "0")}`;
 });
+
+const gpxData = ref<backend.GpxData | undefined>(undefined);
+
+watch(
+  selectedEntry,
+  async () => {
+    if (!selectedEntry.value) {
+      gpxData.value = undefined;
+      return;
+    }
+    try {
+      gpxData.value = await tracksApi.getGpxData(
+        selectedEntry.value.track.baseId,
+        selectedEntry.value.track.id,
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -190,7 +210,7 @@ const pace = computed(() => {
         <InputText id="comment" v-model="selectedEntry!.comment"></InputText>
       </InputGroup>
     </div>
-    <LeafletMap class="flex-grow-1"></LeafletMap>
+    <LeafletMap :gpx-data="gpxData" class="flex-grow-1"></LeafletMap>
   </div>
 </template>
 
