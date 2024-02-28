@@ -10,7 +10,7 @@ import InputText from "primevue/inputtext";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputGroup from "primevue/inputgroup";
 import TreeSelect from "primevue/treeselect";
-import { backend } from "../../wailsjs/go/models";
+import { backend, tracks } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import { TreeNode } from "primevue/treenode";
 import Calendar from "primevue/calendar";
@@ -26,15 +26,20 @@ const error = ref(false);
 const selectedEntryId = computed(() => route.params["entryId"]);
 const selectedEntry = ref<backend.JournalEntry | undefined>(undefined);
 const selectedDate = ref<Date>(new Date());
-const tracks = ref<backend.Track[]>([]);
+const availableTracks = ref<tracks.Track[]>([]);
 
 const selectedTrack = ref<Record<string, boolean>>({});
 
 const tracksApi = useTracksApi();
 
 onMounted(async () => {
-  tracks.value = await tracksApi.getTracks();
-  // todo error handling
+  try {
+    availableTracks.value = await tracksApi.getTracks();
+    console.log(availableTracks.value);
+  } catch (e) {
+    // todo error handling
+    console.error(e);
+  }
 });
 
 watch(selectedEntryId, () => loadEntry(), { immediate: true });
@@ -63,9 +68,9 @@ async function loadEntry() {
 const length = computed(() => ((selectedEntry.value?.track.length || 0) / 1000).toFixed(1));
 
 const trackSelection = computed<TreeNode[]>(() => {
-  const parentTracks: Record<string, backend.Track> = {};
+  const parentTracks: Record<string, tracks.Track> = {};
   const names: Record<string, string> = {};
-  const parentsGroups = tracks.value.reduce(
+  const parentsGroups = availableTracks.value.reduce(
     (acc, curr) => {
       if (!acc[curr.baseId]) {
         names[curr.baseId] = curr.baseName;
@@ -77,7 +82,7 @@ const trackSelection = computed<TreeNode[]>(() => {
       acc[curr.baseId].push(curr);
       return acc;
     },
-    {} as Record<string, backend.Track[]>,
+    {} as Record<string, tracks.Track[]>,
   );
   return Object.entries(parentsGroups).map(([key, group]) => {
     const children = group
@@ -113,7 +118,7 @@ const pace = computed(() => {
   return `${paceHours.toString().padStart(2, "0")}:${paceMinutes.toString().padStart(2, "0")}:${rawPace.toFixed(0).toString().padStart(2, "0")}`;
 });
 
-const gpxData = ref<backend.GpxData | undefined>(undefined);
+const gpxData = ref<tracks.GpxData | undefined>(undefined);
 
 watch(
   selectedEntry,

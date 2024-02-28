@@ -1,4 +1,4 @@
-package backend
+package tracks
 
 import (
 	"github.com/twpayne/go-gpx"

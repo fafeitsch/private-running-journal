@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { getCurrentInstance, onMounted, ref, toRefs, watch } from "vue";
 import * as L from "leaflet";
-import { backend } from "../../wailsjs/go/models";
-import GpxData = backend.GpxData;
+import { tracks} from "../../wailsjs/go/models";
+import GpxData = tracks.GpxData;
 
 const mapId = ref(`map${getCurrentInstance()?.uid}`);
 let map: L.Map;
