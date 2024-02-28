@@ -2,7 +2,6 @@ package backend
 
 import (
 	"github.com/twpayne/go-gpx"
-	"log"
 	"math"
 )
 
@@ -45,30 +44,29 @@ type DistanceMarker struct {
 }
 
 func distanceMarkers(coords []Coordinates, steps float64) []DistanceMarker {
-	distance := 0.0
+	result := make([]DistanceMarker, 0)
+
 	total := 0.0
-	result := make([]DistanceMarker, 0, 0)
 	for index := 0; index < len(coords)-1; index++ {
-		segment := distanceBetweenTwoPoints(
+		distance := distanceBetweenTwoPoints(
 			coords[index].Latitude, coords[index].Longitude, coords[index+1].Latitude, coords[index+1].Longitude,
-		) * 1000
-		distance = distance + segment
-		if distance >= steps {
-			// distance marker must lie between coords[index] and coords[index+1]
-			diff := distance - steps
-			factor := diff / steps
-			if factor > 1 {
-				log.Printf("factor > 1: %f\n", factor)
-			}
-			deltaLat := coords[index+1].Latitude - coords[index].Latitude
-			deltaLon := coords[index+1].Longitude - coords[index].Longitude
-			log.Printf("deltaLat: %f, deltaLon: %f, factor: %f", deltaLat, deltaLon, factor)
-			lat := coords[index].Latitude + factor*deltaLon
-			lon := coords[index].Longitude + factor*deltaLat
-			total = total + steps
-			result = append(result, DistanceMarker{Latitude: lat, Longitude: lon, Distance: total})
-			distance = diff
+		) * 1000 // convert to meters
+
+		if total+distance < steps {
+			total = total + distance
+			continue
 		}
+		remainingDistance := steps - total
+		ratio := remainingDistance / distance
+
+		lat := coords[index].Latitude + ratio*(coords[index+1].Latitude-coords[index].Latitude)
+		lon := coords[index].Longitude + ratio*(coords[index+1].Longitude-coords[index].Longitude)
+
+		result = append(
+			result, DistanceMarker{Latitude: lat, Longitude: lon, Distance: float64(len(result)+1) * steps},
+		)
+		total = distance - remainingDistance
 	}
+
 	return result
 }
