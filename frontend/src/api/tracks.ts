@@ -5,8 +5,8 @@ export function useTracksApi() {
   function getTracks(): Promise<tracks.Track[]> {
     return GetTracks();
   }
-  function getGpxData(baseName: string, variant: string): Promise<tracks.GpxData> {
-    return GetGpxData(baseName, variant);
+  function getGpxData(baseName: string): Promise<tracks.GpxData> {
+    return GetGpxData(baseName);
   }
   return { getTracks, getGpxData };
 }

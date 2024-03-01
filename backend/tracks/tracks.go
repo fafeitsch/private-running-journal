@@ -5,17 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/twpayne/go-gpx"
-	"log"
 	"os"
 	"path/filepath"
 )
 
 type Track struct {
-	Id       string `json:"id"`
-	Length   int    `json:"length"`
-	BaseName string `json:"baseName"`
-	BaseId   string `json:"baseId"`
-	Variant  string `json:"variant"`
+	Id       string  `json:"id"`
+	Length   int     `json:"length"`
+	Name     string  `json:"name"`
+	Variants []Track `json:"variants"`
 }
 
 func GetTracks(baseDir string) ([]Track, error) {
@@ -30,82 +28,63 @@ func GetTracks(baseDir string) ([]Track, error) {
 		if !baseTrack.IsDir() {
 			continue
 		}
-		path := filepath.Join(baseDir, "tracks", baseTrack.Name(), "info.json")
-		var baseDescriptor trackDescriptor
-		fileContent, err := os.Open(path)
+		track, err := readTrack(filepath.Join(tracksDir, baseTrack.Name()), baseTrack.Name())
 		if err != nil {
-			log.Printf("could not open %s, skipping %s", path, baseTrack.Name())
+			fmt.Printf("could not read %s, skipping it: %v", tracksDir, err)
 			continue
 		}
-		err = json.NewDecoder(fileContent).Decode(&baseDescriptor)
-		if err != nil {
-			log.Printf("could not read baseTrack %s: %v", path, err)
-			continue
-		}
-
-		variantsPath := filepath.Join(tracksDir, baseTrack.Name())
-		variants, err := os.ReadDir(variantsPath)
-		if err != nil {
-			log.Printf("could not read variants of %s, skipping: %v", baseTrack.Name(), err)
-			continue
-		}
-		for _, variant := range variants {
-			if !variant.IsDir() && variant.Name() == "track.gpx" {
-				_, length, err := readGpx(filepath.Join(tracksDir, baseTrack.Name(), variant.Name()))
-				if err != nil {
-					log.Printf("could not read gpx data: %v", err)
-					continue
-				}
-				result = append(
-					result, Track{
-						BaseName: baseDescriptor.Name,
-						Variant:  "",
-						BaseId:   baseTrack.Name(),
-						Length:   length,
-					},
-				)
-			}
-			if !variant.IsDir() {
-				continue
-			}
-			variantTrack, err := readTrackVariant(tracksDir, baseTrack.Name(), baseDescriptor.Name, variant.Name())
-			if err != nil {
-				log.Printf("could not read track variant %s of base %s: %v", variant.Name(), baseTrack.Name(), err)
-				continue
-			}
-			result = append(result, variantTrack)
-		}
+		result = append(result, track)
 	}
 	return result, nil
 }
 
-type trackDescriptor struct {
-	Name string `json:"name"`
-}
-
-func readTrackVariant(pathPrefix string, baseId string, baseName string, variantId string) (Track, error) {
-	descriptorPath := filepath.Join(pathPrefix, baseId, variantId, "info.json")
+func readTrack(path string, relativePath string) (Track, error) {
+	descriptorPath := filepath.Join(path, "info.json")
 	var baseDescriptor trackDescriptor
 	fileContent, err := os.Open(descriptorPath)
 	if err != nil {
-		return Track{}, fmt.Errorf("could not open track descriptor %s: %v", descriptorPath, err)
+		return Track{}, err
 	}
 	err = json.NewDecoder(fileContent).Decode(&baseDescriptor)
 	if err != nil {
-		return Track{}, fmt.Errorf("could not decode track descriptor %s: %v", descriptorPath, err)
+		return Track{}, err
 	}
-	gpxPath := filepath.Join(pathPrefix, baseId, variantId, "track.gpx")
-	_, length, err := readGpx(gpxPath)
+
+	length := 0
+	gpxPath := filepath.Join(path, "track.gpx")
+	if _, err := os.Stat(gpxPath); err == nil {
+		_, length, err = readGpx(gpxPath)
+		if err != nil {
+			return Track{}, err
+		}
+	}
+
+	subFiles, err := os.ReadDir(path)
+	variants := make([]Track, 0, 0)
 	if err != nil {
-		return Track{}, fmt.Errorf("could not read gpx data: %v", err)
+		return Track{}, err
+	}
+
+	for _, subFile := range subFiles {
+		if !subFile.IsDir() {
+			continue
+		}
+		variant, err := readTrack(filepath.Join(path, subFile.Name()), filepath.Join(relativePath, subFile.Name()))
+		if err != nil {
+			return Track{}, fmt.Errorf("could not read variant path %s of %s: %e", subFile.Name(), variant, err)
+		}
+		variants = append(variants, variant)
 	}
 	return Track{
-		Id:       variantId,
+		Id:       relativePath,
 		Length:   length,
-		BaseId:   baseId,
-		BaseName: baseName,
-		Variant:  baseDescriptor.Name,
+		Name:     baseDescriptor.Name,
+		Variants: variants,
 	}, nil
+}
+
+type trackDescriptor struct {
+	Name string `json:"name"`
 }
 
 func readGpx(path string) ([]Coordinates, int, error) {
@@ -141,12 +120,8 @@ type GpxData struct {
 	DistanceMarkers []DistanceMarker `json:"distanceMarkers"`
 }
 
-func GetGpxData(baseDir string, baseName string, variant string) (GpxData, error) {
-	path := filepath.Join(baseDir, "tracks", baseName)
-	if variant != "" {
-		path = filepath.Join(path, variant)
-	}
-	path = filepath.Join(path, "track.gpx")
+func GetGpxData(baseDirectory string, id string) (GpxData, error) {
+	path := filepath.Join(baseDirectory, id, "track.gpx")
 	coordinates, _, err := readGpx(path)
 	distanceMarkers := distanceMarkers(coordinates, 1000)
 	return GpxData{Waypoints: coordinates, DistanceMarkers: distanceMarkers}, err

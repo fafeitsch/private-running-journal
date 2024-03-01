@@ -54,8 +54,7 @@ async function loadEntry() {
   }
   try {
     selectedEntry.value = await journalApi.getListEntry(selectedEntryId.value);
-    const trackKey = `${selectedEntry.value.track.baseId}-${selectedEntry.value.track.id}`;
-    selectedTrack.value = { [trackKey]: true };
+    selectedTrack.value = { [selectedEntry.value.track.id]: true };
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
   } catch (e) {
     console.error(e);
@@ -68,40 +67,16 @@ async function loadEntry() {
 const length = computed(() => ((selectedEntry.value?.track.length || 0) / 1000).toFixed(1));
 
 const trackSelection = computed<TreeNode[]>(() => {
-  const parentTracks: Record<string, tracks.Track> = {};
-  const names: Record<string, string> = {};
-  const parentsGroups = availableTracks.value.reduce(
-    (acc, curr) => {
-      if (!acc[curr.baseId]) {
-        names[curr.baseId] = curr.baseName;
-        acc[curr.baseId] = [];
-      }
-      if (!curr.variant) {
-        parentTracks[curr.baseId] = curr;
-      }
-      acc[curr.baseId].push(curr);
-      return acc;
-    },
-    {} as Record<string, tracks.Track[]>,
-  );
-  return Object.entries(parentsGroups).map(([key, group]) => {
-    const children = group
-      .filter((track) => track.variant)
-      .map((track) => ({
-        key: key + "-" + track.id,
-        label: track.variant,
-        data: track,
-        selectedLabel: `${names[key]} – ${track.variant}`,
-      }));
-    return {
-      key,
-      selectable: !!parentTracks[key],
-      label: names[key],
-      children: children.length > 0 ? children : undefined,
-      data: parentTracks[key],
-      selectedLabel: names[key],
-    };
+  const trackToListEntry: (tracks: tracks.Track) => TreeNode = (track: tracks.Track) => ({
+    key: track.id,
+    label: track.name,
+    data: track,
+    children: track.variants.map(trackToListEntry),
+    selectable: track.length > 0,
+    selectedLabel: track.name,
   });
+
+  return availableTracks.value.map(trackToListEntry);
 });
 
 const pace = computed(() => {
@@ -128,10 +103,7 @@ watch(
       return;
     }
     try {
-      gpxData.value = await tracksApi.getGpxData(
-        selectedEntry.value.track.baseId,
-        selectedEntry.value.track.id,
-      );
+      gpxData.value = await tracksApi.getGpxData(selectedEntry.value.track.id);
     } catch (e) {
       console.error(e);
     }

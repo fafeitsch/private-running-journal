@@ -55,6 +55,6 @@ func (a *App) GetTracks() ([]tracks.Track, error) {
 	return tracks.GetTracks("appdata")
 }
 
-func (a *App) GetGpxData(baseName string, variant string) (tracks.GpxData, error) {
-	return tracks.GetGpxData("appdata", baseName, variant)
+func (a *App) GetGpxData(id string) (tracks.GpxData, error) {
+	return tracks.GetGpxData("appdata/tracks", id)
 }
