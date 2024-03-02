@@ -15,6 +15,7 @@ import { useTracksApi } from "../api/tracks";
 import { TreeNode } from "primevue/treenode";
 import Calendar from "primevue/calendar";
 import LeafletMap from "./LeafletMap.vue";
+import TrackTimeResult from "./TrackTimeResult.vue";
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -54,9 +55,9 @@ async function loadEntry() {
   }
   try {
     selectedEntry.value = await journalApi.getListEntry(selectedEntryId.value);
-    if(!selectedEntry.value.track) {
-      console.error("no track found ")
-      return
+    if (!selectedEntry.value.track) {
+      console.error("no track found ");
+      return;
     }
     selectedTrack.value = { [selectedEntry.value.track.id]: true };
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
@@ -67,8 +68,6 @@ async function loadEntry() {
     loading.value = false;
   }
 }
-
-const length = computed(() => ((selectedEntry.value?.track?.length || 0) / 1000).toFixed(1));
 
 const trackSelection = computed<TreeNode[]>(() => {
   const trackToListEntry: (tracks: tracks.Track, parentNames: string) => TreeNode = (
@@ -87,20 +86,6 @@ const trackSelection = computed<TreeNode[]>(() => {
   };
 
   return availableTracks.value.map((entry) => trackToListEntry(entry, ""));
-});
-
-const pace = computed(() => {
-  if (!selectedEntry.value || !/\d\d:\d\d:\d\d/.test(selectedEntry.value.time)) {
-    return "";
-  }
-  const [hours, minutes, seconds] = selectedEntry.value.time.split(":").map((part) => Number(part));
-  const secondsTotal = hours * 60 * 60 + minutes * 60 + seconds;
-  let rawPace = secondsTotal / ((selectedEntry.value.track?.length || 0) / 1000);
-  const paceHours = Math.floor(Math.ceil(rawPace) / (60 * 60));
-  rawPace = Math.ceil(rawPace) % (60 * 60);
-  const paceMinutes = Math.floor(Math.ceil(rawPace) / 60);
-  rawPace = Math.ceil(rawPace) % 60;
-  return `${paceHours.toString().padStart(2, "0")}:${paceMinutes.toString().padStart(2, "0")}:${rawPace.toFixed(0).toString().padStart(2, "0")}`;
 });
 
 const gpxData = ref<tracks.GpxData | undefined>(undefined);
@@ -151,27 +136,11 @@ watch(
           :date-format="locale === 'de' ? 'dd.mm.yy' : 'yyyy/mm/dd'"
         ></Calendar>
       </InputGroup>
-      <div class="flex gap-2">
-        <InputGroup>
-          <InputGroupAddon>
-            <label for="length">{{ t("journal.details.length") }}</label>
-          </InputGroupAddon>
-          <InputText id="length" :value="length" :disabled="true"></InputText>
-          <InputGroupAddon>km</InputGroupAddon>
-        </InputGroup>
-        <InputGroup>
-          <InputGroupAddon>
-            <label for="time">{{ t("journal.details.time") }}</label>
-          </InputGroupAddon>
-          <InputText id="time" v-model="selectedEntry!.time"></InputText>
-        </InputGroup>
-        <InputGroup>
-          <InputGroupAddon>
-            <label for="pace">{{ t("journal.details.pace") }}</label>
-          </InputGroupAddon>
-          <InputText id="pace" :value="pace" disabled></InputText>
-        </InputGroup>
-      </div>
+      <TrackTimeResult
+        v-model:laps="selectedEntry!.laps"
+        v-model:time="selectedEntry!.time"
+        :track-length="selectedEntry!.track!.length"
+      ></TrackTimeResult>
       <InputGroup>
         <InputGroupAddon>
           <label for="track">{{ t("journal.details.track") }}</label>

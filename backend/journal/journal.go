@@ -23,6 +23,7 @@ type entryFile struct {
 	Track   string `json:"track"`
 	Time    string `json:"time"`
 	Comment string `json:"comment"`
+	Laps    int    `json:"laps"`
 }
 
 var directoryRegex = regexp.MustCompile("\\d\\d[a-z]?|\\d\\d\\d\\d")
@@ -47,8 +48,7 @@ func ReadEntries(baseDirectory string) ([]ListEntry, error) {
 				return filepath.SkipDir
 			}
 			entry, err := ReadJournalEntry(
-				baseDirectory,
-				strings.Replace(strings.Replace(path, journalDirectory, "", 1), info.Name(), "", 1),
+				baseDirectory, strings.Replace(strings.Replace(path, journalDirectory, "", 1), info.Name(), "", 1),
 			)
 			if err != nil {
 				log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)
@@ -58,7 +58,7 @@ func ReadEntries(baseDirectory string) ([]ListEntry, error) {
 			if entry.Track != nil {
 				listEntry.ParentNames = entry.Track.ParentNames
 				listEntry.TrackName = entry.Track.Name
-				listEntry.Length = entry.Track.Length
+				listEntry.Length = entry.Track.Length * entry.Laps
 			}
 			result = append(result, listEntry)
 			return nil
@@ -73,6 +73,7 @@ type Entry struct {
 	Track   *tracks.Track `json:"track"`
 	Comment string        `json:"comment"`
 	Time    string        `json:"time"`
+	Laps    int           `json:"laps"`
 }
 
 func ReadJournalEntry(basePath string, path string) (Entry, error) {
@@ -87,7 +88,12 @@ func ReadJournalEntry(basePath string, path string) (Entry, error) {
 		log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)
 		return Entry{}, err
 	}
-	journalEntry := Entry{Id: path, Comment: entryDescriptor.Comment, Time: entryDescriptor.Time}
+	journalEntry := Entry{
+		Id:      path,
+		Comment: entryDescriptor.Comment,
+		Time:    entryDescriptor.Time,
+		Laps:    entryDescriptor.Laps,
+	}
 	date, err := computeDateFromPath(path)
 	if err != nil {
 		log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)

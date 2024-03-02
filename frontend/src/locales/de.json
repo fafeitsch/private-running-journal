@@ -14,7 +14,8 @@
       "time": "Zeit",
       "track": "Strecke",
       "date": "Datum",
-      "pace": "Pace"
+      "pace": "Pace",
+      "laps": "Runden"
     }
   }
 }

@@ -14,7 +14,8 @@
       "time": "Time",
       "track": "Track",
       "date": "Date",
-      "pace": "Pace"
+      "pace": "Pace",
+      "laps": "Laps"
     }
   }
 }

@@ -15,7 +15,6 @@ const error = ref<boolean>(false);
 const { getListEntries } = useJournalApi();
 
 const route = useRoute();
-const selectedEntry = computed(() => route.params["routeId"]);
 
 onMounted(async () => {
   await loadEntries();
@@ -59,6 +58,7 @@ const formattedEntries = computed(() =>
       v-for="entry of formattedEntries"
       :key="entry.id"
       class="list-none p-0 m-0 flex flex-column"
+      v-tooltip="{value: entry.parentName + ' ' + entry.trackName, showDelay: 500}"
     >
       <RouterLink
         v-ripple
@@ -67,11 +67,12 @@ const formattedEntries = computed(() =>
         active-class="surface-200"
         ><span class="font-medium">{{ d(entry.date) }}</span>
         <span
-          class="font-normal flex-shrink-1 overflow-hidden white-space-nowrap text-overflow-ellipsis"
+          class="font-normal flex-shrink-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
+          >{{ entry.trackName }}</span
+        >
+        <span
+          class="font-light text-sm flex-grow-1 flex-shrink-1 overflow-hidden white-space-nowrap text-overflow-ellipsis variant"
           >{{ entry.parentName }}</span
-        ><span
-          class="variant font-light flex-grow-1 flex-shrink-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-          >&nbsp;–&nbsp;{{ entry.trackName }}</span
         >
         <span class="font-medium">{{ entry.length }}&nbsp;km</span></RouterLink
       >

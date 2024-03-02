@@ -277,7 +277,7 @@ packages:
       '@vue/compiler-ssr': 3.4.19
       '@vue/shared': 3.4.19
       estree-walker: 2.0.2
-      magic-string: 0.30.7
+      magic-string: 0.30a.7
       postcss: 8.4.35
       source-map-js: 1.0.2
 
