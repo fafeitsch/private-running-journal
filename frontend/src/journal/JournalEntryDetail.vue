@@ -16,6 +16,7 @@ import { TreeNode } from "primevue/treenode";
 import Calendar from "primevue/calendar";
 import LeafletMap from "./LeafletMap.vue";
 import TrackTimeResult from "./TrackTimeResult.vue";
+import TrackSelection from './TrackSelection.vue';
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -33,15 +34,7 @@ const selectedTrack = ref<Record<string, boolean>>({});
 
 const tracksApi = useTracksApi();
 
-onMounted(async () => {
-  try {
-    availableTracks.value = await tracksApi.getTracks();
-    console.log(availableTracks.value);
-  } catch (e) {
-    // todo error handling
-    console.error(e);
-  }
-});
+
 
 watch(selectedEntryId, () => loadEntry(), { immediate: true });
 
@@ -55,11 +48,6 @@ async function loadEntry() {
   }
   try {
     selectedEntry.value = await journalApi.getListEntry(selectedEntryId.value);
-    if (!selectedEntry.value.track) {
-      console.error("no track found ");
-      return;
-    }
-    selectedTrack.value = { [selectedEntry.value.track.id]: true };
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
   } catch (e) {
     console.error(e);
@@ -69,36 +57,17 @@ async function loadEntry() {
   }
 }
 
-const trackSelection = computed<TreeNode[]>(() => {
-  const trackToListEntry: (tracks: tracks.Track, parentNames: string) => TreeNode = (
-    track: tracks.Track,
-    parentNames: string,
-  ) => {
-    const name = parentNames ? `${parentNames} / ${track.name}` : track.name;
-    return {
-      key: track.id,
-      label: track.name,
-      data: track,
-      children: track.variants.map((entry) => trackToListEntry(entry, name)),
-      selectable: track.length > 0,
-      selectedLabel: name,
-    };
-  };
-
-  return availableTracks.value.map((entry) => trackToListEntry(entry, ""));
-});
-
 const gpxData = ref<tracks.GpxData | undefined>(undefined);
 
 watch(
   selectedEntry,
   async () => {
-    if (!selectedEntry.value) {
+    if (!selectedEntry.value || !selectedEntry.value.track) {
       gpxData.value = undefined;
       return;
     }
     try {
-      gpxData.value = await tracksApi.getGpxData(selectedEntry.value.track!.id);
+      gpxData.value = await tracksApi.getGpxData(selectedEntry.value.track.id);
     } catch (e) {
       console.error(e);
     }
@@ -136,29 +105,12 @@ watch(
           :date-format="locale === 'de' ? 'dd.mm.yy' : 'yyyy/mm/dd'"
         ></Calendar>
       </InputGroup>
+      <TrackSelection v-model="selectedEntry!.track" :linked-track="selectedEntry!.linkedTrack"></TrackSelection>
       <TrackTimeResult
         v-model:laps="selectedEntry!.laps"
         v-model:time="selectedEntry!.time"
-        :track-length="selectedEntry!.track!.length"
+        :track-length="selectedEntry!.track?.length || undefined"
       ></TrackTimeResult>
-      <InputGroup>
-        <InputGroupAddon>
-          <label for="track">{{ t("journal.details.track") }}</label>
-        </InputGroupAddon>
-        <TreeSelect
-          id="track"
-          v-model="selectedTrack"
-          selection-mode="single"
-          :options="trackSelection"
-          placeholder="Select Item"
-          class="md:w-20rem w-full"
-          @node-select="(node) => (selectedEntry!.track = node.data)"
-        >
-          <template #value="props">
-            {{ props.value[0]?.selectedLabel }}
-          </template>
-        </TreeSelect>
-      </InputGroup>
       <InputGroup>
         <InputGroupAddon>
           <label for="comment">{{ t("journal.details.comment") }}</label>

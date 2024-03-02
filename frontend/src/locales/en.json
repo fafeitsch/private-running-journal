@@ -15,7 +15,9 @@
       "track": "Track",
       "date": "Date",
       "pace": "Pace",
-      "laps": "Laps"
-    }
+      "laps": "Laps",
+      "trackNotFound": "The linked track \"{link}\" could not be found."
+    },
+    "noTrack": "Loading error"
   }
 }

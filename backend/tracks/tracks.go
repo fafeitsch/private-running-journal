@@ -102,7 +102,6 @@ func RootTracks() []Track {
 
 func GetTrack(id string) (Track, bool) {
 	track, exists := trackCache[id]
-	fmt.Printf("TRACKS %s: %v", id, trackCache)
 	if exists {
 		return *track, true
 	}

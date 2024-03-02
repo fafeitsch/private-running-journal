@@ -15,7 +15,9 @@
       "track": "Strecke",
       "date": "Datum",
       "pace": "Pace",
-      "laps": "Runden"
-    }
+      "laps": "Runden",
+      "trackNotFound": "Die verlinkte Strecke \"{link}\" konnte nicht gefunden werden."
+    },
+    "noTrack": "Fehler beim Laden"
   }
 }

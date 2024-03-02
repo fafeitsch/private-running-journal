@@ -74,6 +74,8 @@ type Entry struct {
 	Comment string        `json:"comment"`
 	Time    string        `json:"time"`
 	Laps    int           `json:"laps"`
+	//needed in FE if the Track file is missing to give a reference what track should be there
+	LinkedTrack string `json:"linkedTrack"`
 }
 
 func ReadJournalEntry(basePath string, path string) (Entry, error) {
@@ -89,10 +91,11 @@ func ReadJournalEntry(basePath string, path string) (Entry, error) {
 		return Entry{}, err
 	}
 	journalEntry := Entry{
-		Id:      path,
-		Comment: entryDescriptor.Comment,
-		Time:    entryDescriptor.Time,
-		Laps:    entryDescriptor.Laps,
+		Id:          path,
+		Comment:     entryDescriptor.Comment,
+		Time:        entryDescriptor.Time,
+		Laps:        entryDescriptor.Laps,
+		LinkedTrack: entryDescriptor.Track,
 	}
 	date, err := computeDateFromPath(path)
 	if err != nil {

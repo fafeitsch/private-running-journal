@@ -12,16 +12,19 @@ const { t } = useI18n();
 const time = defineModel<string>("time", { required: true });
 const laps = defineModel<number>("laps", { required: true });
 
-const props = defineProps<{ trackLength: number }>();
+const props = defineProps<{ trackLength: number | undefined }>();
 
 const { trackLength } = toRefs(props);
 
-const formattedLength = computed(
-  () => ((laps.value * trackLength.value) / 1000).toFixed(1) + " km",
-);
+const formattedLength = computed(() => {
+  if(trackLength.value == null) {
+    return ''
+  }
+  return ((laps.value * trackLength.value) / 1000).toFixed(1) + " km";
+});
 
 const pace = computed(() => {
-  if (!/\d\d:\d\d:\d\d/.test(time.value)) {
+  if (trackLength.value == null || !/\d\d:\d\d:\d\d/.test(time.value)) {
     return "";
   }
   const [hours, minutes, seconds] = time.value.split(":").map((part) => Number(part));
@@ -60,7 +63,7 @@ const pace = computed(() => {
       <InputGroupAddon>
         <label for="laps">{{ t("journal.details.laps") }}</label>
       </InputGroupAddon>
-        <InputNumber id="laps" v-model="laps" :min="1"></InputNumber>
+      <InputNumber id="laps" v-model="laps" :min="1"></InputNumber>
     </InputGroup>
   </div>
 </template>

@@ -10,7 +10,9 @@ import { useRoute } from "vue-router";
 
 const { t, d } = useI18n();
 const loading = ref(false);
-const entries = ref<(journal.ListEntry & { parentName: string; link: string })[]>([]);
+const entries = ref<
+  (journal.ListEntry & { parentName: string; link: string; trackError: boolean })[]
+>([]);
 const error = ref<boolean>(false);
 const { getListEntries } = useJournalApi();
 
@@ -27,8 +29,9 @@ async function loadEntries() {
   try {
     entries.value = (await getListEntries()).map((entry) => ({
       ...entry,
-      parentName: entry.trackParents.join(" / "),
+      parentName: (entry.trackParents || []).join(" / "),
       link: encodeURIComponent(entry.id),
+      trackError: !entry.trackParents && !entry.trackName && !entry.length,
     }));
   } catch (e) {
     error.value = true;
@@ -58,7 +61,7 @@ const formattedEntries = computed(() =>
       v-for="entry of formattedEntries"
       :key="entry.id"
       class="list-none p-0 m-0 flex flex-column"
-      v-tooltip="{value: entry.parentName + ' ' + entry.trackName, showDelay: 500}"
+      v-tooltip="{ value: entry.parentName + ' ' + entry.trackName, showDelay: 500 }"
     >
       <RouterLink
         v-ripple
@@ -66,16 +69,21 @@ const formattedEntries = computed(() =>
         :to="{ path: '/journal/' + entry.link }"
         active-class="surface-200"
         ><span class="font-medium">{{ d(entry.date) }}</span>
-        <span
-          class="font-normal flex-shrink-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-          >{{ entry.trackName }}</span
-        >
-        <span
-          class="font-light text-sm flex-grow-1 flex-shrink-1 overflow-hidden white-space-nowrap text-overflow-ellipsis variant"
-          >{{ entry.parentName }}</span
-        >
-        <span class="font-medium">{{ entry.length }}&nbsp;km</span></RouterLink
-      >
+        <template v-if="!entry.trackError">
+          <span
+            class="font-normal flex-shrink-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
+            >{{ entry.trackName }}</span
+          >
+          <span
+            class="font-light text-sm flex-grow-1 flex-shrink-1 overflow-hidden white-space-nowrap text-overflow-ellipsis variant"
+            >{{ entry.parentName }}</span
+          >
+          <span class="font-medium">{{ entry.length }}&nbsp;km</span>
+        </template>
+        <div v-else class="ml-2 flex gap-2 text-red-500">
+          <span class="pi pi-exclamation-triangle"></span>{{t('journal.noTrack')}}
+        </div>
+      </RouterLink>
     </li>
   </ul>
 </template>
