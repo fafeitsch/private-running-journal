@@ -10,35 +10,37 @@ import (
 )
 
 type Track struct {
-	Id       string  `json:"id"`
-	Length   int     `json:"length"`
-	Name     string  `json:"name"`
-	Variants []Track `json:"variants"`
+	Id          string   `json:"id"`
+	Length      int      `json:"length"`
+	Name        string   `json:"name"`
+	Variants    []Track  `json:"variants"`
+	ParentNames []string `json:"parentNames"`
 }
 
-func GetTracks(baseDir string) ([]Track, error) {
+var trackCache = make(map[string]*Track)
+
+func Init(baseDir string) error {
 	tracksDir := filepath.Join(baseDir, "tracks")
 	baseDirEntries, err := os.ReadDir(tracksDir)
 	if err != nil {
-		return nil, fmt.Errorf("could not read %s: %v", tracksDir, err)
+		return fmt.Errorf("could not read %s: %v", tracksDir, err)
 	}
 
-	result := make([]Track, 0, len(baseDirEntries))
 	for _, baseTrack := range baseDirEntries {
 		if !baseTrack.IsDir() {
 			continue
 		}
-		track, err := readTrack(filepath.Join(tracksDir, baseTrack.Name()), baseTrack.Name())
+		track, err := readTrack(filepath.Join(tracksDir, baseTrack.Name()), baseTrack.Name(), []string{})
 		if err != nil {
 			fmt.Printf("could not read %s, skipping it: %v", tracksDir, err)
 			continue
 		}
-		result = append(result, track)
+		trackCache[track.Id] = &track
 	}
-	return result, nil
+	return nil
 }
 
-func readTrack(path string, relativePath string) (Track, error) {
+func readTrack(path string, relativePath string, parentNames []string) (Track, error) {
 	descriptorPath := filepath.Join(path, "info.json")
 	var baseDescriptor trackDescriptor
 	fileContent, err := os.Open(descriptorPath)
@@ -69,18 +71,42 @@ func readTrack(path string, relativePath string) (Track, error) {
 		if !subFile.IsDir() {
 			continue
 		}
-		variant, err := readTrack(filepath.Join(path, subFile.Name()), filepath.Join(relativePath, subFile.Name()))
+		parents := append(parentNames, baseDescriptor.Name)
+		variant, err := readTrack(
+			filepath.Join(path, subFile.Name()), filepath.Join(relativePath, subFile.Name()), parents,
+		)
 		if err != nil {
 			return Track{}, fmt.Errorf("could not read variant path %s of %s: %e", subFile.Name(), variant, err)
 		}
+		trackCache[variant.Id] = &variant
 		variants = append(variants, variant)
 	}
 	return Track{
-		Id:       relativePath,
-		Length:   length,
-		Name:     baseDescriptor.Name,
-		Variants: variants,
+		Id:          relativePath,
+		Length:      length,
+		Name:        baseDescriptor.Name,
+		Variants:    variants,
+		ParentNames: parentNames,
 	}, nil
+}
+
+func RootTracks() []Track {
+	result := make([]Track, 0, 0)
+	for _, value := range trackCache {
+		if len(value.ParentNames) == 0 {
+			result = append(result, *value)
+		}
+	}
+	return result
+}
+
+func GetTrack(id string) (Track, bool) {
+	track, exists := trackCache[id]
+	fmt.Printf("TRACKS %s: %v", id, trackCache)
+	if exists {
+		return *track, true
+	}
+	return Track{}, exists
 }
 
 type trackDescriptor struct {

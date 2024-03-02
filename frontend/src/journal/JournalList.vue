@@ -1,22 +1,21 @@
 <script setup lang="ts">
 import { useJournalApi } from "../api/journal";
 import { computed, onMounted, ref } from "vue";
-import { backend } from "../../wailsjs/go/models";
+import { journal } from "../../wailsjs/go/models";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import { useI18n } from "vue-i18n";
-import JournalListEntry = backend.JournalListEntry;
-import {useRoute} from 'vue-router';
+import { useRoute } from "vue-router";
 
 const { t, d } = useI18n();
 const loading = ref(false);
-const entries = ref<JournalListEntry[]>([]);
+const entries = ref<(journal.ListEntry & { parentName: string; link: string })[]>([]);
 const error = ref<boolean>(false);
 const { getListEntries } = useJournalApi();
 
-const route = useRoute()
-const selectedEntry = computed(() => route.params['routeId'])
+const route = useRoute();
+const selectedEntry = computed(() => route.params["routeId"]);
 
 onMounted(async () => {
   await loadEntries();
@@ -27,7 +26,11 @@ async function loadEntries() {
   error.value = false;
   entries.value = [];
   try {
-    entries.value = await getListEntries();
+    entries.value = (await getListEntries()).map((entry) => ({
+      ...entry,
+      parentName: entry.trackParents.join(" / "),
+      link: encodeURIComponent(entry.id),
+    }));
   } catch (e) {
     error.value = true;
     console.error(e);
@@ -60,15 +63,15 @@ const formattedEntries = computed(() =>
       <RouterLink
         v-ripple
         class="flex gap-1 cursor-pointer p-ripple transition-colors hover:surface-100 transition-duration-150 text-700 p-3"
-        :to="{path: '/journal/' + entry.id}"
+        :to="{ path: '/journal/' + entry.link }"
         active-class="surface-200"
         ><span class="font-medium">{{ d(entry.date) }}</span>
         <span
           class="font-normal flex-shrink-1 overflow-hidden white-space-nowrap text-overflow-ellipsis"
-          >{{ entry.trackBaseName }}</span
+          >{{ entry.parentName }}</span
         ><span
           class="variant font-light flex-grow-1 flex-shrink-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-          >&nbsp;–&nbsp;{{ entry.trackVariant }}</span
+          >&nbsp;–&nbsp;{{ entry.trackName }}</span
         >
         <span class="font-medium">{{ entry.length }}&nbsp;km</span></RouterLink
       >
@@ -78,6 +81,6 @@ const formattedEntries = computed(() =>
 
 <style scoped>
 .variant {
-  flex-basis: 0
+  flex-basis: 0;
 }
 </style>

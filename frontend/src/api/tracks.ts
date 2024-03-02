@@ -1,5 +1,5 @@
-import {backend, tracks} from "../../wailsjs/go/models";
-import { GetTracks, GetGpxData } from "../../wailsjs/go/backend/App";
+import { tracks } from "../../wailsjs/go/models";
+import { GetGpxData, GetTracks } from "../../wailsjs/go/backend/App";
 
 export function useTracksApi() {
   function getTracks(): Promise<tracks.Track[]> {

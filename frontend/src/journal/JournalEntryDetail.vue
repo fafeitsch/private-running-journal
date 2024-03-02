@@ -10,7 +10,7 @@ import InputText from "primevue/inputtext";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputGroup from "primevue/inputgroup";
 import TreeSelect from "primevue/treeselect";
-import { backend, tracks } from "../../wailsjs/go/models";
+import { journal, tracks } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import { TreeNode } from "primevue/treenode";
 import Calendar from "primevue/calendar";
@@ -24,7 +24,7 @@ const router = useRouter();
 const loading = ref(false);
 const error = ref(false);
 const selectedEntryId = computed(() => route.params["entryId"]);
-const selectedEntry = ref<backend.JournalEntry | undefined>(undefined);
+const selectedEntry = ref<journal.Entry | undefined>(undefined);
 const selectedDate = ref<Date>(new Date());
 const availableTracks = ref<tracks.Track[]>([]);
 
@@ -54,6 +54,10 @@ async function loadEntry() {
   }
   try {
     selectedEntry.value = await journalApi.getListEntry(selectedEntryId.value);
+    if(!selectedEntry.value.track) {
+      console.error("no track found ")
+      return
+    }
     selectedTrack.value = { [selectedEntry.value.track.id]: true };
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
   } catch (e) {
@@ -64,19 +68,25 @@ async function loadEntry() {
   }
 }
 
-const length = computed(() => ((selectedEntry.value?.track.length || 0) / 1000).toFixed(1));
+const length = computed(() => ((selectedEntry.value?.track?.length || 0) / 1000).toFixed(1));
 
 const trackSelection = computed<TreeNode[]>(() => {
-  const trackToListEntry: (tracks: tracks.Track) => TreeNode = (track: tracks.Track) => ({
-    key: track.id,
-    label: track.name,
-    data: track,
-    children: track.variants.map(trackToListEntry),
-    selectable: track.length > 0,
-    selectedLabel: track.name,
-  });
+  const trackToListEntry: (tracks: tracks.Track, parentNames: string) => TreeNode = (
+    track: tracks.Track,
+    parentNames: string,
+  ) => {
+    const name = parentNames ? `${parentNames} / ${track.name}` : track.name;
+    return {
+      key: track.id,
+      label: track.name,
+      data: track,
+      children: track.variants.map((entry) => trackToListEntry(entry, name)),
+      selectable: track.length > 0,
+      selectedLabel: name,
+    };
+  };
 
-  return availableTracks.value.map(trackToListEntry);
+  return availableTracks.value.map((entry) => trackToListEntry(entry, ""));
 });
 
 const pace = computed(() => {
@@ -85,7 +95,7 @@ const pace = computed(() => {
   }
   const [hours, minutes, seconds] = selectedEntry.value.time.split(":").map((part) => Number(part));
   const secondsTotal = hours * 60 * 60 + minutes * 60 + seconds;
-  let rawPace = secondsTotal / (selectedEntry.value.track.length / 1000);
+  let rawPace = secondsTotal / ((selectedEntry.value.track?.length || 0) / 1000);
   const paceHours = Math.floor(Math.ceil(rawPace) / (60 * 60));
   rawPace = Math.ceil(rawPace) % (60 * 60);
   const paceMinutes = Math.floor(Math.ceil(rawPace) / 60);
@@ -103,7 +113,7 @@ watch(
       return;
     }
     try {
-      gpxData.value = await tracksApi.getGpxData(selectedEntry.value.track.id);
+      gpxData.value = await tracksApi.getGpxData(selectedEntry.value.track!.id);
     } catch (e) {
       console.error(e);
     }
