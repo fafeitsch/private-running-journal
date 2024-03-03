@@ -18,6 +18,8 @@
       "laps": "Runden",
       "trackNotFound": "Die verlinkte Strecke \"{link}\" konnte nicht gefunden werden."
     },
-    "noTrack": "Fehler beim Laden"
+    "noTrack": "Fehler beim Laden",
+    "createEntry": "Erstellen",
+    "createEntryError": "Erstellen fehlgeschlagen"
   }
 }

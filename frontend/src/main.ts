@@ -9,6 +9,7 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import Ripple from "primevue/ripple";
 import Tooltip from "primevue/tooltip";
 import JournalPage from "./journal/JournalPage.vue";
+import {createPinia} from 'pinia';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -32,6 +33,7 @@ createApp(App)
   .use(PrimeVue)
   .use(i18n)
   .use(router)
+  .use(createPinia())
   .directive("tooltip", Tooltip)
   .directive("ripple", Ripple)
   .mount("#app");

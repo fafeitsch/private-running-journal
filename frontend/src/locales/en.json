@@ -18,6 +18,8 @@
       "laps": "Laps",
       "trackNotFound": "The linked track \"{link}\" could not be found."
     },
-    "noTrack": "Loading error"
+    "noTrack": "Loading error",
+    "createEntry": "Create",
+    "createEntryError": "Creation failed"
   }
 }

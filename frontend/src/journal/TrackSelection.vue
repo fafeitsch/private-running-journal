@@ -13,7 +13,7 @@ const { t } = useI18n();
 const tracksApi = useTracksApi();
 const selectedTrack = defineModel<Track | undefined>();
 
-const props = defineProps<{ linkedTrack: string }>();
+const props = defineProps<{ linkedTrack?: string }>();
 const { linkedTrack } = toRefs(props);
 
 const availableTracks = ref<TreeNode[]>([]);
@@ -61,7 +61,6 @@ watch(
 </script>
 
 <template>
-
   <InputGroup>
     <InputGroupAddon class="flex gap-2">
       <label for="track">{{ t("journal.details.track") }}</label>
@@ -69,7 +68,7 @@ watch(
         v-if="!selectedTrack && linkedTrack"
         class="text-red-500 pi pi-exclamation-triangle"
         v-tooltip="{
-          value: t('journal.details.trackNotFound', { link: linkedTrack }) ,
+          value: t('journal.details.trackNotFound', { link: linkedTrack }),
           showDelay: 500,
         }"
       ></span>

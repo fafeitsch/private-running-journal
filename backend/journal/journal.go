@@ -47,19 +47,14 @@ func ReadEntries(baseDirectory string) ([]ListEntry, error) {
 				)
 				return filepath.SkipDir
 			}
-			entry, err := ReadJournalEntry(
+			listEntry, err := readListEntry(
 				baseDirectory, strings.Replace(strings.Replace(path, journalDirectory, "", 1), info.Name(), "", 1),
 			)
 			if err != nil {
 				log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)
 				return filepath.SkipDir
 			}
-			listEntry := ListEntry{Id: entry.Id, Date: entry.Date}
-			if entry.Track != nil {
-				listEntry.ParentNames = entry.Track.ParentNames
-				listEntry.TrackName = entry.Track.Name
-				listEntry.Length = entry.Track.Length * entry.Laps
-			}
+
 			result = append(result, listEntry)
 			return nil
 		},
@@ -81,13 +76,11 @@ type Entry struct {
 func ReadJournalEntry(basePath string, path string) (Entry, error) {
 	file, err := os.Open(filepath.Join(basePath, "journal", path, "entry.json"))
 	if err != nil {
-		log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)
 		return Entry{}, err
 	}
 	var entryDescriptor entryFile
 	err = json.NewDecoder(file).Decode(&entryDescriptor)
 	if err != nil {
-		log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)
 		return Entry{}, err
 	}
 	journalEntry := Entry{
@@ -99,7 +92,6 @@ func ReadJournalEntry(basePath string, path string) (Entry, error) {
 	}
 	date, err := computeDateFromPath(path)
 	if err != nil {
-		log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)
 		return Entry{}, err
 	}
 	journalEntry.Date = date
@@ -110,12 +102,63 @@ func ReadJournalEntry(basePath string, path string) (Entry, error) {
 	return journalEntry, nil
 }
 
-var pathRegex = regexp.MustCompile("(\\d\\d\\d\\d)/(\\d\\d)/(\\d\\d)[a-z]?/")
+func readListEntry(basePath string, path string) (ListEntry, error) {
+	entry, err := ReadJournalEntry(basePath, path)
+	if err != nil {
+		return ListEntry{}, err
+	}
+	listEntry := ListEntry{Id: entry.Id, Date: entry.Date}
+	if entry.Track != nil {
+		listEntry.ParentNames = entry.Track.ParentNames
+		listEntry.TrackName = entry.Track.Name
+		listEntry.Length = entry.Track.Length * entry.Laps
+	}
+	return listEntry, nil
+}
+
+var dateRegex = regexp.MustCompile("(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)")
+
+func CreateEntry(basePath string, date string, trackId string) (ListEntry, error) {
+	regexResult := dateRegex.FindStringSubmatch(date)
+	if regexResult == nil {
+		return ListEntry{}, fmt.Errorf("the date \"%s\" is not a valid date of the format yyyy-mm-dd", date)
+	}
+	id := filepath.Join(regexResult[1], regexResult[2], regexResult[3])
+	journalPath := filepath.Join(basePath, "journal")
+	_, existsCheck := os.Stat(filepath.Join(journalPath, id))
+	modifier := 0
+	for ; existsCheck == nil && modifier < 27; modifier = modifier + 1 {
+		_, existsCheck = os.Stat(filepath.Join(journalPath, id+string(rune(modifier+96))))
+	}
+	if existsCheck == nil {
+		return ListEntry{}, fmt.Errorf(
+			"all slots for the given date \"%s\" seem to be already taken: %v",
+			date,
+			existsCheck,
+		)
+	}
+	if modifier > 0 {
+		id = id + string(rune(modifier+96))
+	}
+	err := os.MkdirAll(filepath.Join(basePath, "journal", id), os.ModePerm)
+	if err != nil {
+		return ListEntry{}, fmt.Errorf("could not create directory %s: %v", id, err)
+	}
+	entryFilePath := filepath.Join(basePath, "journal", id, "entry.json")
+	payload, _ := json.Marshal(entryFile{Track: trackId, Laps: 1, Time: "", Comment: ""})
+	err = os.WriteFile(entryFilePath, payload, 0644)
+	if err != nil {
+		return ListEntry{}, fmt.Errorf("could not write file \"%s\": %v", entryFilePath, err)
+	}
+	return readListEntry(basePath, id)
+}
+
+var pathRegex = regexp.MustCompile("(\\d\\d\\d\\d)/(\\d\\d)/(\\d\\d)[a-z]?")
 
 func computeDateFromPath(path string) (string, error) {
 	regexResult := pathRegex.FindStringSubmatch(path)
 	if regexResult == nil {
-		return "", fmt.Errorf("path \"%s\" does not have the correct format dddd/dd/dd/*.json", path)
+		return "", fmt.Errorf("path \"%s\" does not have the correct format dddd/dd/dd/", path)
 	}
 	return fmt.Sprintf("%s-%s-%s", regexResult[1], regexResult[2], regexResult[3]), nil
 }
