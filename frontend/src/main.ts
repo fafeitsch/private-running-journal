@@ -10,6 +10,7 @@ import Ripple from "primevue/ripple";
 import Tooltip from "primevue/tooltip";
 import JournalPage from "./journal/JournalPage.vue";
 import {createPinia} from 'pinia';
+import ConfirmationService from 'primevue/confirmationservice';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -34,6 +35,7 @@ createApp(App)
   .use(i18n)
   .use(router)
   .use(createPinia())
+  .use(ConfirmationService)
   .directive("tooltip", Tooltip)
   .directive("ripple", Ripple)
   .mount("#app");

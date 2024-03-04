@@ -42,7 +42,7 @@ async function createEntry() {
 </script>
 
 <template>
-  <Button icon="pi pi-plus" rounded @click="(event) => overlayPanel.toggle(event)"></Button>
+  <Button icon="pi pi-plus" @click="(event) => overlayPanel.toggle(event)"></Button>
   <OverlayPanel ref="overlayPanel">
     <div class="flex flex-column gap-2 overlay">
       <TrackSelection v-model="selectedTrack"></TrackSelection>

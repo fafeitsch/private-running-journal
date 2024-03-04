@@ -33,6 +33,10 @@ func (a *App) GetJournalEntry(id string) (journal.Entry, error) {
 	return journal.ReadJournalEntry("appdata", id)
 }
 
+func (a *App) SaveJournalEntry(entry journal.Entry) error {
+	return journal.SaveEntry("appdata", entry)
+}
+
 func (a *App) CreateJournalEntry(date string, trackId string) (journal.ListEntry, error) {
 	return journal.CreateEntry("appdata", date, trackId)
 }

@@ -21,5 +21,13 @@
     "noTrack": "Loading error",
     "createEntry": "Create",
     "createEntryError": "Creation failed"
+  },
+  "shared": {
+    "confirm": {
+      "message": "Discard unsaved changes?",
+      "header": "Unsaved changes",
+      "discard": "Discard"
+    },
+    "cancel": "Cancel"
   }
 }

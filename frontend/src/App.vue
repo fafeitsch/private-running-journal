@@ -27,7 +27,7 @@ function toggleSidebar() {
       </li>
     </ul>
   </Sidebar>
-  <Button icon="pi pi-bars" class="absolute right-0 m-1" @click="toggleSidebar"></Button>
+  <Button icon="pi pi-bars" class="absolute right-0 bottom-0 m-1" @click="toggleSidebar"></Button>
   <router-view class="h-full w-full"></router-view>
 </template>
 

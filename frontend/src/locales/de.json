@@ -21,5 +21,13 @@
     "noTrack": "Fehler beim Laden",
     "createEntry": "Erstellen",
     "createEntryError": "Erstellen fehlgeschlagen"
+  },
+  "shared": {
+    "confirm": {
+      "message": "Ungespeicherte Änderungen verwerfen?",
+      "header": "Ungespeicherte Änderungen",
+      "discard": "Verwerfen"
+    },
+    "cancel": "Abbrechen"
   }
 }

@@ -153,6 +153,26 @@ func CreateEntry(basePath string, date string, trackId string) (ListEntry, error
 	return readListEntry(basePath, id)
 }
 
+func SaveEntry(basePath string, entry Entry) error {
+	journalPath := filepath.Join(basePath, "journal", entry.Id, "entry.json")
+	if _, err := os.Stat(journalPath); err != nil {
+		return fmt.Errorf("could not update entry \"%s\": %v", entry.Id, err)
+	}
+	payload, _ := json.Marshal(
+		entryFile{
+			Track:   entry.Track.Id,
+			Time:    entry.Time,
+			Comment: entry.Comment,
+			Laps:    entry.Laps,
+		},
+	)
+	err := os.WriteFile(journalPath, payload, 0644)
+	if err != nil {
+		return fmt.Errorf("could not update entry \"%s\": %v", entry.Id, err)
+	}
+	return nil
+}
+
 var pathRegex = regexp.MustCompile("(\\d\\d\\d\\d)/(\\d\\d)/(\\d\\d)[a-z]?")
 
 func computeDateFromPath(path string) (string, error) {
