@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useJournalApi } from "../api/journal";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
@@ -17,6 +17,8 @@ import TrackTimeResult from "./TrackTimeResult.vue";
 import TrackSelection from "./TrackSelection.vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import { useConfirm } from "primevue/useconfirm";
+import { useJournalStore } from "../store/journal-store";
+import { storeToRefs } from "pinia";
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -26,24 +28,30 @@ const router = useRouter();
 const loading = ref(false);
 const error = ref(false);
 const dirty = ref(false);
-const selectedEntryId = computed(() => route.params["entryId"]);
 const selectedEntry = ref<journal.Entry | undefined>(undefined);
 const selectedDate = ref<Date>(new Date());
+const journalStore = useJournalStore();
+const { selectedEntryId } = storeToRefs(journalStore);
 
 const tracksApi = useTracksApi();
 
-watch(selectedEntryId, () => loadEntry(), { immediate: true });
+watch(
+  () => route.params.entryId as string,
+  (value: string) => loadEntry(value),
+  { immediate: true },
+);
 
-async function loadEntry() {
+async function loadEntry(entryId: string) {
   selectedEntry.value = undefined;
   error.value = false;
   loading.value = true;
-  if (!selectedEntryId.value || typeof selectedEntryId.value !== "string") {
+  selectedEntryId.value = entryId;
+  if (!entryId) {
     await router.replace("/journal");
     return;
   }
   try {
-    selectedEntry.value = await journalApi.getListEntry(selectedEntryId.value);
+    selectedEntry.value = await journalApi.getListEntry(entryId);
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
   } catch (e) {
     console.error(e);
@@ -89,8 +97,8 @@ onBeforeRouteLeave(() => handleRouteLeave());
 onBeforeRouteUpdate(() => handleRouteLeave());
 
 function handleRouteLeave(): Promise<boolean> {
-  if(!dirty.value) {
-    return Promise.resolve(true)
+  if (!dirty.value) {
+    return Promise.resolve(true);
   }
   let resolveFn: (result: boolean) => void;
   const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
@@ -108,7 +116,7 @@ function handleRouteLeave(): Promise<boolean> {
 
 <template>
   <div class="flex flex-column">
-    <div v-if="loading">
+    <div v-if="loading" class="flex w-full flex-grow-1 justify-content-center align-items-center">
       <ProgressSpinner></ProgressSpinner>
     </div>
     <div v-else-if="error">
@@ -124,7 +132,10 @@ function handleRouteLeave(): Promise<boolean> {
           ></Button></div
       ></Message>
     </div>
-    <div v-else-if="selectedEntry" class="flex flex-column gap-2 w-full p-2">
+    <div
+      v-else-if="selectedEntry"
+      class="flex flex-column gap-2 w-full p-2 flex-grow-1 flex-shrink-1"
+    >
       <div class="flex">
         <Button icon="pi pi-save" :disabled="!dirty" @click="saveEntry"></Button>
         <ConfirmDialog></ConfirmDialog>
@@ -162,8 +173,10 @@ function handleRouteLeave(): Promise<boolean> {
           @update:model-value="() => (dirty = true)"
         ></InputText>
       </InputGroup>
+      <div class="flex-shrink-1 flex-grow-1">
+        <LeafletMap class="h-full w-full":gpx-data="gpxData"></LeafletMap>
+      </div>
     </div>
-    <LeafletMap :gpx-data="gpxData" class="flex-grow-1"></LeafletMap>
   </div>
 </template>
 

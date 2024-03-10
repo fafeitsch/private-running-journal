@@ -9,8 +9,9 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import Ripple from "primevue/ripple";
 import Tooltip from "primevue/tooltip";
 import JournalPage from "./journal/JournalPage.vue";
-import {createPinia} from 'pinia';
-import ConfirmationService from 'primevue/confirmationservice';
+import { createPinia } from "pinia";
+import ConfirmationService from "primevue/confirmationservice";
+import TrackPage from "./tracks/TrackPage.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -20,6 +21,7 @@ const router = createRouter({
       path: "/journal/:entryId?",
       component: JournalPage,
     },
+    { path: "/tracks/:trackId?", component: TrackPage },
   ],
 });
 

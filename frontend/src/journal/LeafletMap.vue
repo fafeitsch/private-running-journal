@@ -45,7 +45,7 @@ function invalidateSize() {
 </script>
 
 <template>
-  <div ref="mapContainer" class="h-full w-full" :id="mapId"></div>
+  <div ref="mapContainer" :id="mapId"></div>
 </template>
 
 <style scoped></style>

@@ -1,14 +1,16 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import {computed, ref} from "vue";
 import { journal } from "../../wailsjs/go/models";
 import { useJournalApi } from "../api/journal";
+import {TreeNode} from 'primevue/treenode';
 
 export const useJournalStore = defineStore("journal", () => {
   const journalApi = useJournalApi();
   const listEntries = ref<journal.ListEntry[]>([]);
+  const selectedEntryId = ref<string | undefined>(undefined);
 
   async function loadEntries() {
-    listEntries.value = []
+    listEntries.value = [];
     listEntries.value = await journalApi.getListEntries();
   }
 
@@ -16,5 +18,5 @@ export const useJournalStore = defineStore("journal", () => {
     listEntries.value.push(entry);
   }
 
-  return { listEntries, loadEntries, addEntryToList };
+  return { listEntries, loadEntries, addEntryToList, selectedEntryId };
 });

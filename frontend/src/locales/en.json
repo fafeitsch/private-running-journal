@@ -1,7 +1,8 @@
 {
   "sidenav": {
     "menu": "Menu",
-    "journal": "Journal"
+    "journal": "Journal",
+    "tracks": "Tracks"
   },
   "journal": {
     "entries": "Entries",
@@ -29,5 +30,8 @@
       "discard": "Discard"
     },
     "cancel": "Cancel"
+  },
+  "tracks": {
+    "name": "Track name"
   }
 }

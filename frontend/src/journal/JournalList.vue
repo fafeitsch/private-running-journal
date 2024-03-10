@@ -8,7 +8,7 @@ import Button from "primevue/button";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import CreateEntryOverlay from "./CreateEntryOverlay.vue";
-import {useJournalStore} from '../store/use-journal-store';
+import {useJournalStore} from '../store/journal-store';
 import {storeToRefs} from 'pinia';
 
 const { t, d } = useI18n();

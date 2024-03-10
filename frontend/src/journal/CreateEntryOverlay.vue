@@ -8,7 +8,7 @@ import { useI18n } from "vue-i18n";
 import { useJournalApi } from "../api/journal";
 import TrackSelection from './TrackSelection.vue';
 import {tracks} from '../../wailsjs/go/models';
-import {useJournalStore} from '../store/use-journal-store';
+import {useJournalStore} from '../store/journal-store';
 import {useRouter} from 'vue-router';
 
 const { locale, t } = useI18n();

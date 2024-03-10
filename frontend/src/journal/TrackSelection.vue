@@ -6,7 +6,7 @@ import { useI18n } from "vue-i18n";
 import { onMounted, ref, toRefs, watch } from "vue";
 import { tracks } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
-import { TreeNode } from "primevue/treenode";
+import type { TreeNode } from "primevue/treenode";
 import Track = tracks.Track;
 
 const { t } = useI18n();
@@ -20,23 +20,7 @@ const availableTracks = ref<TreeNode[]>([]);
 
 onMounted(async () => {
   try {
-    const trackToListEntry: (tracks: tracks.Track, parentNames: string) => TreeNode = (
-      track: tracks.Track,
-      parentNames: string,
-    ) => {
-      const name = parentNames ? `${parentNames} / ${track.name}` : track.name;
-      return {
-        key: track.id,
-        label: track.name,
-        data: track,
-        children: track.variants.map((entry) => trackToListEntry(entry, name)),
-        selectable: track.length > 0,
-        selectedLabel: name,
-      };
-    };
-    const rawTracks = await tracksApi.getTracks();
-    availableTracks.value = rawTracks.map((entry) => trackToListEntry(entry, ""));
-    console.log("available tracks", availableTracks.value);
+    availableTracks.value = await tracksApi.getTracks();
   } catch (e) {
     // todo error handling
     console.error(e);

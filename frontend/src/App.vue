@@ -1,8 +1,10 @@
 <script lang="ts" setup>
-import Sidebar from "primevue/sidebar";
-import Button from "primevue/button";
-import { ref } from "vue";
+import {computed, ref, watch} from "vue";
 import { useI18n } from "vue-i18n";
+import { TabMenuChangeEvent } from "primevue/tabmenu";
+import {useRoute, useRouter} from "vue-router";
+import { storeToRefs } from "pinia";
+import { useJournalStore } from "./store/journal-store";
 
 const { t } = useI18n();
 
@@ -11,24 +13,40 @@ const sidebarVisible = ref(false);
 function toggleSidebar() {
   sidebarVisible.value = !sidebarVisible.value;
 }
+
+const journalStoreRef = storeToRefs(useJournalStore());
+
+const navItems = computed(() => [
+  {
+    label: t("sidenav.journal"),
+    icon: "pi pi-list",
+    link: `/journal/${encodeURIComponent(journalStoreRef.selectedEntryId.value || "")}`,
+  },
+  { label: t("sidenav.tracks"), icon: "pi pi-directions", link: "/tracks" },
+]);
+const active = ref(0);
+
+const router = useRouter();
+function tabChangeEvent(event: TabMenuChangeEvent) {
+  router.push(navItems.value[event.index].link);
+}
+
+const route = useRoute()
+watch(() => route.fullPath, (value) => {
+  const item = navItems.value.findIndex(i => i.link.startsWith(value))
+  if(item > -1) {
+    active.value = item
+  }
+})
 </script>
 
 <template>
-  <Sidebar v-model:visible="sidebarVisible" :header="t('sidenav.menu')" :position="'top'" :modal="false" :dismissable="false">
-    <ul class="list-none p-0 m-0">
-      <li class="list-none p-0 m-0 flex flex-column">
-        <RouterLink
-          v-ripple
-          class="cursor-pointer p-ripple transition-colors hover:surface-100 transition-duration-150 text-700 p-3"
-          to="/"
-          active-class="surface-200"
-          ><span class="font-medium">{{ $t("sidenav.journal") }}</span></RouterLink
-        >
-      </li>
-    </ul>
-  </Sidebar>
-  <Button icon="pi pi-bars" class="absolute right-0 bottom-0 m-1" @click="toggleSidebar"></Button>
-  <router-view class="h-full w-full"></router-view>
+  <div class="h-full flex flex-column">
+    <TabMenu class="flex-shrink-0" :model="navItems" v-model:active-index="active" @tab-change="tabChangeEvent"></TabMenu>
+    <div class="flex-grow-1 w-full">
+      <router-view class="h-full w-full"></router-view>
+    </div>
+  </div>
 </template>
 
 <style></style>
