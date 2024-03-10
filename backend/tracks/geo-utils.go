@@ -27,11 +27,21 @@ func distanceBetweenTwoPoints(latDeg1, lonDeg1, latDeg2, lonDeg2 float64) float6
 	return distance
 }
 
-func distance(coords []*gpx.WptType) float64 {
+func distanceGpx(coords []*gpx.WptType) float64 {
 	result := 0.0
 	for index := 0; index < len(coords)-1; index++ {
 		result = result + distanceBetweenTwoPoints(
 			coords[index].Lat, coords[index].Lon, coords[index+1].Lat, coords[index+1].Lon,
+		)
+	}
+	return result
+}
+
+func distance(coords []Coordinates) float64 {
+	result := 0.0
+	for index := 0; index < len(coords)-1; index++ {
+		result = result + distanceBetweenTwoPoints(
+			coords[index].Latitude, coords[index].Longitude, coords[index+1].Latitude, coords[index+1].Longitude,
 		)
 	}
 	return result

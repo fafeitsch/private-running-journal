@@ -32,6 +32,10 @@
     "cancel": "Cancel"
   },
   "tracks": {
-    "name": "Track name"
+    "name": "Track name",
+    "editMode": "Edit mode",
+    "editModeForward": "Forward",
+    "editModeBackward": "Backward",
+    "editModeDrag": "Edit vertices"
   }
 }

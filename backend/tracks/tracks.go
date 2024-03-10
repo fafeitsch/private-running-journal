@@ -127,7 +127,7 @@ func readGpx(path string) ([]Coordinates, int, error) {
 	length := 0.0
 	coordinates := make([]Coordinates, 0, 0)
 	for _, segment := range tracks.Trk[0].TrkSeg {
-		length = length + distance(segment.TrkPt)
+		length = length + distanceGpx(segment.TrkPt)
 		for _, trkPt := range segment.TrkPt {
 			coordinates = append(coordinates, Coordinates{Longitude: trkPt.Lon, Latitude: trkPt.Lat})
 		}
@@ -150,4 +150,15 @@ func GetGpxData(baseDirectory string, id string) (GpxData, error) {
 	coordinates, _, err := readGpx(path)
 	distanceMarkers := distanceMarkers(coordinates, 1000)
 	return GpxData{Waypoints: coordinates, DistanceMarkers: distanceMarkers}, err
+}
+
+type PolylineProps struct {
+	Length          int              `json:"length"`
+	DistanceMarkers []DistanceMarker `json:"distanceMarkers"`
+}
+
+func ComputePolylineProps(coordinates []Coordinates) PolylineProps {
+	distanceMarkers := distanceMarkers(coordinates, 1000)
+	distance := int(1000 * distance(coordinates))
+	return PolylineProps{Length: distance, DistanceMarkers: distanceMarkers}
 }

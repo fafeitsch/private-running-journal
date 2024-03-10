@@ -2,7 +2,7 @@
 import { computed, onMounted, Ref } from "vue";
 import { useTrackStore } from "../store/track-store";
 import { storeToRefs } from "pinia";
-import { TreeNode } from "primevue/treenode";
+import type { TreeNode } from "primevue/treenode";
 import { useRouter } from "vue-router";
 
 const trackStore = useTrackStore();

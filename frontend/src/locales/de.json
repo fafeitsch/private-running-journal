@@ -32,6 +32,10 @@
     "cancel": "Abbrechen"
   },
   "tracks": {
-    "name": "Streckenname"
+    "name": "Streckenname",
+    "editMode": "Bearbeitungsmodus",
+    "editModeForward": "Vorwärts",
+    "editModeBackward": "Rückwärts",
+    "editModeDrag": "Anpassen"
   }
 }

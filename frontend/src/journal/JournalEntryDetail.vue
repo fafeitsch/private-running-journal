@@ -128,7 +128,7 @@ function handleRouteLeave(): Promise<boolean> {
             rounded
             text
             icon="pi pi-replay"
-            @click="loadEntry"
+            @click="loadEntry(route.params.entryId as string)"
           ></Button></div
       ></Message>
     </div>

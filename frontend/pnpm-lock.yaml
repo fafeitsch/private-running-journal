@@ -5,9 +5,15 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@types/leaflet-editable':
+    specifier: ^1.2.6
+    version: 1.2.6
   leaflet:
     specifier: 1.9.4
     version: 1.9.4
+  leaflet-editable:
+    specifier: ^1.2.0
+    version: 1.2.0
   pinia:
     specifier: ^2.1.7
     version: 2.1.7(typescript@4.9.5)(vue@3.4.19)
@@ -239,13 +245,17 @@ packages:
 
   /@types/geojson@7946.0.14:
     resolution: {integrity: sha512-WCfD5Ht3ZesJUsONdhvm84dmzWOiOzOAqOncN0++w0lBw1o8OuDNJF2McvvCef/yBqb/HYRahp1BYtODFQ8bRg==}
-    dev: true
+
+  /@types/leaflet-editable@1.2.6:
+    resolution: {integrity: sha512-8K1QEDiWZvbShO0bcT4UxjkUJRx0Szp7PXewYxi9AjKNMttM9lxKTbioKm8t4ieZQlqmM+DTd8yUliMoAbA/Cw==}
+    dependencies:
+      '@types/leaflet': 1.9.8
+    dev: false
 
   /@types/leaflet@1.9.8:
     resolution: {integrity: sha512-EXdsL4EhoUtGm2GC2ZYtXn+Fzc6pluVgagvo2VC1RHWToLGlTRwVYoDpqS/7QXa01rmDyBjJk3Catpf60VMkwg==}
     dependencies:
       '@types/geojson': 7946.0.14
-    dev: true
 
   /@ungap/structured-clone@1.2.0:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
@@ -1075,6 +1085,10 @@ packages:
     dependencies:
       json-buffer: 3.0.1
     dev: true
+
+  /leaflet-editable@1.2.0:
+    resolution: {integrity: sha512-wG11JwpL8zqIbypTop6xCRGagMuWw68ihYu4uqrqc5Ep0wnEJeyob7NB2Rt5t74Oih4rwJ3OfwaGbzdowOGfYQ==}
+    dev: false
 
   /leaflet@1.9.4:
     resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}

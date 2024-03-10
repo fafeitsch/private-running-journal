@@ -48,3 +48,7 @@ func (a *App) GetTracks() []tracks.Track {
 func (a *App) GetGpxData(id string) (tracks.GpxData, error) {
 	return tracks.GetGpxData("appdata/tracks", id)
 }
+
+func (a *App) ComputePolylineProps(coords []tracks.Coordinates) tracks.PolylineProps {
+	return tracks.ComputePolylineProps(coords)
+}
