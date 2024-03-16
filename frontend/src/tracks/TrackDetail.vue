@@ -37,6 +37,7 @@ const tracksApi = useTracksApi();
 watch(
   selectedTrack,
   async () => {
+    console.log('selected track', selectedTrack)
     if (!selectedTrack.value) {
       gpxData.value = undefined;
       return;

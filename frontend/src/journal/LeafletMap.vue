@@ -1,47 +1,23 @@
 <script setup lang="ts">
 import { getCurrentInstance, onMounted, ref, toRefs, watch } from "vue";
 import * as L from "leaflet";
-import { tracks} from "../../wailsjs/go/models";
+import { tracks } from "../../wailsjs/go/models";
+import { useMap } from "../shared/use-map";
 import GpxData = tracks.GpxData;
 
 const mapId = ref(`map${getCurrentInstance()?.uid}`);
 let map: L.Map;
 const mapContainer = ref();
+const mapApi = useMap();
 
 onMounted(() => {
-  map = L.map(mapId.value).setView([49, 9], 13);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  }).addTo(map);
-  new ResizeObserver(invalidateSize).observe(mapContainer.value);
+  mapApi.initMap(mapId, mapContainer);
 });
 
 const props = defineProps<{ gpxData: GpxData | undefined }>();
 const { gpxData } = toRefs(props);
 
-let trackLayer: L.Layer | undefined = undefined;
-let distanceMarkerLayer: L.Layer | undefined = undefined;
-
-watch(gpxData, () => {
-  trackLayer?.removeFrom(map);
-  distanceMarkerLayer?.removeFrom(map);
-  if (!gpxData.value) {
-    return;
-  }
-  trackLayer = L.polyline(
-    gpxData.value!.waypoints.map((wp) => L.latLng(wp.latitude, wp.longitude)),
-    { color: "red" },
-  ).addTo(map);
-
-  distanceMarkerLayer = L.layerGroup(
-    gpxData.value?.distanceMarkers.map((dm) => L.marker(L.latLng(dm.latitude, dm.longitude), {title: dm.distance.toString()})),
-  ).addTo(map);
-});
-
-function invalidateSize() {
-  map.invalidateSize();
-}
+watch(gpxData, (value) => (mapApi.gpxData.value = value));
 </script>
 
 <template>
