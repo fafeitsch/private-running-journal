@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/local-track-journal/backend/events"
+	"github.com/fafeitsch/local-track-journal/backend/shared"
 	"github.com/twpayne/go-gpx"
 	"os"
 	"path/filepath"
@@ -14,8 +14,9 @@ type Track struct {
 	Id          string   `json:"id"`
 	Length      int      `json:"length"`
 	Name        string   `json:"name"`
-	Variants    []Track  `json:"variants"`
+	Variants    []*Track `json:"variants"`
 	ParentNames []string `json:"parentNames"`
+	Usages      int      `json:"usages"`
 }
 
 type Tracks struct {
@@ -43,12 +44,35 @@ func New(baseDir string) (*Tracks, error) {
 		}
 		trackCache[track.Id] = &track
 	}
-	list := make([]*Track, 0)
-	for _, track := range trackCache {
-		list = append(list, track)
-	}
-	events.Send("tracks initialized", list)
+	shared.RegisterHandler(
+		"journal entry changed", func(data ...any) {
+			old := data[0].(shared.JournalEntry)
+			nevv := data[1].(shared.JournalEntry)
+			if oldTrack, ok := trackCache[old.TrackId]; ok {
+				oldTrack.Usages = oldTrack.Usages - 1
+			}
+			if newTrack, ok := trackCache[nevv.TrackId]; ok {
+				newTrack.Usages = newTrack.Usages + 1
+			}
+		},
+	)
+	sendInitEvent(trackCache)
 	return &result, nil
+}
+
+func sendInitEvent(trackCache map[string]*Track) {
+	list := make([]shared.Track, 0)
+	for _, track := range trackCache {
+		list = append(
+			list, shared.Track{
+				Id:          track.Id,
+				Length:      track.Length,
+				Name:        track.Name,
+				ParentNames: track.ParentNames,
+			},
+		)
+	}
+	shared.Send("tracks initialized", list)
 }
 
 func (t Tracks) readTrack(path string, relativePath string, parentNames []string) (Track, error) {
@@ -73,7 +97,7 @@ func (t Tracks) readTrack(path string, relativePath string, parentNames []string
 	}
 
 	subFiles, err := os.ReadDir(path)
-	variants := make([]Track, 0, 0)
+	variants := make([]*Track, 0, 0)
 	if err != nil {
 		return Track{}, err
 	}
@@ -90,7 +114,7 @@ func (t Tracks) readTrack(path string, relativePath string, parentNames []string
 			return Track{}, fmt.Errorf("could not read variant path %s of %s: %e", subFile.Name(), variant, err)
 		}
 		t.cache[variant.Id] = &variant
-		variants = append(variants, variant)
+		variants = append(variants, &variant)
 	}
 	return Track{
 		Id:          relativePath,
@@ -103,9 +127,10 @@ func (t Tracks) readTrack(path string, relativePath string, parentNames []string
 
 func (t Tracks) RootTracks() []Track {
 	result := make([]Track, 0, 0)
-	for _, value := range t.cache {
+	for key, value := range t.cache {
+		v := t.cache[key]
 		if len(value.ParentNames) == 0 {
-			result = append(result, *value)
+			result = append(result, *v)
 		}
 	}
 	return result

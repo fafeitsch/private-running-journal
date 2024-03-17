@@ -36,6 +36,7 @@
     "editMode": "Edit mode",
     "editModeForward": "Forward",
     "editModeBackward": "Backward",
-    "editModeDrag": "Edit vertices"
+    "editModeDrag": "Edit vertices",
+    "usages": "Usages"
   }
 }

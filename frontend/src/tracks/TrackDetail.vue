@@ -37,7 +37,6 @@ const tracksApi = useTracksApi();
 watch(
   selectedTrack,
   async () => {
-    console.log('selected track', selectedTrack)
     if (!selectedTrack.value) {
       gpxData.value = undefined;
       return;
@@ -64,19 +63,27 @@ const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
 
 <template>
   <div v-if="selectedTrack" class="w-full p-2 flex flex-column h-full gap-2">
-    <InputGroup>
-      <InputGroupAddon>
-        <label for="nameInput">{{ t("tracks.name") }}</label>
-      </InputGroupAddon>
-      <InputText
-        v-if="prefix"
-        :value="prefix"
-        class="flex-shrink-0 flex-grow-0 w-auto"
-        disabled
-        :pt="{ root: { size: prefix.length } }"
-      ></InputText>
-      <InputText id="nameInput" v-model="selectedTrack!.name"></InputText>
-    </InputGroup>
+    <div class="flex gap-2">
+      <InputGroup>
+        <InputGroupAddon>
+          <label for="nameInput">{{ t("tracks.name") }}</label>
+        </InputGroupAddon>
+        <InputText
+          v-if="prefix"
+          :value="prefix"
+          class="flex-shrink-0 flex-grow-0 w-auto"
+          disabled
+          :pt="{ root: { size: prefix.length } }"
+        ></InputText>
+        <InputText id="nameInput" v-model="selectedTrack!.name"></InputText>
+      </InputGroup>
+      <InputGroup class="flex-grow-0 w-2">
+        <InputGroupAddon>
+          <label for="nameInput">{{ t("tracks.usages") }}</label>
+        </InputGroupAddon>
+        <InputText id="nameInput" v-model="selectedTrack!.usages"></InputText>
+      </InputGroup>
+    </div>
     <div class="flex gap-2 align-items-center">
       <InputGroup class="flex-shrink-1 flex-grow-1 w-auto">
         <InputGroupAddon>

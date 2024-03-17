@@ -5,6 +5,7 @@ import (
 	"github.com/fafeitsch/local-track-journal/backend/journal"
 	"github.com/fafeitsch/local-track-journal/backend/tracks"
 	"log"
+	"sync"
 )
 
 // App struct
@@ -22,11 +23,23 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	var err error
-	a.journal = journal.New("appdata")
-	a.tracks, err = tracks.New("appdata")
-	if err != nil {
-		log.Fatalf("could not initialize track directory: %v", err)
-	}
+	group := sync.WaitGroup{}
+	group.Add(2)
+	go func() {
+		a.tracks, err = tracks.New("appdata")
+		if err != nil {
+			log.Fatalf("could not initialize track directory: %v", err)
+		}
+		group.Done()
+	}()
+	go func() {
+		a.journal, err = journal.New("appdata")
+		if err != nil {
+			log.Fatalf("could not initialize journal: %v", err)
+		}
+		group.Done()
+	}()
+	group.Wait()
 }
 
 func (a *App) GetJournalListEntries() ([]journal.ListEntry, error) {

@@ -1,6 +1,8 @@
-package events
+package shared
 
-type Handler func(data any)
+import "log"
+
+type Handler func(data ...any)
 
 var handlers = make(map[string][]Handler)
 
@@ -12,11 +14,12 @@ func RegisterHandler(name string, handler Handler) {
 	handlers[name] = append(handlers[name], handler)
 }
 
-func Send(name string, data any) {
+func Send(name string, data ...any) {
 	if _, ok := handlers[name]; !ok {
 		return
 	}
+	log.Printf("sending eving \"%s\" with params %v", name, data)
 	for _, handler := range handlers[name] {
-		go handler(data)
+		handler(data...)
 	}
 }

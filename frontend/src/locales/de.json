@@ -36,6 +36,7 @@
     "editMode": "Bearbeitungsmodus",
     "editModeForward": "Vorwärts",
     "editModeBackward": "Rückwärts",
-    "editModeDrag": "Anpassen"
+    "editModeDrag": "Anpassen",
+    "usages": "Verwendungen"
   }
 }

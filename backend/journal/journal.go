@@ -3,13 +3,13 @@ package journal
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/local-track-journal/backend/events"
-	"github.com/fafeitsch/local-track-journal/backend/tracks"
+	"github.com/fafeitsch/local-track-journal/backend/shared"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 type ListEntry struct {
@@ -18,6 +18,7 @@ type ListEntry struct {
 	ParentNames []string `json:"trackParents"`
 	TrackName   string   `json:"trackName"`
 	Length      int      `json:"length"`
+	trackId     string
 }
 
 type entryFile struct {
@@ -31,24 +32,37 @@ var directoryRegex = regexp.MustCompile("\\d\\d[a-z]?|\\d\\d\\d\\d")
 
 type Journal struct {
 	baseDirectory string
-	tracks        map[string]*tracks.Track
+	tracks        map[string]*shared.Track
 }
 
-func New(baseDirectory string) *Journal {
-	result := &Journal{baseDirectory: baseDirectory, tracks: make(map[string]*tracks.Track)}
-	events.RegisterHandler(
-		"tracks initialized", func(data any) {
-			newTracks, ok := data.([]*tracks.Track)
+func New(baseDirectory string) (*Journal, error) {
+	result := &Journal{baseDirectory: baseDirectory, tracks: make(map[string]*shared.Track)}
+	group := sync.WaitGroup{}
+	group.Add(1)
+	shared.RegisterHandler(
+		"tracks initialized", func(data ...any) {
+			newTracks, ok := data[0].([]shared.Track)
 			if !ok {
-				panic(fmt.Errorf("received unexpected type for event \"tracks initialized\": %v", data))
+				panic(fmt.Errorf("received unexpected type for event \"tracks initialized\": %v", data[0]))
 			}
-			result.tracks = make(map[string]*tracks.Track)
+			result.tracks = make(map[string]*shared.Track)
 			for _, track := range newTracks {
-				result.tracks[track.Id] = track
+				t := track
+				result.tracks[track.Id] = &t
 			}
+			group.Done()
 		},
 	)
-	return result
+	group.Wait()
+	entries, err := result.ReadEntries()
+	if err == nil {
+		for _, entry := range entries {
+			shared.Send("journal entry changed", shared.JournalEntry{}, shared.JournalEntry{TrackId: entry.trackId})
+		}
+	} else {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (j *Journal) ReadEntries() ([]ListEntry, error) {
@@ -87,7 +101,7 @@ func (j *Journal) ReadEntries() ([]ListEntry, error) {
 type Entry struct {
 	Id      string        `json:"id"`
 	Date    string        `json:"date"`
-	Track   *tracks.Track `json:"track"`
+	Track   *shared.Track `json:"track"`
 	Comment string        `json:"comment"`
 	Time    string        `json:"time"`
 	Laps    int           `json:"laps"`
@@ -134,6 +148,7 @@ func (j *Journal) readListEntry(path string) (ListEntry, error) {
 		listEntry.ParentNames = entry.Track.ParentNames
 		listEntry.TrackName = entry.Track.Name
 		listEntry.Length = entry.Track.Length * entry.Laps
+		listEntry.trackId = entry.LinkedTrack
 	}
 	return listEntry, nil
 }

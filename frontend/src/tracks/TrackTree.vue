@@ -10,15 +10,6 @@ const trackStore = useTrackStore();
 const { selectedTrackId } = storeToRefs(trackStore);
 const { availableTracks }: { availableTracks: Ref<TreeNode[]> } = storeToRefs(trackStore);
 
-onMounted(async () => {
-  try {
-    await trackStore.loadTracks();
-  } catch (e) {
-    // TODO error handling
-    console.error(e);
-  }
-});
-
 const selectableTracks = computed(() => {
   const makeSelectable: (node: TreeNode) => TreeNode = (node: TreeNode) => ({
     ...node,

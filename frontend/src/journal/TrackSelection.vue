@@ -4,10 +4,10 @@ import InputGroupAddon from "primevue/inputgroupaddon";
 import TreeSelect from "primevue/treeselect";
 import { useI18n } from "vue-i18n";
 import { onMounted, ref, toRefs, watch } from "vue";
-import { tracks } from "../../wailsjs/go/models";
+import { shared } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import type { TreeNode } from "primevue/treenode";
-import Track = tracks.Track;
+import Track = shared.Track;
 
 const { t } = useI18n();
 const tracksApi = useTracksApi();
