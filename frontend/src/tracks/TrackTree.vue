@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, Ref, watch } from "vue";
+import { computed, ref, Ref, watch } from "vue";
 import { useTrackStore } from "../store/track-store";
 import { storeToRefs } from "pinia";
 import type { TreeNode } from "primevue/treenode";
@@ -13,7 +13,7 @@ const { availableTracks }: { availableTracks: Ref<TreeNode[]> } = storeToRefs(tr
 const selectableTracks = computed(() => {
   const makeSelectable: (node: TreeNode) => TreeNode = (node: TreeNode) => ({
     ...node,
-    selectable: true,
+    selectable: node.data.length > 0,
     children: node.children?.map(makeSelectable),
   });
   return availableTracks.value.map(makeSelectable);
@@ -46,10 +46,10 @@ watch(
       return node.children ? node.children.reduce(setParent, acc) : acc;
     };
     const parents = tracks.reduce(setParent, {} as Record<string, string>);
-    let parent = parents[trackId]
+    let parent = parents[trackId];
     while (parent) {
-      expansion.value[parent as string] = true
-      parent = parents[parent]
+      expansion.value[parent as string] = true;
+      parent = parents[parent];
     }
   },
 );

@@ -6,7 +6,7 @@ toolchain go1.21.4
 
 require github.com/wailsapp/wails/v2 v2.8.0
 
-require github.com/twpayne/go-geom v1.5.3 // indirect
+require github.com/twpayne/go-geom v1.5.3
 
 require (
 	github.com/bep/debounce v1.2.1 // indirect

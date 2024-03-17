@@ -69,3 +69,7 @@ func (a *App) GetGpxData(id string) (tracks.GpxData, error) {
 func (a *App) ComputePolylineProps(coords []tracks.Coordinates) tracks.PolylineProps {
 	return tracks.ComputePolylineProps(coords)
 }
+
+func (a *App) SaveTrack(track tracks.SaveTrack) error {
+	return a.tracks.SaveTrack(track)
+}

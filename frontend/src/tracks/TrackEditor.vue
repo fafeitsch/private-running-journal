@@ -3,6 +3,7 @@ import { getCurrentInstance, onMounted, ref, toRefs, watch } from "vue";
 import { tracks } from "../../wailsjs/go/models";
 import { useMap } from "../shared/use-map";
 import GpxData = tracks.GpxData;
+import Coordinates = tracks.Coordinates;
 
 const mapId = ref(`map${getCurrentInstance()?.uid}`);
 const mapContainer = ref();
@@ -22,13 +23,15 @@ const { gpxData, editDirection } = toRefs(props);
 
 watch(gpxData, (value) => (mapApi.gpxData.value = value), { immediate: true });
 
-async function handleTrackEditEvent(length: number) {
-  emit("change-track", length);
+async function handleTrackEditEvent(props: { length: number; waypoints: Coordinates[]}) {
+  emit("change-track", props);
 }
 
 watch(editDirection, (value) => mapApi.changeEditDirection(value), { immediate: true });
 
-const emit = defineEmits<{ (e: "change-track", length: number): void }>();
+const emit = defineEmits<{
+  (e: "change-track", props: { length: number; waypoints: Coordinates[]}): void;
+}>();
 </script>
 
 <template>

@@ -1,13 +1,14 @@
 import * as L from "leaflet";
-import { MaybeRefOrGetter, ref, Ref, toValue } from "vue";
+import { MaybeRefOrGetter, ref, Ref, toValue, watch } from "vue";
 import { tracks } from "../../wailsjs/go/models";
-import { watch } from "vue";
 import { useTracksApi } from "../api/tracks";
-import GpxData = tracks.GpxData;
-// noinspection ES6UnusedImports needed to make editable work
 // @ts-expect-error
+// noinspection ES6UnusedImports needed to make editable work
 import * as E from "leaflet-editable/src/Leaflet.Editable";
-const use = E
+import GpxData = tracks.GpxData;
+import Coordinates = tracks.Coordinates;
+
+const use = E;
 
 export const useMap = () => {
   let map: L.Map | undefined = undefined;
@@ -58,11 +59,12 @@ export const useMap = () => {
   });
 
   let editEnabled = false;
-  let editTrackHandler: (length: number) => void = () => void 0;
+  let editTrackHandler: (props: { length: number; waypoints: Coordinates[] }) => void = () =>
+    void 0;
 
   function enableEditing(
     value: boolean = editEnabled,
-    handler: (length: number) => void = editTrackHandler,
+    handler: (props: { length: number; waypoints: Coordinates[] }) => void = editTrackHandler,
   ) {
     editTrackHandler = handler;
     editEnabled = value;
@@ -92,18 +94,20 @@ export const useMap = () => {
     if (!map) {
       return;
     }
-    const props = await tracksApi.ComputePolylineProps(
-      (trackLayer!.getLatLngs() as L.LatLng[]).map((latLng) => ({
-        latitude: latLng.lat,
-        longitude: latLng.lng,
-      })),
-    );
+    const coordinates = (trackLayer!.getLatLngs() as L.LatLng[]).map((latLng) => ({
+      latitude: latLng.lat,
+      longitude: latLng.lng,
+    }));
+    const props = await tracksApi.ComputePolylineProps(coordinates);
     distanceMarkerLayer?.removeFrom(map);
 
     distanceMarkerLayer = L.layerGroup(
       props.distanceMarkers.map((dm) => createDistanceMarker(dm)),
     ).addTo(map);
-    editTrackHandler(props.length);
+    editTrackHandler({
+      length: props.length,
+      waypoints: coordinates,
+    });
   }
 
   function changeEditDirection(value: "backward" | "drag" | "forward") {

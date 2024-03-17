@@ -1,7 +1,13 @@
 import { tracks } from "../../wailsjs/go/models";
-import { ComputePolylineProps, GetGpxData, GetTracks } from "../../wailsjs/go/backend/App";
+import {
+  ComputePolylineProps as computePolylineProps,
+  GetGpxData,
+  GetTracks,
+  SaveTrack,
+} from "../../wailsjs/go/backend/App";
 import { TreeNode } from "primevue/treenode";
 import PolylineProps = tracks.PolylineProps;
+import Track = tracks.Track;
 
 export function useTracksApi() {
   async function getTracks(): Promise<TreeNode[]> {
@@ -28,8 +34,12 @@ export function useTracksApi() {
   function getGpxData(baseName: string): Promise<tracks.GpxData> {
     return GetGpxData(baseName);
   }
-  function getPolylineProps(coordinates: tracks.Coordinates[]): Promise<PolylineProps> {
-    return ComputePolylineProps(coordinates);
+  function ComputePolylineProps(coordinates: tracks.Coordinates[]): Promise<PolylineProps> {
+    return computePolylineProps(coordinates);
   }
-  return { getTracks, getGpxData, ComputePolylineProps };
+  function saveTrack(track: tracks.SaveTrack): Promise<void> {
+    return SaveTrack(track);
+  }
+
+  return { getTracks, getGpxData, ComputePolylineProps, saveTrack };
 }

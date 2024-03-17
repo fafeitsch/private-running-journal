@@ -29,7 +29,8 @@
       "header": "Ungespeicherte Änderungen",
       "discard": "Verwerfen"
     },
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "save": "Speichen"
   },
   "tracks": {
     "name": "Streckenname",
@@ -37,6 +38,7 @@
     "editModeForward": "Vorwärts",
     "editModeBackward": "Rückwärts",
     "editModeDrag": "Anpassen",
-    "usages": "Verwendungen"
+    "usages": "Verwendungen",
+    "changeJournalWarning": "Die Strecke wird in {count} Journal-Einträgen verwendet. Wenn Sie die Strecke speichern, werden diese Einträge aktualisiert. Sie können die Strecke stattdessen klonen."
   }
 }

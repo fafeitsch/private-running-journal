@@ -1,12 +1,15 @@
 package tracks
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/local-track-journal/backend/shared"
+	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-gpx"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -144,7 +147,34 @@ type SaveTrack struct {
 }
 
 func (t Tracks) SaveTrack(track SaveTrack) error {
-	return nil
+	trackDirectory := path.Join(path.Join(t.baseDir, "tracks"), path.Join(track.Parents...), track.Id)
+	stat, err := os.Stat(trackDirectory)
+	if err != nil || !stat.IsDir() {
+		return fmt.Errorf("derived track directory \"%s\" does not seems to exist: %v", trackDirectory, err)
+	}
+	existing, ok := t.cache[track.Id]
+	if !ok {
+		return fmt.Errorf("the track with id \"%s\" does not seem to exist yet", track.Id)
+	}
+	existing.Name = track.Name
+	infoFile := path.Join(trackDirectory, "info.json")
+	infoPayload, _ := json.Marshal(trackDescriptor{Name: existing.Name})
+	err = os.WriteFile(infoFile, infoPayload, 0666)
+	if err != nil {
+		return fmt.Errorf("could not save base information: %v", err)
+	}
+	coords := make([]geom.Coord, 0)
+	for _, coordinate := range track.Waypoints {
+		coords = append(coords, []float64{coordinate.Longitude, coordinate.Latitude})
+	}
+	linestring, _ := geom.NewLineString(geom.XY).SetCoords(coords)
+	segment := gpx.NewTrkSegType(linestring)
+	trackSegment := &gpx.TrkType{TrkSeg: []*gpx.TrkSegType{segment}}
+	gpxPayload := gpx.GPX{Trk: []*gpx.TrkType{trackSegment}}
+	writer := bytes.Buffer{}
+	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
+	err = os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
+	return err
 }
 
 type trackDescriptor struct {
