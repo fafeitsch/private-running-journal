@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/fafeitsch/local-track-journal/backend/events"
 	"github.com/twpayne/go-gpx"
 	"os"
 	"path/filepath"
@@ -17,30 +18,40 @@ type Track struct {
 	ParentNames []string `json:"parentNames"`
 }
 
-var trackCache = make(map[string]*Track)
+type Tracks struct {
+	cache   map[string]*Track
+	baseDir string
+}
 
-func Init(baseDir string) error {
+func New(baseDir string) (*Tracks, error) {
+	var trackCache = make(map[string]*Track)
+	result := Tracks{cache: trackCache, baseDir: baseDir}
 	tracksDir := filepath.Join(baseDir, "tracks")
 	baseDirEntries, err := os.ReadDir(tracksDir)
 	if err != nil {
-		return fmt.Errorf("could not read %s: %v", tracksDir, err)
+		return nil, fmt.Errorf("could not read %s: %v", tracksDir, err)
 	}
 
 	for _, baseTrack := range baseDirEntries {
 		if !baseTrack.IsDir() {
 			continue
 		}
-		track, err := readTrack(filepath.Join(tracksDir, baseTrack.Name()), baseTrack.Name(), []string{})
+		track, err := result.readTrack(filepath.Join(tracksDir, baseTrack.Name()), baseTrack.Name(), []string{})
 		if err != nil {
 			fmt.Printf("could not read %s, skipping it: %v", tracksDir, err)
 			continue
 		}
 		trackCache[track.Id] = &track
 	}
-	return nil
+	list := make([]*Track, 0)
+	for _, track := range trackCache {
+		list = append(list, track)
+	}
+	events.Send("tracks initialized", list)
+	return &result, nil
 }
 
-func readTrack(path string, relativePath string, parentNames []string) (Track, error) {
+func (t Tracks) readTrack(path string, relativePath string, parentNames []string) (Track, error) {
 	descriptorPath := filepath.Join(path, "info.json")
 	var baseDescriptor trackDescriptor
 	fileContent, err := os.Open(descriptorPath)
@@ -72,13 +83,13 @@ func readTrack(path string, relativePath string, parentNames []string) (Track, e
 			continue
 		}
 		parents := append(parentNames, baseDescriptor.Name)
-		variant, err := readTrack(
+		variant, err := t.readTrack(
 			filepath.Join(path, subFile.Name()), filepath.Join(relativePath, subFile.Name()), parents,
 		)
 		if err != nil {
 			return Track{}, fmt.Errorf("could not read variant path %s of %s: %e", subFile.Name(), variant, err)
 		}
-		trackCache[variant.Id] = &variant
+		t.cache[variant.Id] = &variant
 		variants = append(variants, variant)
 	}
 	return Track{
@@ -90,9 +101,9 @@ func readTrack(path string, relativePath string, parentNames []string) (Track, e
 	}, nil
 }
 
-func RootTracks() []Track {
+func (t Tracks) RootTracks() []Track {
 	result := make([]Track, 0, 0)
-	for _, value := range trackCache {
+	for _, value := range t.cache {
 		if len(value.ParentNames) == 0 {
 			result = append(result, *value)
 		}
@@ -100,12 +111,15 @@ func RootTracks() []Track {
 	return result
 }
 
-func GetTrack(id string) (Track, bool) {
-	track, exists := trackCache[id]
-	if exists {
-		return *track, true
-	}
-	return Track{}, exists
+type SaveTrack struct {
+	Id        string        `json:"id,omitempty"`
+	Name      string        `json:"name,omitempty"`
+	Parents   []string      `json:"parents,omitempty"`
+	Waypoints []Coordinates `json:"waypoints,omitempty"`
+}
+
+func (t Tracks) SaveTrack(track SaveTrack) error {
+	return nil
 }
 
 type trackDescriptor struct {

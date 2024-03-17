@@ -9,7 +9,9 @@ import (
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx     context.Context
+	tracks  *tracks.Tracks
+	journal *journal.Journal
 }
 
 // NewApp creates a new App application struct
@@ -19,30 +21,32 @@ func NewApp() *App {
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
-	err := tracks.Init("appdata")
+	var err error
+	a.journal = journal.New("appdata")
+	a.tracks, err = tracks.New("appdata")
 	if err != nil {
 		log.Fatalf("could not initialize track directory: %v", err)
 	}
 }
 
 func (a *App) GetJournalListEntries() ([]journal.ListEntry, error) {
-	return journal.ReadEntries("appdata")
+	return a.journal.ReadEntries()
 }
 
 func (a *App) GetJournalEntry(id string) (journal.Entry, error) {
-	return journal.ReadJournalEntry("appdata", id)
+	return a.journal.ReadJournalEntry(id)
 }
 
 func (a *App) SaveJournalEntry(entry journal.Entry) error {
-	return journal.SaveEntry("appdata", entry)
+	return a.journal.SaveEntry(entry)
 }
 
 func (a *App) CreateJournalEntry(date string, trackId string) (journal.ListEntry, error) {
-	return journal.CreateEntry("appdata", date, trackId)
+	return a.journal.CreateEntry(date, trackId)
 }
 
 func (a *App) GetTracks() []tracks.Track {
-	return tracks.RootTracks()
+	return a.tracks.RootTracks()
 }
 
 func (a *App) GetGpxData(id string) (tracks.GpxData, error) {
