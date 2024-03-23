@@ -146,22 +146,23 @@ type SaveTrack struct {
 	Waypoints []Coordinates `json:"waypoints,omitempty"`
 }
 
-func (t *Tracks) SaveTrack(track SaveTrack) error {
+func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
 	trackDirectory := path.Join(t.basePath, path.Join(track.Parents...), track.Id)
 	stat, err := os.Stat(trackDirectory)
 	if err != nil || !stat.IsDir() {
-		return fmt.Errorf("derived track directory \"%s\" does not seems to exist: %v", trackDirectory, err)
+		return nil, fmt.Errorf("derived track directory \"%s\" does not seems to exist: %v", trackDirectory, err)
 	}
 	existing, ok := t.cache[track.Id]
 	if !ok {
-		return fmt.Errorf("the track with id \"%s\" does not seem to exist yet", track.Id)
+		return nil, fmt.Errorf("the track with id \"%s\" does not seem to exist yet", track.Id)
 	}
 	existing.Name = track.Name
+	existing.Length = int(1000 * distance(track.Waypoints))
 	infoFile := path.Join(trackDirectory, "info.json")
 	infoPayload, _ := json.Marshal(trackDescriptor{Name: existing.Name})
 	err = os.WriteFile(infoFile, infoPayload, 0666)
 	if err != nil {
-		return fmt.Errorf("could not save base information: %v", err)
+		return nil, fmt.Errorf("could not save base information: %v", err)
 	}
 	coords := make([]geom.Coord, 0)
 	for _, coordinate := range track.Waypoints {
@@ -174,7 +175,11 @@ func (t *Tracks) SaveTrack(track SaveTrack) error {
 	writer := bytes.Buffer{}
 	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
 	err = os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	existingTrack, err := t.readTrack(trackDirectory, track.Id, track.Parents)
+	return &existingTrack, err
 }
 
 type CreateTrack struct {
@@ -213,13 +218,21 @@ func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
 		return nil, err
 	}
 	id := strings.Replace(trackPath, t.basePath+"/", "", 1)
-	parents := make([]string, 0, len(parent.ParentNames))
+	parents := make([]string, 0)
 	if track.Parent != "" {
+		parents = make([]string, 0, len(parent.ParentNames))
 		copy(parents, parent.ParentNames)
 		parents = append(parents, parent.Name)
 	}
 	newTrack, err := t.readTrack(trackPath, id, parents)
-	return &newTrack, err
+	if err != nil {
+		return nil, err
+	}
+	t.cache[newTrack.Id] = &newTrack
+	if track.Parent != "" {
+		parent.Variants = append(parent.Variants, &newTrack)
+	}
+	return &newTrack, nil
 }
 
 type trackDescriptor struct {

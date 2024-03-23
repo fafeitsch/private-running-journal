@@ -30,7 +30,8 @@
       "discard": "Discard"
     },
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "add": "Add"
   },
   "tracks": {
     "name": "Track name",
@@ -40,6 +41,7 @@
     "editModeDrag": "Edit vertices",
     "usages": "Usages",
     "changeJournalWarning": "The track is already used in {count} journal entries. Saving the track will change these entries. You can instead clone the track.",
-    "title": "Tracks"
+    "title": "Tracks",
+    "variant": "Variant"
   }
 }

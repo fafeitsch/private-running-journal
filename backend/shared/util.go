@@ -6,9 +6,10 @@ import (
 )
 
 func FindFreeFileName(base string) (string, error) {
-	modifier := 0
+	modifier := 1
 	_, existsCheck := os.Stat(base)
 	for ; existsCheck == nil && modifier < 27; modifier = modifier + 1 {
+		fmt.Printf("BASE %s", base+string(rune(modifier+96)))
 		_, existsCheck = os.Stat(base + string(rune(modifier+96)))
 	}
 	if existsCheck == nil {
@@ -18,7 +19,7 @@ func FindFreeFileName(base string) (string, error) {
 	}
 	id := ""
 	if modifier > 0 {
-		id = id + string(rune(modifier+96))
+		id = string(rune(modifier + 96))
 	}
 	return base + id, nil
 }

@@ -5,21 +5,20 @@ import { storeToRefs } from "pinia";
 import type { TreeNode } from "primevue/treenode";
 import { useRouter } from "vue-router";
 import { TreeSelectionKeys } from "primevue/tree";
-import CreateEntryOverlay from '../journal/CreateEntryOverlay.vue';
-import CreateTrackOverlay from './CreateTrackOverlay.vue';
+import CreateTrackOverlay from "./CreateTrackOverlay.vue";
+import { MenuItem } from "primevue/menuitem";
+import { useI18n } from "vue-i18n";
+import { useTracksApi } from "../api/tracks";
+import { shared } from "../../wailsjs/go/models";
+import Track = shared.Track;
+import {tracksToTreeNodes} from '../shared/track-utils';
 
+const tracksApi = useTracksApi();
 const trackStore = useTrackStore();
-const { selectedTrackId } = storeToRefs(trackStore);
-const { availableTracks }: { availableTracks: Ref<TreeNode[]> } = storeToRefs(trackStore);
+const { availableTracks, selectedTrackId } = storeToRefs(trackStore);
+const { t } = useI18n();
 
-const selectableTracks = computed(() => {
-  const makeSelectable: (node: TreeNode) => TreeNode = (node: TreeNode) => ({
-    ...node,
-    selectable: true,
-    children: node.children?.map(makeSelectable),
-  });
-  return availableTracks.value.map(makeSelectable);
-});
+const selectableTracks = computed(() => tracksToTreeNodes(availableTracks.value));
 
 const selection = ref<TreeSelectionKeys>({});
 
@@ -61,6 +60,35 @@ const router = useRouter();
 function selectNode(node: TreeNode) {
   router.push(`/tracks/${encodeURIComponent(node.key!)}`);
 }
+
+const treeNodeMenu = ref();
+const clickedTrack = ref<Track | undefined>(undefined);
+
+const menuItems = ref<MenuItem>([
+  {
+    label: t("shared.add"),
+    icon: "pi pi-plus",
+    command: async () => {
+      if (!clickedTrack.value) {
+        return;
+      }
+      const name = `${clickedTrack.value.name} ${t("tracks.variant")}`;
+      try {
+        const track = await tracksApi.createTrack({ parent: clickedTrack.value.id, name });
+        trackStore.addTrack(track, clickedTrack.value.id);
+        router.push("/tracks/" + encodeURIComponent(track.id));
+      } catch (error) {
+        //TODO error handling
+        console.error(error);
+      }
+    },
+  },
+]);
+
+function showContextMenu(track: Track, event: any) {
+  clickedTrack.value = track;
+  treeNodeMenu.value.show(event);
+}
 </script>
 
 <template>
@@ -75,7 +103,14 @@ function selectNode(node: TreeNode) {
     v-model:expanded-keys="expansion"
     selection-mode="single"
     @node-select="selectNode"
-  ></Tree>
+  >
+    <template #default="slotProps">
+      <span @contextmenu="showContextMenu(slotProps.node.data, $event)">{{
+        slotProps.node.label
+      }}</span>
+    </template>
+  </Tree>
+  <ContextMenu ref="treeNodeMenu" :model="menuItems"></ContextMenu>
 </template>
 
 <style scoped></style>

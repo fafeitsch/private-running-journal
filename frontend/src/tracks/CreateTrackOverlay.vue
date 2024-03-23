@@ -9,6 +9,7 @@ import { useRouter } from "vue-router";
 import { useTracksApi } from "../api/tracks";
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
+import {useTrackStore} from '../store/track-store';
 
 const { locale, t } = useI18n();
 
@@ -17,6 +18,7 @@ const name = ref<string>("");
 const error = ref<boolean>(false);
 
 const tracksApi = useTracksApi();
+const tracksStore = useTrackStore();
 const store = useJournalStore();
 const router = useRouter();
 
@@ -28,6 +30,7 @@ async function createEntry() {
 
   try {
     const track = await tracksApi.createTrack({ name: name.value, parent: "" });
+    tracksStore.addTrack(track)
     router.push("/tracks/" + encodeURIComponent(track.id));
     overlayPanel.value.hide();
   } catch (e) {

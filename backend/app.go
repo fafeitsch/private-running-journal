@@ -74,6 +74,6 @@ func (a *App) CreateNewTrack(track tracks.CreateTrack) (*tracks.Track, error) {
 	return a.tracks.CreateTrack(track)
 }
 
-func (a *App) SaveTrack(track tracks.SaveTrack) error {
+func (a *App) SaveTrack(track tracks.SaveTrack) (*tracks.Track, error) {
 	return a.tracks.SaveTrack(track)
 }

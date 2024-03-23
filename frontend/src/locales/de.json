@@ -30,7 +30,8 @@
       "discard": "Verwerfen"
     },
     "cancel": "Abbrechen",
-    "save": "Speichen"
+    "save": "Speichen",
+    "add": "Hinzufügen"
   },
   "tracks": {
     "name": "Streckenname",
@@ -40,6 +41,7 @@
     "editModeDrag": "Anpassen",
     "usages": "Verwendungen",
     "changeJournalWarning": "Die Strecke wird in {count} Journal-Einträgen verwendet. Wenn Sie die Strecke speichern, werden diese Einträge aktualisiert. Sie können die Strecke stattdessen klonen.",
-    "title": "Strecken"
+    "title": "Strecken",
+    "variant": "Variante"
   }
 }

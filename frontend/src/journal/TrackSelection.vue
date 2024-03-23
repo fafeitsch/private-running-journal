@@ -8,6 +8,7 @@ import { shared } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import type { TreeNode } from "primevue/treenode";
 import Track = shared.Track;
+import {tracksToTreeNodes} from '../shared/track-utils';
 
 const { t } = useI18n();
 const tracksApi = useTracksApi();
@@ -20,7 +21,8 @@ const availableTracks = ref<TreeNode[]>([]);
 
 onMounted(async () => {
   try {
-    availableTracks.value = await tracksApi.getTracks();
+    const tracks = await tracksApi.getTracks();
+    availableTracks.value = tracksToTreeNodes(tracks)
   } catch (e) {
     // todo error handling
     console.error(e);

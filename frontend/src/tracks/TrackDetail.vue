@@ -84,6 +84,7 @@ function trackChanged(props: { length: number; waypoints: Coordinates[] }) {
 const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
 
 async function saveTrack(event: any) {
+  trackEditDirection.value = 'drag'
   if (!track.value) {
     return;
   }
@@ -105,7 +106,7 @@ async function saveTrack(event: any) {
   }
   if (choice) {
     try {
-      await tracksApi.saveTrack(
+      const updated = await tracksApi.saveTrack(
         new SaveTrack({
           id: track.value.id,
           name: track.value.name,
@@ -113,6 +114,8 @@ async function saveTrack(event: any) {
           waypoints: editedWaypoints.value,
         }),
       );
+      dirty.value = false;
+      tracksStore.updateTrack(updated)
     } catch (e) {
       // TODO error handling
       console.error(e);
