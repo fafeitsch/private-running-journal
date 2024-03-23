@@ -57,7 +57,7 @@ watch(
       v-model:active-index="active"
       @tab-change="tabChangeEvent"
     ></TabMenu>
-    <div class="flex-grow-1 w-full">
+    <div class="flex-grow-1 flex-shrink-1 w-full overflow-hidden">
       <router-view class="h-full w-full"></router-view>
     </div>
   </div>
