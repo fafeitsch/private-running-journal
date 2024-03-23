@@ -12,6 +12,7 @@ import JournalPage from "./journal/JournalPage.vue";
 import { createPinia } from "pinia";
 import ConfirmationService from "primevue/confirmationservice";
 import TrackPage from "./tracks/TrackPage.vue";
+import FocusTrap from 'primevue/focustrap';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -38,6 +39,7 @@ createApp(App)
   .use(router)
   .use(createPinia())
   .use(ConfirmationService)
+  .directive('focustrap', FocusTrap)
   .directive("tooltip", Tooltip)
   .directive("ripple", Ripple)
   .mount("#app");

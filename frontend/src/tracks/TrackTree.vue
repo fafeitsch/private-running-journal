@@ -1,24 +1,31 @@
 <script setup lang="ts">
-import { computed, ref, Ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useTrackStore } from "../store/track-store";
 import { storeToRefs } from "pinia";
 import type { TreeNode } from "primevue/treenode";
 import { useRouter } from "vue-router";
 import { TreeSelectionKeys } from "primevue/tree";
-import CreateTrackOverlay from "./CreateTrackOverlay.vue";
 import { MenuItem } from "primevue/menuitem";
 import { useI18n } from "vue-i18n";
-import { useTracksApi } from "../api/tracks";
 import { shared } from "../../wailsjs/go/models";
+import { tracksToTreeNodes } from "../shared/track-utils";
 import Track = shared.Track;
-import {tracksToTreeNodes} from '../shared/track-utils';
+import CreateTrackOverlay from "./CreateTrackOverlay.vue";
 
-const tracksApi = useTracksApi();
 const trackStore = useTrackStore();
 const { availableTracks, selectedTrackId } = storeToRefs(trackStore);
 const { t } = useI18n();
 
-const selectableTracks = computed(() => tracksToTreeNodes(availableTracks.value));
+const selectableTracks = computed(() => [
+  {
+    label: t("tracks.title"),
+    selectable: false,
+    key: "root",
+    type: "root",
+    expandedIcon: "",
+    children: tracksToTreeNodes(availableTracks.value),
+  },
+]);
 
 const selection = ref<TreeSelectionKeys>({});
 
@@ -30,7 +37,7 @@ watch(
   { immediate: true },
 );
 
-const expansion = ref<TreeSelectionKeys>({});
+const expansion = ref<TreeSelectionKeys>({ root: "" });
 
 watch(
   () => ({ trackId: selectedTrackId.value, tracks: selectableTracks.value }),
@@ -62,40 +69,32 @@ function selectNode(node: TreeNode) {
 }
 
 const treeNodeMenu = ref();
-const clickedTrack = ref<Track | undefined>(undefined);
-
+const contextMenuOpenedOn = ref<{ track: Track | 'root'; event: any } | undefined>(undefined);
+const addClickedOn = ref<{ parentId: string; target: HTMLElement } | undefined>(undefined);
 const menuItems = ref<MenuItem>([
   {
     label: t("shared.add"),
     icon: "pi pi-plus",
-    command: async () => {
-      if (!clickedTrack.value) {
+    command: async (event: Event) => {
+      if (!contextMenuOpenedOn.value) {
         return;
       }
-      const name = `${clickedTrack.value.name} ${t("tracks.variant")}`;
-      try {
-        const track = await tracksApi.createTrack({ parent: clickedTrack.value.id, name });
-        trackStore.addTrack(track, clickedTrack.value.id);
-        router.push("/tracks/" + encodeURIComponent(track.id));
-      } catch (error) {
-        //TODO error handling
-        console.error(error);
-      }
+      let clickedTrack = contextMenuOpenedOn.value.track;
+      addClickedOn.value = {
+        target: contextMenuOpenedOn.value.event.target,
+        parentId: clickedTrack === 'root' ? clickedTrack : clickedTrack.id,
+      };
     },
   },
 ]);
 
-function showContextMenu(track: Track, event: any) {
-  clickedTrack.value = track;
+function showContextMenu(track: Track | 'root', event: any) {
+  contextMenuOpenedOn.value = { track, event };
   treeNodeMenu.value.show(event);
 }
 </script>
 
 <template>
-  <header class="flex justify-content-between align-items-center">
-    <span class="text-2xl">{{ $t("tracks.title") }}</span
-    ><CreateTrackOverlay></CreateTrackOverlay>
-  </header>
   <Tree
     class="h-full overflow-auto"
     :value="selectableTracks"
@@ -103,14 +102,21 @@ function showContextMenu(track: Track, event: any) {
     v-model:expanded-keys="expansion"
     selection-mode="single"
     @node-select="selectNode"
+    :pt="{ label: { class: 'w-full flex' } }"
   >
     <template #default="slotProps">
-      <span @contextmenu="showContextMenu(slotProps.node.data, $event)">{{
+      <span @contextmenu="showContextMenu(slotProps.node.data, $event)" class="w-full">{{
         slotProps.node.label
+      }}</span>
+    </template>
+    <template #root="{ node }">
+      <span @contextmenu="showContextMenu('root', $event)" class="text-2xl w-full text-color">{{
+        node.label
       }}</span>
     </template>
   </Tree>
   <ContextMenu ref="treeNodeMenu" :model="menuItems"></ContextMenu>
+  <CreateTrackOverlay :show-event="addClickedOn"></CreateTrackOverlay>
 </template>
 
 <style scoped></style>
