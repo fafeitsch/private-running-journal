@@ -162,20 +162,11 @@ func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
 	}
 	id := filepath.Join(regexResult[1], regexResult[2], regexResult[3])
 	journalPath := filepath.Join(j.baseDirectory, "journal")
-	_, existsCheck := os.Stat(filepath.Join(journalPath, id))
-	modifier := 0
-	for ; existsCheck == nil && modifier < 27; modifier = modifier + 1 {
-		_, existsCheck = os.Stat(filepath.Join(journalPath, id+string(rune(modifier+96))))
+	path, err := shared.FindFreeFileName(filepath.Join(journalPath, id))
+	if err != nil {
+		return ListEntry{}, err
 	}
-	if existsCheck == nil {
-		return ListEntry{}, fmt.Errorf(
-			"all slots for the given date \"%s\" seem to be already taken: %v", date, existsCheck,
-		)
-	}
-	if modifier > 0 {
-		id = id + string(rune(modifier+96))
-	}
-	err := os.MkdirAll(filepath.Join(j.baseDirectory, "journal", id), os.ModePerm)
+	err = os.MkdirAll(path, os.ModePerm)
 	if err != nil {
 		return ListEntry{}, fmt.Errorf("could not create directory %s: %v", id, err)
 	}

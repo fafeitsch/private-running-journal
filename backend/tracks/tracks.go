@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 type Track struct {
@@ -23,26 +24,25 @@ type Track struct {
 }
 
 type Tracks struct {
-	cache   map[string]*Track
-	baseDir string
+	cache    map[string]*Track
+	basePath string
 }
 
 func New(baseDir string) (*Tracks, error) {
 	var trackCache = make(map[string]*Track)
-	result := Tracks{cache: trackCache, baseDir: baseDir}
-	tracksDir := filepath.Join(baseDir, "tracks")
-	baseDirEntries, err := os.ReadDir(tracksDir)
+	result := Tracks{cache: trackCache, basePath: filepath.Join(baseDir, "tracks")}
+	baseDirEntries, err := os.ReadDir(result.basePath)
 	if err != nil {
-		return nil, fmt.Errorf("could not read %s: %v", tracksDir, err)
+		return nil, fmt.Errorf("could not read %s: %v", result.basePath, err)
 	}
 
 	for _, baseTrack := range baseDirEntries {
 		if !baseTrack.IsDir() {
 			continue
 		}
-		track, err := result.readTrack(filepath.Join(tracksDir, baseTrack.Name()), baseTrack.Name(), []string{})
+		track, err := result.readTrack(filepath.Join(result.basePath, baseTrack.Name()), baseTrack.Name(), []string{})
 		if err != nil {
-			fmt.Printf("could not read %s, skipping it: %v", tracksDir, err)
+			fmt.Printf("could not read %s, skipping it: %v", result.basePath, err)
 			continue
 		}
 		trackCache[track.Id] = &track
@@ -78,7 +78,7 @@ func sendInitEvent(trackCache map[string]*Track) {
 	shared.Send("tracks initialized", list)
 }
 
-func (t Tracks) readTrack(path string, relativePath string, parentNames []string) (Track, error) {
+func (t *Tracks) readTrack(path string, relativePath string, parentNames []string) (Track, error) {
 	descriptorPath := filepath.Join(path, "info.json")
 	var baseDescriptor trackDescriptor
 	fileContent, err := os.Open(descriptorPath)
@@ -128,7 +128,7 @@ func (t Tracks) readTrack(path string, relativePath string, parentNames []string
 	}, nil
 }
 
-func (t Tracks) RootTracks() []Track {
+func (t *Tracks) RootTracks() []Track {
 	result := make([]Track, 0, 0)
 	for key, value := range t.cache {
 		v := t.cache[key]
@@ -146,8 +146,8 @@ type SaveTrack struct {
 	Waypoints []Coordinates `json:"waypoints,omitempty"`
 }
 
-func (t Tracks) SaveTrack(track SaveTrack) error {
-	trackDirectory := path.Join(path.Join(t.baseDir, "tracks"), path.Join(track.Parents...), track.Id)
+func (t *Tracks) SaveTrack(track SaveTrack) error {
+	trackDirectory := path.Join(t.basePath, path.Join(track.Parents...), track.Id)
 	stat, err := os.Stat(trackDirectory)
 	if err != nil || !stat.IsDir() {
 		return fmt.Errorf("derived track directory \"%s\" does not seems to exist: %v", trackDirectory, err)
@@ -175,6 +175,51 @@ func (t Tracks) SaveTrack(track SaveTrack) error {
 	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
 	err = os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
 	return err
+}
+
+type CreateTrack struct {
+	Name   string `json:"name"`
+	Parent string `json:"parent"`
+}
+
+func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
+	parent, ok := t.cache[track.Parent]
+	if !ok && track.Parent != "" {
+		return nil, fmt.Errorf("there is no parent track with id %s", track.Parent)
+	}
+	parentId := ""
+	if track.Parent != "" {
+		parentId = parent.Id
+	}
+	trackPath, err := shared.FindFreeFileName(filepath.Join(t.basePath, parentId, strings.ToLower(track.Name)))
+	if err != nil {
+		return nil, err
+	}
+	err = os.MkdirAll(trackPath, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+	entryFilePath := filepath.Join(trackPath, "info.json")
+	payload, _ := json.Marshal(trackDescriptor{Name: track.Name})
+	err = os.WriteFile(entryFilePath, payload, 0644)
+	if err != nil {
+		return nil, err
+	}
+	gpxPayload := gpx.GPX{Trk: []*gpx.TrkType{{}}}
+	writer := bytes.Buffer{}
+	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
+	err = os.WriteFile(filepath.Join(trackPath, "track.gpx"), writer.Bytes(), 0644)
+	if err != nil {
+		return nil, err
+	}
+	id := strings.Replace(trackPath, t.basePath+"/", "", 1)
+	parents := make([]string, 0, len(parent.ParentNames))
+	if track.Parent != "" {
+		copy(parents, parent.ParentNames)
+		parents = append(parents, parent.Name)
+	}
+	newTrack, err := t.readTrack(trackPath, id, parents)
+	return &newTrack, err
 }
 
 type trackDescriptor struct {

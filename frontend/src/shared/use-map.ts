@@ -49,10 +49,13 @@ export const useMap = () => {
       gpxData.value!.waypoints.map((wp) => L.latLng(wp.latitude, wp.longitude)),
       { color: "red" },
     ).addTo(map);
+    console.log(trackLayer)
     enableEditing();
-    map.setView(
-      L.latLng(gpxData.value!.waypoints[0].latitude, gpxData.value!.waypoints[0].longitude),
-    );
+    if(gpxData.value?.waypoints.length) {
+      map.setView(
+        L.latLng(gpxData.value!.waypoints[0].latitude, gpxData.value!.waypoints[0].longitude),
+      );
+    }
     distanceMarkerLayer = L.layerGroup(
       gpxData.value?.distanceMarkers.map((dm) => createDistanceMarker(dm)),
     ).addTo(map);
@@ -69,6 +72,7 @@ export const useMap = () => {
     editTrackHandler = handler;
     editEnabled = value;
     if (!trackLayer) {
+      console.log('no track layer')
       return;
     }
     trackLayer.removeEventListener({

@@ -70,6 +70,10 @@ func (a *App) ComputePolylineProps(coords []tracks.Coordinates) tracks.PolylineP
 	return tracks.ComputePolylineProps(coords)
 }
 
+func (a *App) CreateNewTrack(track tracks.CreateTrack) (*tracks.Track, error) {
+	return a.tracks.CreateTrack(track)
+}
+
 func (a *App) SaveTrack(track tracks.SaveTrack) error {
 	return a.tracks.SaveTrack(track)
 }

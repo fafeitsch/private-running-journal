@@ -5,6 +5,8 @@ import { storeToRefs } from "pinia";
 import type { TreeNode } from "primevue/treenode";
 import { useRouter } from "vue-router";
 import { TreeSelectionKeys } from "primevue/tree";
+import CreateEntryOverlay from '../journal/CreateEntryOverlay.vue';
+import CreateTrackOverlay from './CreateTrackOverlay.vue';
 
 const trackStore = useTrackStore();
 const { selectedTrackId } = storeToRefs(trackStore);
@@ -13,7 +15,7 @@ const { availableTracks }: { availableTracks: Ref<TreeNode[]> } = storeToRefs(tr
 const selectableTracks = computed(() => {
   const makeSelectable: (node: TreeNode) => TreeNode = (node: TreeNode) => ({
     ...node,
-    selectable: node.data.length > 0,
+    selectable: true,
     children: node.children?.map(makeSelectable),
   });
   return availableTracks.value.map(makeSelectable);
@@ -62,6 +64,10 @@ function selectNode(node: TreeNode) {
 </script>
 
 <template>
+  <header class="flex justify-content-between align-items-center">
+    <span class="text-2xl">{{ $t("tracks.title") }}</span
+    ><CreateTrackOverlay></CreateTrackOverlay>
+  </header>
   <Tree
     class="h-full overflow-auto"
     :value="selectableTracks"

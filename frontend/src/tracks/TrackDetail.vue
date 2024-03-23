@@ -77,7 +77,7 @@ const formattedLength = computed(() => (length.value / 1000).toFixed(1));
 
 function trackChanged(props: { length: number; waypoints: Coordinates[] }) {
   length.value = props.length;
-  editedWaypoints.value = props.waypoints
+  editedWaypoints.value = props.waypoints;
   dirty.value = true;
 }
 
@@ -87,6 +87,7 @@ async function saveTrack(event: any) {
   if (!track.value) {
     return;
   }
+  let choice = true;
   if (track.value.usages > 0) {
     let resolveFn: (result: boolean) => void;
     const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
@@ -100,21 +101,21 @@ async function saveTrack(event: any) {
       rejectLabel: t("shared.cancel"),
       acceptLabel: t("shared.save"),
     });
-    const choice = await result;
-    if (choice) {
-      try {
-        await tracksApi.saveTrack(
-          new SaveTrack({
-            id: track.value.id,
-            name: track.value.name,
-            parents: [],
-            waypoints: editedWaypoints.value,
-          }),
-        );
-      } catch (e) {
-        // TODO error handling
-        console.error(e);
-      }
+    choice = await result;
+  }
+  if (choice) {
+    try {
+      await tracksApi.saveTrack(
+        new SaveTrack({
+          id: track.value.id,
+          name: track.value.name,
+          parents: [],
+          waypoints: editedWaypoints.value,
+        }),
+      );
+    } catch (e) {
+      // TODO error handling
+      console.error(e);
     }
   }
 }

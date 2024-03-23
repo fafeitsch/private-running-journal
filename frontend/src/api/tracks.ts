@@ -1,6 +1,6 @@
 import { tracks } from "../../wailsjs/go/models";
 import {
-  ComputePolylineProps as computePolylineProps,
+  ComputePolylineProps as computePolylineProps, CreateNewTrack,
   GetGpxData,
   GetTracks,
   SaveTrack,
@@ -8,6 +8,8 @@ import {
 import { TreeNode } from "primevue/treenode";
 import PolylineProps = tracks.PolylineProps;
 import Track = tracks.Track;
+import CreateTrackOverlay from '../tracks/CreateTrackOverlay.vue';
+import CreateTrack = tracks.CreateTrack;
 
 export function useTracksApi() {
   async function getTracks(): Promise<TreeNode[]> {
@@ -40,6 +42,9 @@ export function useTracksApi() {
   function saveTrack(track: tracks.SaveTrack): Promise<void> {
     return SaveTrack(track);
   }
+  function createTrack(track: CreateTrack): Promise<tracks.Track> {
+    return CreateNewTrack(track)
+  }
 
-  return { getTracks, getGpxData, ComputePolylineProps, saveTrack };
+  return { getTracks, getGpxData, ComputePolylineProps, saveTrack, createTrack };
 }
