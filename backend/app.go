@@ -7,14 +7,17 @@ import (
 	"github.com/fafeitsch/local-track-journal/backend/tracks"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 )
 
 // App struct
 type App struct {
-	ctx     context.Context
-	tracks  *tracks.Tracks
-	journal *journal.Journal
+	ctx             context.Context
+	configDirectory string
+	tracks          *tracks.Tracks
+	journal         *journal.Journal
 }
 
 // NewApp creates a new App application struct
@@ -23,25 +26,26 @@ func NewApp() *App {
 }
 
 func (a *App) Startup(ctx context.Context) {
+	a.setupConfigDirectory()
 	a.ctx = ctx
 	var err error
 	group := sync.WaitGroup{}
 	group.Add(2)
 	go func() {
-		a.tracks, err = tracks.New("appdata")
+		a.tracks, err = tracks.New(a.configDirectory)
 		if err != nil {
 			log.Fatalf("could not initialize track directory: %v", err)
 		}
 		group.Done()
 	}()
 	go func() {
-		a.journal, err = journal.New("appdata")
+		a.journal, err = journal.New(a.configDirectory)
 		if err != nil {
 			log.Fatalf("could not initialize journal: %v", err)
 		}
 		group.Done()
 	}()
-	tileServer := httpapi.NewTileServer("appdata", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", true)
+	tileServer := httpapi.NewTileServer(a.configDirectory, "https://tile.openstreetmap.org/{z}/{x}/{y}.png", true)
 	go func() {
 		err = http.ListenAndServe("127.0.0.1:47836", tileServer)
 		if err != nil {
@@ -49,6 +53,25 @@ func (a *App) Startup(ctx context.Context) {
 		}
 	}()
 	group.Wait()
+}
+
+func (a *App) setupConfigDirectory() {
+	var homeDir, homeDirErr = os.UserHomeDir()
+	if len(os.Args) > 1 {
+		a.configDirectory = os.Args[1]
+	} else if homeDirErr == nil {
+		a.configDirectory = filepath.Join(homeDir, ".local-track-journal")
+	} else {
+		log.Fatalf(
+			"cannot read home directory, please specify one by providing a command line argument: %v",
+			homeDirErr,
+		)
+	}
+	err := os.MkdirAll(a.configDirectory, os.ModePerm)
+	if err != nil {
+		log.Fatalf("could not create app's config dir: %v", err)
+	}
+	log.Printf("setting app's home dir to %s", a.configDirectory)
 }
 
 func (a *App) GetJournalListEntries() ([]journal.ListEntry, error) {
@@ -72,7 +95,7 @@ func (a *App) GetTracks() []tracks.Track {
 }
 
 func (a *App) GetGpxData(id string) (tracks.GpxData, error) {
-	return tracks.GetGpxData("appdata/tracks", id)
+	return a.tracks.GetGpxData(id)
 }
 
 func (a *App) ComputePolylineProps(coords []tracks.Coordinates) tracks.PolylineProps {

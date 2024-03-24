@@ -49,7 +49,6 @@ export const useMap = () => {
       gpxData.value!.waypoints.map((wp) => L.latLng(wp.latitude, wp.longitude)),
       { color: "red" },
     ).addTo(map);
-    console.log(trackLayer)
     enableEditing();
     if(gpxData.value?.waypoints.length) {
       map.setView(
@@ -75,6 +74,7 @@ export const useMap = () => {
       console.log('no track layer')
       return;
     }
+    console.log('track layer')
     trackLayer.removeEventListener({
       "editable:vertex:dragend": handleTrackEditEvent,
       "editable:vertex:new": handleTrackEditEvent,

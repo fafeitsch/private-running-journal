@@ -31,6 +31,10 @@ type Tracks struct {
 func New(baseDir string) (*Tracks, error) {
 	var trackCache = make(map[string]*Track)
 	result := Tracks{cache: trackCache, basePath: filepath.Join(baseDir, "tracks")}
+	err := os.MkdirAll(result.basePath, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("could not create tracks directory: %v", err)
+	}
 	baseDirEntries, err := os.ReadDir(result.basePath)
 	if err != nil {
 		return nil, fmt.Errorf("could not read %s: %v", result.basePath, err)
@@ -272,9 +276,9 @@ type GpxData struct {
 	DistanceMarkers []DistanceMarker `json:"distanceMarkers"`
 }
 
-func GetGpxData(baseDirectory string, id string) (GpxData, error) {
-	path := filepath.Join(baseDirectory, id, "track.gpx")
-	coordinates, _, err := readGpx(path)
+func (t *Tracks) GetGpxData(id string) (GpxData, error) {
+	gpxPath := filepath.Join(filepath.Join(t.basePath, id), "track.gpx")
+	coordinates, _, err := readGpx(gpxPath)
 	distanceMarkers := distanceMarkers(coordinates, 1000)
 	return GpxData{Waypoints: coordinates, DistanceMarkers: distanceMarkers}, err
 }

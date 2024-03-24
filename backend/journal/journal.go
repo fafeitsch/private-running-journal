@@ -36,7 +36,7 @@ type Journal struct {
 }
 
 func New(baseDirectory string) (*Journal, error) {
-	result := &Journal{baseDirectory: baseDirectory, tracks: make(map[string]*shared.Track)}
+	result := &Journal{baseDirectory: filepath.Join(baseDirectory, "journal"), tracks: make(map[string]*shared.Track)}
 	group := sync.WaitGroup{}
 	group.Add(1)
 	shared.RegisterHandler(
@@ -54,6 +54,10 @@ func New(baseDirectory string) (*Journal, error) {
 		},
 	)
 	group.Wait()
+	err := os.MkdirAll(result.baseDirectory, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("could not create journal directory: %v", err)
+	}
 	entries, err := result.ReadEntries()
 	if err == nil {
 		for _, entry := range entries {
@@ -67,15 +71,14 @@ func New(baseDirectory string) (*Journal, error) {
 
 func (j *Journal) ReadEntries() ([]ListEntry, error) {
 	result := make([]ListEntry, 0, 0)
-	journalDirectory := filepath.Join(j.baseDirectory, "journal")
 	err := filepath.Walk(
-		journalDirectory, func(path string, info os.FileInfo, err error) error {
+		j.baseDirectory, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				log.Printf("skipping directory \"%s\" because an error occurred: %v", path, err)
 				return filepath.SkipDir
 			}
 			if info.IsDir() || info.Name() != "entry.json" {
-				if path == journalDirectory || directoryRegex.MatchString(info.Name()) {
+				if path == j.baseDirectory || directoryRegex.MatchString(info.Name()) {
 					return nil
 				}
 				log.Printf(
@@ -84,7 +87,7 @@ func (j *Journal) ReadEntries() ([]ListEntry, error) {
 				return filepath.SkipDir
 			}
 			listEntry, err := j.readListEntry(
-				strings.Replace(strings.Replace(path, journalDirectory, "", 1), info.Name(), "", 1),
+				strings.Replace(strings.Replace(path, j.baseDirectory, "", 1), info.Name(), "", 1),
 			)
 			if err != nil {
 				log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)
@@ -161,8 +164,7 @@ func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
 		return ListEntry{}, fmt.Errorf("the date \"%s\" is not a valid date of the format yyyy-mm-dd", date)
 	}
 	id := filepath.Join(regexResult[1], regexResult[2], regexResult[3])
-	journalPath := filepath.Join(j.baseDirectory, "journal")
-	path, err := shared.FindFreeFileName(filepath.Join(journalPath, id))
+	path, err := shared.FindFreeFileName(filepath.Join(j.baseDirectory, id))
 	if err != nil {
 		return ListEntry{}, err
 	}
@@ -170,7 +172,7 @@ func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
 	if err != nil {
 		return ListEntry{}, fmt.Errorf("could not create directory %s: %v", id, err)
 	}
-	entryFilePath := filepath.Join(j.baseDirectory, "journal", id, "entry.json")
+	entryFilePath := filepath.Join(j.baseDirectory, id, "entry.json")
 	payload, _ := json.Marshal(entryFile{Track: trackId, Laps: 1, Time: "", Comment: ""})
 	err = os.WriteFile(entryFilePath, payload, 0644)
 	if err != nil {
@@ -180,7 +182,7 @@ func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
 }
 
 func (j *Journal) SaveEntry(entry Entry) error {
-	journalPath := filepath.Join(j.baseDirectory, "journal", entry.Id, "entry.json")
+	journalPath := filepath.Join(j.baseDirectory, entry.Id, "entry.json")
 	if _, err := os.Stat(journalPath); err != nil {
 		return fmt.Errorf("could not update entry \"%s\": %v", entry.Id, err)
 	}

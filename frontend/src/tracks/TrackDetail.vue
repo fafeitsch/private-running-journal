@@ -63,6 +63,7 @@ watch(
     }
     try {
       gpxData.value = await tracksApi.getGpxData(selectedTrack.value.id);
+      console.log('VALUE', gpxData.value)
       editedWaypoints.value = gpxData.value.waypoints;
       length.value = selectedTrack.value.length;
     } catch (e) {

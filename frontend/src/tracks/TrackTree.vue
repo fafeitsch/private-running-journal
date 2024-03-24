@@ -23,7 +23,7 @@ const selectableTracks = computed(() => [
     key: "root",
     type: "root",
     expandedIcon: "",
-    children: tracksToTreeNodes(availableTracks.value),
+    children: tracksToTreeNodes(availableTracks.value, true),
   },
 ]);
 
@@ -37,12 +37,12 @@ watch(
   { immediate: true },
 );
 
-const expansion = ref<TreeSelectionKeys>({ root: "" });
+const expansion = ref<TreeSelectionKeys>({ root: true });
 
 watch(
   () => ({ trackId: selectedTrackId.value, tracks: selectableTracks.value }),
   ({ tracks, trackId }) => {
-    expansion.value = {};
+    expansion.value = { root: true };
     if (!trackId || !tracks) {
       return;
     }
@@ -69,7 +69,7 @@ function selectNode(node: TreeNode) {
 }
 
 const treeNodeMenu = ref();
-const contextMenuOpenedOn = ref<{ track: Track | 'root'; event: any } | undefined>(undefined);
+const contextMenuOpenedOn = ref<{ track: Track | "root"; event: any } | undefined>(undefined);
 const addClickedOn = ref<{ parentId: string; target: HTMLElement } | undefined>(undefined);
 const menuItems = ref<MenuItem>([
   {
@@ -82,13 +82,13 @@ const menuItems = ref<MenuItem>([
       let clickedTrack = contextMenuOpenedOn.value.track;
       addClickedOn.value = {
         target: contextMenuOpenedOn.value.event.target,
-        parentId: clickedTrack === 'root' ? clickedTrack : clickedTrack.id,
+        parentId: clickedTrack === "root" ? clickedTrack : clickedTrack.id,
       };
     },
   },
 ]);
 
-function showContextMenu(track: Track | 'root', event: any) {
+function showContextMenu(track: Track | "root", event: any) {
   contextMenuOpenedOn.value = { track, event };
   treeNodeMenu.value.show(event);
 }
