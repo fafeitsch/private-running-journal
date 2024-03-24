@@ -2,9 +2,11 @@ package backend
 
 import (
 	"context"
+	"github.com/fafeitsch/local-track-journal/backend/httpapi"
 	"github.com/fafeitsch/local-track-journal/backend/journal"
 	"github.com/fafeitsch/local-track-journal/backend/tracks"
 	"log"
+	"net/http"
 	"sync"
 )
 
@@ -38,6 +40,13 @@ func (a *App) Startup(ctx context.Context) {
 			log.Fatalf("could not initialize journal: %v", err)
 		}
 		group.Done()
+	}()
+	tileServer := httpapi.NewTileServer("appdata", "https://tile.openstreetmap.org/{z}/{x}/{y}.png", true)
+	go func() {
+		err = http.ListenAndServe("127.0.0.1:47836", tileServer)
+		if err != nil {
+			log.Fatalf("could not start tile server: %v", err)
+		}
 	}()
 	group.Wait()
 }

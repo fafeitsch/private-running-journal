@@ -17,7 +17,7 @@ export const useMap = () => {
 
   function initMap(id: MaybeRefOrGetter<string>, mapContainer: Ref) {
     map = L.map(toValue(id), { editable: true }).setView([49, 9], 13);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    L.tileLayer("http://127.0.0.1:47836/tiles/{z}/{x}/{y}", {
       maxZoom: 19,
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
