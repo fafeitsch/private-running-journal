@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import { useI18n } from "vue-i18n";
 import { TabMenuChangeEvent } from "primevue/tabmenu";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useJournalStore } from "./store/journal-store";
 import { useTrackStore } from "./store/track-store";
+import {useSettingsStore} from './store/settings-store';
 
 const { t } = useI18n();
 
@@ -29,6 +30,11 @@ const navItems = computed(() => [
     icon: "pi pi-directions",
     link: `/tracks/${encodeURIComponent(trackStoreRef.selectedTrackId.value || "")}`,
   },
+  {
+    label: t("sidenav.settings"),
+    icon: "pi pi-cog",
+    link: `/settings/`
+  }
 ]);
 const active = ref(0);
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/fafeitsch/local-track-journal/backend/httpapi"
 	"github.com/fafeitsch/local-track-journal/backend/journal"
+	"github.com/fafeitsch/local-track-journal/backend/settings"
 	"github.com/fafeitsch/local-track-journal/backend/tracks"
 	"log"
 	"net/http"
@@ -18,6 +19,7 @@ type App struct {
 	configDirectory string
 	tracks          *tracks.Tracks
 	journal         *journal.Journal
+	settings        *settings.Settings
 }
 
 // NewApp creates a new App application struct
@@ -29,6 +31,10 @@ func (a *App) Startup(ctx context.Context) {
 	a.setupConfigDirectory()
 	a.ctx = ctx
 	var err error
+	a.settings, err = settings.New(a.configDirectory)
+	if err != nil {
+		log.Fatalf("could not read settings: %v", err)
+	}
 	group := sync.WaitGroup{}
 	group.Add(2)
 	go func() {
@@ -45,14 +51,16 @@ func (a *App) Startup(ctx context.Context) {
 		}
 		group.Done()
 	}()
-	tileServer := httpapi.NewTileServer(a.configDirectory, "https://tile.openstreetmap.org/{z}/{x}/{y}.png", true)
+	group.Wait()
+	tileServer := httpapi.NewTileServer(
+		a.configDirectory, a.settings.MapSettings().TileServer, a.settings.MapSettings().CacheTiles,
+	)
 	go func() {
 		err = http.ListenAndServe("127.0.0.1:47836", tileServer)
 		if err != nil {
 			log.Fatalf("could not start tile server: %v", err)
 		}
 	}()
-	group.Wait()
 }
 
 func (a *App) setupConfigDirectory() {
@@ -63,8 +71,7 @@ func (a *App) setupConfigDirectory() {
 		a.configDirectory = filepath.Join(homeDir, ".local-track-journal")
 	} else {
 		log.Fatalf(
-			"cannot read home directory, please specify one by providing a command line argument: %v",
-			homeDirErr,
+			"cannot read home directory, please specify one by providing a command line argument: %v", homeDirErr,
 		)
 	}
 	err := os.MkdirAll(a.configDirectory, os.ModePerm)
@@ -108,4 +115,8 @@ func (a *App) CreateNewTrack(track tracks.CreateTrack) (*tracks.Track, error) {
 
 func (a *App) SaveTrack(track tracks.SaveTrack) (*tracks.Track, error) {
 	return a.tracks.SaveTrack(track)
+}
+
+func (a *App) GetSettings() settings.AppSettings {
+	return a.settings.AppSettings()
 }

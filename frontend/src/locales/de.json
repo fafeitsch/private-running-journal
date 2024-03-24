@@ -2,7 +2,8 @@
   "sidenav": {
     "menu": "Menü",
     "journal": "Tagebuch",
-    "tracks": "Strecken"
+    "tracks": "Strecken",
+    "settings": "Einstellungen"
   },
   "journal": {
     "entries": "Einträge",
@@ -43,5 +44,34 @@
     "changeJournalWarning": "Die Strecke wird in {count} Journal-Einträgen verwendet. Wenn Sie die Strecke speichern, werden diese Einträge aktualisiert. Sie können die Strecke stattdessen klonen.",
     "title": "Strecken",
     "variant": "Variante"
+  },
+  "settings": {
+    "mapSettings": {
+      "tileServer": {
+        "label": "Tile Server",
+        "help": {
+          "template": "Siehe {0}. Bitte Nutzungsregeln beachten.",
+          "link": "OSM Wiki (englisch)"
+        }
+      },
+      "header": "Karteneinstellungen",
+      "cache": {
+        "label": "Tiles cachen",
+        "help": "Speichert Teile lokal für 180 Tage zwischen. Kostet Speicherplatz, reduziert Abhängigkeit vom Internet."
+      },
+      "mapPosition": {
+        "general": "Initiale Kartenposition",
+        "latitude": "Breitengrad",
+        "longitude": "Längengrad",
+        "zoom": "Zoomstufe"
+      }
+    },
+    "general": {
+      "header": "Allgemeine Einstellungen",
+      "port": {
+        "label": "Port",
+        "help": "Für den internen TileServer. Benötigt Neustart."
+      }
+    }
   }
 }

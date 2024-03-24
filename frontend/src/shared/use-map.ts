@@ -5,6 +5,7 @@ import { useTracksApi } from "../api/tracks";
 // @ts-expect-error
 // noinspection ES6UnusedImports needed to make editable work
 import * as E from "leaflet-editable/src/Leaflet.Editable";
+import { useSettingsStore } from "../store/settings-store";
 import GpxData = tracks.GpxData;
 import Coordinates = tracks.Coordinates;
 
@@ -12,14 +13,19 @@ const use = E;
 
 export const useMap = () => {
   let map: L.Map | undefined = undefined;
+  const settingsStore = useSettingsStore();
 
   let gpxData = ref<GpxData | undefined>();
 
   function initMap(id: MaybeRefOrGetter<string>, mapContainer: Ref) {
-    map = L.map(toValue(id), { editable: true }).setView([49, 9], 13);
-    L.tileLayer("http://127.0.0.1:47836/tiles/{z}/{x}/{y}", {
+    const mapSettings = settingsStore.settings.mapSettings;
+    map = L.map(toValue(id), { editable: true }).setView(
+      mapSettings.center as [number, number],
+      mapSettings.zoomLevel,
+    );
+    L.tileLayer(`http://127.0.0.1:${settingsStore.settings.httpPort}/tiles/{z}/{x}/{y}`, {
       maxZoom: 19,
-      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      attribution: mapSettings.attribution,
     }).addTo(map);
     new ResizeObserver(() => map?.invalidateSize()).observe(mapContainer.value);
   }
@@ -50,7 +56,7 @@ export const useMap = () => {
       { color: "red" },
     ).addTo(map);
     enableEditing();
-    if(gpxData.value?.waypoints.length) {
+    if (gpxData.value?.waypoints.length) {
       map.setView(
         L.latLng(gpxData.value!.waypoints[0].latitude, gpxData.value!.waypoints[0].longitude),
       );
@@ -71,10 +77,10 @@ export const useMap = () => {
     editTrackHandler = handler;
     editEnabled = value;
     if (!trackLayer) {
-      console.log('no track layer')
+      console.log("no track layer");
       return;
     }
-    console.log('track layer')
+    console.log("track layer");
     trackLayer.removeEventListener({
       "editable:vertex:dragend": handleTrackEditEvent,
       "editable:vertex:new": handleTrackEditEvent,

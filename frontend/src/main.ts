@@ -13,6 +13,8 @@ import { createPinia } from "pinia";
 import ConfirmationService from "primevue/confirmationservice";
 import TrackPage from "./tracks/TrackPage.vue";
 import FocusTrap from 'primevue/focustrap';
+import SettingsPage from './settings/SettingsPage.vue';
+import {useSettingsStore} from './store/settings-store';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -23,6 +25,7 @@ const router = createRouter({
       component: JournalPage,
     },
     { path: "/tracks/:trackId?", component: TrackPage },
+    { path: "/settings", component: SettingsPage },
   ],
 });
 
@@ -43,3 +46,5 @@ createApp(App)
   .directive("tooltip", Tooltip)
   .directive("ripple", Ripple)
   .mount("#app");
+
+useSettingsStore().loadSettings()

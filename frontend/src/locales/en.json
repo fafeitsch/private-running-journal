@@ -2,7 +2,8 @@
   "sidenav": {
     "menu": "Menu",
     "journal": "Journal",
-    "tracks": "Tracks"
+    "tracks": "Tracks",
+    "settings": "Settings"
   },
   "journal": {
     "entries": "Entries",
@@ -43,5 +44,34 @@
     "changeJournalWarning": "The track is already used in {count} journal entries. Saving the track will change these entries. You can instead clone the track.",
     "title": "Tracks",
     "variant": "Variant"
+  },
+  "settings": {
+    "mapSettings": {
+      "tileServer": {
+        "label": "Tile Server",
+        "help": {
+          "template": "See {0}. Please obey usage policies.",
+          "link": "OSM Wiki"
+        }
+      },
+      "header": "Map Settings",
+      "cache": {
+        "label": "Cache tiles",
+        "help": "Caches tiles locally for 180 days. Needs disk space, makes app less dependent on internet access."
+      },
+      "mapPosition": {
+        "general": "Initial map position",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "zoom": "Zoom level"
+      }
+    },
+    "general": {
+      "header": "General Settings",
+      "port": {
+        "label": "Port",
+        "help": "For the internal tile server. Requires restart."
+      }
+    }
   }
 }
