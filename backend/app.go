@@ -120,3 +120,7 @@ func (a *App) SaveTrack(track tracks.SaveTrack) (*tracks.Track, error) {
 func (a *App) GetSettings() settings.AppSettings {
 	return a.settings.AppSettings()
 }
+
+func (a *App) SaveSettings(settings settings.AppSettings) error {
+	return a.settings.SaveSettings(settings)
+}

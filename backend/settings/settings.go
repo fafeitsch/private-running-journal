@@ -2,6 +2,8 @@ package settings
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/fafeitsch/local-track-journal/backend/shared"
 	"os"
 	"path/filepath"
 )
@@ -49,8 +51,24 @@ func (s *Settings) initSettings() error {
 		}
 		return json.Unmarshal(content, &s.appSettings)
 	}
-	payload, _ := json.MarshalIndent(s.appSettings, "", " ")
+	payload, _ := json.MarshalIndent(s.appSettings, "", "  ")
 	return os.WriteFile(s.settingsFile, payload, 0664)
+}
+
+func (s *Settings) SaveSettings(settings AppSettings) error {
+	payload, _ := json.MarshalIndent(settings, "", "  ")
+	err := os.WriteFile(s.settingsFile, payload, 0644)
+	if err != nil {
+		return fmt.Errorf("could not save settings: %v", err)
+	}
+	if settings.MapSettings.TileServer != s.appSettings.MapSettings.TileServer {
+		shared.Send("tile-server-changed", settings.MapSettings.TileServer)
+	}
+	if settings.MapSettings.CacheTiles != s.appSettings.MapSettings.CacheTiles {
+		shared.Send("tile-server-cache-enabled-changed", settings.MapSettings.CacheTiles)
+	}
+	s.appSettings = settings
+	return nil
 }
 
 func (s *Settings) AppSettings() AppSettings {

@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"fmt"
 	"github.com/fafeitsch/local-track-journal/backend/shared"
 	"io"
 	"net/http"
@@ -27,11 +28,13 @@ type TileServer struct {
 	cacheEnabled bool
 }
 
-func NewTileServer(baseDir string, url string, chacheEnabled bool) *TileServer {
-	result := TileServer{url: url, baseDir: filepath.Join(baseDir, "tiles"), cacheEnabled: chacheEnabled}
+func NewTileServer(baseDir string, url string, cacheEnabled bool) *TileServer {
+	result := TileServer{url: url, baseDir: filepath.Join(baseDir, "tiles"), cacheEnabled: cacheEnabled}
 	shared.RegisterHandler(
 		"tile-server-changed", func(url ...any) {
 			result.url = url[0].(string)
+			err := os.RemoveAll(result.baseDir)
+			fmt.Printf("removing %v", err)
 		},
 	)
 	shared.RegisterHandler(
@@ -66,11 +69,11 @@ func (t *TileServer) ServeHTTP(resp http.ResponseWriter, originalRequest *http.R
 		return
 	}
 	body, err := io.ReadAll(response.Body)
-	_ = os.MkdirAll(filepath.Join(t.baseDir, z, x), os.ModePerm)
 	if t.cacheEnabled {
 		go func() {
 			tilesDirMutex.Lock()
 			defer tilesDirMutex.Unlock()
+			_ = os.MkdirAll(filepath.Join(t.baseDir, z, x), os.ModePerm)
 			_ = os.WriteFile(filepath.Join(t.baseDir, z, x, y)+".png", body, 0644)
 		}()
 	}
@@ -86,11 +89,15 @@ func (t *TileServer) readCacheFile(z string, x string, y string, resp http.Respo
 	if err != nil || time.Now().Sub(cachedFile.ModTime()) >= 24*time.Hour*180 {
 		return false
 	}
-	tile, err := os.ReadFile(filepath.Join("tiles", z, x, y) + ".png")
+	tile, err := os.ReadFile(filepath.Join(t.baseDir, z, x, y) + ".png")
 	resp.Header().Set("Content-Length", strconv.Itoa(len(tile)))
-	resp.Header().Set("Cache-Control", "public, max-age=86400")
+	resp.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	resp.Header().Set("Pragma", "no-cache")
+	resp.Header().Set("Expires", "0")
 	if err == nil {
 		_, _ = resp.Write(tile)
+	} else {
+		fmt.Printf("bigg error %v", err)
 	}
 	return true
 }

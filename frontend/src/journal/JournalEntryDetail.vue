@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ref, watch } from "vue";
 import { useJournalApi } from "../api/journal";
 import ProgressSpinner from "primevue/progressspinner";
@@ -15,10 +15,9 @@ import Calendar from "primevue/calendar";
 import LeafletMap from "./LeafletMap.vue";
 import TrackTimeResult from "./TrackTimeResult.vue";
 import TrackSelection from "./TrackSelection.vue";
-import ConfirmDialog from "primevue/confirmdialog";
-import { useConfirm } from "primevue/useconfirm";
 import { useJournalStore } from "../store/journal-store";
 import { storeToRefs } from "pinia";
+import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -36,8 +35,13 @@ const { selectedEntryId } = storeToRefs(journalStore);
 const tracksApi = useTracksApi();
 
 watch(
-  () => route.params.entryId as string,
-  (value: string) => loadEntry(value),
+  () => {
+    return route.params.entryId as string;
+  },
+  (value: string) => {
+    dirty.value = false;
+    return loadEntry(value);
+  },
   { immediate: true },
 );
 
@@ -91,27 +95,7 @@ async function saveEntry() {
   }
 }
 
-const confirm = useConfirm();
-
-onBeforeRouteLeave(() => handleRouteLeave());
-onBeforeRouteUpdate(() => handleRouteLeave());
-
-function handleRouteLeave(): Promise<boolean> {
-  if (!dirty.value) {
-    return Promise.resolve(true);
-  }
-  let resolveFn: (result: boolean) => void;
-  const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
-  confirm.require({
-    header: t("shared.confirm.header"),
-    accept: () => resolveFn(true),
-    reject: () => resolveFn(false),
-    message: t("shared.confirm.message"),
-    rejectLabel: t("shared.cancel"),
-    acceptLabel: t("shared.confirm.discard"),
-  });
-  return result;
-}
+useLeaveConfirmation(dirty);
 </script>
 
 <template>
@@ -138,7 +122,6 @@ function handleRouteLeave(): Promise<boolean> {
     >
       <div class="flex">
         <Button icon="pi pi-save" :disabled="!dirty" @click="saveEntry"></Button>
-        <ConfirmDialog></ConfirmDialog>
       </div>
       <InputGroup>
         <InputGroupAddon>
@@ -174,7 +157,7 @@ function handleRouteLeave(): Promise<boolean> {
         ></InputText>
       </InputGroup>
       <div class="flex-shrink-1 flex-grow-1">
-        <LeafletMap class="h-full w-full":gpx-data="gpxData"></LeafletMap>
+        <LeafletMap class="h-full w-full" :gpx-data="gpxData"></LeafletMap>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
+import { useRoute } from "vue-router";
 import { computed, ref, watch } from "vue";
 import { useTrackStore } from "../store/track-store";
 import { storeToRefs } from "pinia";
@@ -10,9 +10,9 @@ import { tracks } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import TrackEditor from "./TrackEditor.vue";
 import Button from "primevue/button";
-import ConfirmDialog from "primevue/confirmdialog";
 import ConfirmPopup from "primevue/confirmpopup";
 import { useConfirm } from "primevue/useconfirm";
+import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import GpxData = tracks.GpxData;
 import SaveTrack = tracks.SaveTrack;
 import Coordinates = tracks.Coordinates;
@@ -63,7 +63,7 @@ watch(
     }
     try {
       gpxData.value = await tracksApi.getGpxData(selectedTrack.value.id);
-      console.log('VALUE', gpxData.value)
+      console.log("VALUE", gpxData.value);
       editedWaypoints.value = gpxData.value.waypoints;
       length.value = selectedTrack.value.length;
     } catch (e) {
@@ -84,8 +84,10 @@ function trackChanged(props: { length: number; waypoints: Coordinates[] }) {
 
 const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
 
+const confirm = useConfirm();
+
 async function saveTrack(event: any) {
-  trackEditDirection.value = 'drag'
+  trackEditDirection.value = "drag";
   if (!track.value) {
     return;
   }
@@ -116,7 +118,7 @@ async function saveTrack(event: any) {
         }),
       );
       dirty.value = false;
-      tracksStore.updateTrack(updated)
+      tracksStore.updateTrack(updated);
     } catch (e) {
       // TODO error handling
       console.error(e);
@@ -124,28 +126,7 @@ async function saveTrack(event: any) {
   }
 }
 
-const confirm = useConfirm();
-
-onBeforeRouteLeave(() => handleRouteLeave());
-onBeforeRouteUpdate(() => handleRouteLeave());
-
-function handleRouteLeave(): Promise<boolean> {
-  if (!dirty.value) {
-    return Promise.resolve(true);
-  }
-  let resolveFn: (result: boolean) => void;
-  const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
-  confirm.require({
-    group: "leave",
-    header: t("shared.confirm.header"),
-    accept: () => resolveFn(true),
-    reject: () => resolveFn(false),
-    message: t("shared.confirm.message"),
-    rejectLabel: t("shared.cancel"),
-    acceptLabel: t("shared.confirm.discard"),
-  });
-  return result;
-}
+useLeaveConfirmation(dirty);
 </script>
 
 <template>
@@ -157,7 +138,6 @@ function handleRouteLeave(): Promise<boolean> {
           <div style="max-width: 330px" class="p-2">{{ message.message }}</div>
         </template>
       </ConfirmPopup>
-      <ConfirmDialog group="leave"></ConfirmDialog>
     </div>
     <div class="flex gap-2">
       <InputGroup>

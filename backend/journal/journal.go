@@ -113,7 +113,7 @@ type Entry struct {
 }
 
 func (j *Journal) ReadJournalEntry(path string) (Entry, error) {
-	file, err := os.Open(filepath.Join(j.baseDirectory, "journal", path, "entry.json"))
+	file, err := os.Open(filepath.Join(j.baseDirectory, path, "entry.json"))
 	if err != nil {
 		return Entry{}, err
 	}
@@ -165,6 +165,7 @@ func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
 	}
 	id := filepath.Join(regexResult[1], regexResult[2], regexResult[3])
 	path, err := shared.FindFreeFileName(filepath.Join(j.baseDirectory, id))
+	id = strings.Replace(path, j.baseDirectory+"/", "", 1)
 	if err != nil {
 		return ListEntry{}, err
 	}

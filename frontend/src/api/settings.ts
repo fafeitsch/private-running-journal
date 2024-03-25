@@ -1,10 +1,13 @@
 import { settings } from "../../wailsjs/go/models";
-import { GetSettings } from "../../wailsjs/go/backend/App";
+import {GetSettings, SaveSettings} from "../../wailsjs/go/backend/App";
 import AppSettings = settings.AppSettings;
 
 export const useSettingsApi = () => {
   function getSettings(): Promise<AppSettings> {
     return GetSettings();
   }
-  return { getSettings };
+  function saveSettings(settings: AppSettings): Promise<void> {
+    return SaveSettings(settings);
+  }
+  return { getSettings, saveSettings };
 };

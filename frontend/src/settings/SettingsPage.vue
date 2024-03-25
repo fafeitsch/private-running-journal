@@ -8,6 +8,8 @@ import InputGroupAddon from "primevue/inputgroupaddon";
 import { storeToRefs } from "pinia";
 import Button from "primevue/button";
 import AppSettings = settingsType.AppSettings;
+import {useLeaveConfirmation} from '../shared/use-leave-confirmation';
+import {useSettingsApi} from '../api/settings';
 
 const settingsStore = useSettingsStore();
 const { t } = useI18n();
@@ -24,7 +26,18 @@ watch(
 
 const dirty = ref(false);
 
-function saveSettings() {}
+useLeaveConfirmation(dirty)
+const settingsApi = useSettingsApi()
+
+async function saveSettings() {
+  try {
+    await settingsApi.saveSettings(settings.value)
+    settingsStore.settings = settings.value
+    dirty.value = false
+  }catch (e) {
+    console.error(e)
+  }
+}
 </script>
 
 <template>
@@ -33,38 +46,44 @@ function saveSettings() {}
       <h2 class="text-xl">{{ t("sidenav.settings") }}</h2>
       <Button icon="pi pi-save" :disabled="!dirty" @click="saveSettings"></Button>
     </header>
-    <Panel :header="t('settings.general.header')">
-      <InputGroup>
-        <InputGroupAddon>
-          <label for="portInput">{{ t("settings.general.port.label") }}</label>
-        </InputGroupAddon>
-        <InputNumber
-          id="portInput"
-          v-model="settings.httpPort"
-          :use-grouping="false"
-          @update:model-value="dirty = true"
-          :max="65535"
-        ></InputNumber>
-        <InputGroupAddon>
+    <div class="flex flex-column gap-2 flex-grow-1 flex-shrink-1 overflow-auto">
+      <Panel
+        :header="t('settings.general.header')"
+        :pt="{ content: { class: 'flex flex-column gap-2' } }"
+      >
+        <InputGroup>
+          <InputGroupAddon>
+            <label for="portInput">{{ t("settings.general.port.label") }}</label>
+          </InputGroupAddon>
+          <InputNumber
+            id="portInput"
+            v-model="settings.httpPort"
+            :use-grouping="false"
+            @update:model-value="dirty = true"
+            :max="65535"
+          ></InputNumber>
+        </InputGroup>
+        <div class="text-xs">
           {{ t("settings.general.port.help") }}
-        </InputGroupAddon>
-      </InputGroup>
-    </Panel>
-    <Panel
-      :header="t('settings.mapSettings.header')"
-      :pt="{ content: { class: 'flex-column flex gap-2' } }"
-    >
-      <InputGroup>
-        <InputGroupAddon>
-          <label for="tileServerInput">{{ t("settings.mapSettings.tileServer.label") }}</label>
-        </InputGroupAddon>
-        <InputText
-          id="tileServerInput"
-          v-model="settings.mapSettings.tileServer"
-          @update:model-value="dirty = true"
-        ></InputText>
-        <InputGroupAddon>
+        </div>
+      </Panel>
+      <Panel
+        :header="t('settings.mapSettings.header')"
+        :pt="{ content: { class: 'flex-column flex gap-4' } }"
+      >
+        <div class="flex flex-column gap-2">
+          <InputGroup>
+            <InputGroupAddon>
+              <label for="tileServerInput">{{ t("settings.mapSettings.tileServer.label") }}</label>
+            </InputGroupAddon>
+            <InputText
+              id="tileServerInput"
+              v-model="settings.mapSettings.tileServer"
+              @update:model-value="dirty = true"
+            ></InputText>
+          </InputGroup>
           <i18n-t
+            class="text-xs"
             keypath="settings.mapSettings.tileServer.help.template"
             tag="span"
             for="settings.mapSettings.tileServer.help.link"
@@ -78,57 +97,78 @@ function saveSettings() {}
               {{ $t("settings.mapSettings.tileServer.help.link") }}
             </a>
           </i18n-t>
-        </InputGroupAddon>
-      </InputGroup>
-      <InputGroup>
-        <InputGroupAddon>
-          <Checkbox
-            id="cacheTilesInput"
-            v-model="settings.mapSettings.cacheTiles"
-            :disabled="false"
-            :binary="true"
-            @update:model-value="dirty = true"
-          ></Checkbox>
-        </InputGroupAddon>
-        <InputGroupAddon class="flex-grow-1 justify-content-start">
-          <label for="cacheTilesInput">{{ t("settings.mapSettings.cache.label") }}</label>
-        </InputGroupAddon>
-        <InputGroupAddon>
-          {{ t("settings.mapSettings.cache.help") }}
-        </InputGroupAddon>
-      </InputGroup>
-      <InputGroup>
-        <InputGroupAddon>
-          {{ t("settings.mapSettings.mapPosition.general") }}
-        </InputGroupAddon>
-        <InputGroupAddon>
-          <label for="latInput">{{ t("settings.mapSettings.mapPosition.latitude") }}</label>
-        </InputGroupAddon>
-        <InputText
-          v-model="settings.mapSettings.center[0]"
-          id="latInput"
-          @update:model-value="dirty = true"
-        ></InputText>
-        <InputGroupAddon>
-          <label for="lonInput">{{ t("settings.mapSettings.mapPosition.longitude") }}</label>
-        </InputGroupAddon>
-        <InputText
-          v-model="settings.mapSettings.center[1]"
-          id="lonInput"
-          @update:model-value="dirty = true"
-        ></InputText>
-        <InputGroupAddon>
-          <label for="zoomInput">{{ t("settings.mapSettings.mapPosition.zoom") }}</label>
-        </InputGroupAddon>
-        <InputText
-          v-model="settings.mapSettings.zoomLevel"
-          id="zoomInput"
-          :min="1"
-          :max="19"
-          @update:model-value="dirty = true"
-        ></InputText>
-      </InputGroup>
-    </Panel>
+        </div>
+        <div class="flex flex-column gap-2">
+          <InputGroup>
+            <InputGroupAddon>
+              <label for="tileAttributionInput">{{
+                t("settings.mapSettings.attribution.label")
+              }}</label>
+            </InputGroupAddon>
+            <InputText
+              id="tileAttributionInput"
+              v-model="settings.mapSettings.attribution"
+              @update:model-value="dirty = true"
+            ></InputText>
+          </InputGroup>
+          <div class="text-xs">{{ t("settings.mapSettings.attribution.help") }}</div>
+        </div>
+        <div class="flex flex-column gap-2">
+          <InputGroup>
+            <InputGroupAddon>
+              <Checkbox
+                id="cacheTilesInput"
+                v-model="settings.mapSettings.cacheTiles"
+                :disabled="false"
+                :binary="true"
+                @update:model-value="dirty = true"
+              ></Checkbox>
+            </InputGroupAddon>
+            <InputGroupAddon class="flex-grow-1 justify-content-start">
+              <label for="cacheTilesInput">{{ t("settings.mapSettings.cache.label") }}</label>
+            </InputGroupAddon>
+          </InputGroup>
+          <div class="text-xs">{{ t("settings.mapSettings.cache.help") }}</div>
+        </div>
+        <div class="flex flex-column gap-2">
+          <h4 class="m-0 p-0">{{ t("settings.mapSettings.mapPosition.general") }}</h4>
+          <div class="flex gap-2">
+            <InputGroup>
+              <InputGroupAddon>
+                <label for="latInput">{{ t("settings.mapSettings.mapPosition.latitude") }}</label>
+              </InputGroupAddon>
+              <InputText
+                v-model="settings.mapSettings.center[0]"
+                id="latInput"
+                @update:model-value="dirty = true"
+              ></InputText>
+            </InputGroup>
+            <InputGroup>
+              <InputGroupAddon>
+                <label for="lonInput">{{ t("settings.mapSettings.mapPosition.longitude") }}</label>
+              </InputGroupAddon>
+              <InputText
+                v-model="settings.mapSettings.center[1]"
+                id="lonInput"
+                @update:model-value="dirty = true"
+              ></InputText>
+            </InputGroup>
+            <InputGroup>
+              <InputGroupAddon>
+                <label for="zoomInput">{{ t("settings.mapSettings.mapPosition.zoom") }}</label>
+              </InputGroupAddon>
+              <InputText
+                v-model="settings.mapSettings.zoomLevel"
+                id="zoomInput"
+                :min="1"
+                :max="19"
+                @update:model-value="dirty = true"
+              ></InputText>
+            </InputGroup>
+          </div>
+        </div>
+      </Panel>
+    </div>
   </div>
 </template>
 

@@ -6,7 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useJournalStore } from "./store/journal-store";
 import { useTrackStore } from "./store/track-store";
-import {useSettingsStore} from './store/settings-store';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const { t } = useI18n();
 
@@ -67,6 +67,7 @@ watch(
       <router-view class="h-full w-full"></router-view>
     </div>
   </div>
+  <ConfirmDialog group="leave"></ConfirmDialog>
 </template>
 
 <style></style>

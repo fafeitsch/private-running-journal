@@ -64,6 +64,10 @@
         "latitude": "Breitengrad",
         "longitude": "Längengrad",
         "zoom": "Zoomstufe"
+      },
+      "attribution": {
+        "label": "Zuschreibung",
+        "help": "Urheberrechtshinweis für die Karte. HTML ist möglich."
       }
     },
     "general": {

@@ -64,6 +64,10 @@
         "latitude": "Latitude",
         "longitude": "Longitude",
         "zoom": "Zoom level"
+      },
+      "attribution": {
+        "label": "Attribution",
+        "help": "Copyright for the map tiles. HTML is possible."
       }
     },
     "general": {
