@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useJournalApi } from "../api/journal";
 import { computed, onMounted, ref } from "vue";
 import { journal } from "../../wailsjs/go/models";
 import ProgressSpinner from "primevue/progressspinner";
@@ -8,14 +7,17 @@ import Button from "primevue/button";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import CreateEntryOverlay from "./CreateEntryOverlay.vue";
-import {useJournalStore} from '../store/journal-store';
-import {storeToRefs} from 'pinia';
+import { useJournalStore } from "../store/journal-store";
+import { storeToRefs } from "pinia";
+import { MenuItem } from "primevue/menuitem";
+import { useJournalApi } from "../api/journal";
 
 const { t, d } = useI18n();
 const loading = ref(false);
 const error = ref<boolean>(false);
-const store = useJournalStore()
-const {listEntries} = storeToRefs(store)
+const store = useJournalStore();
+const journalApi = useJournalApi();
+const { listEntries } = storeToRefs(store);
 
 const route = useRoute();
 
@@ -42,11 +44,45 @@ const entries = computed(() => {
     parentName: (entry.trackParents || []).join(" / "),
     link: encodeURIComponent(entry.id),
     trackError: !entry.trackParents && !entry.trackName && !entry.length,
-    length: (entry.length / 1000).toFixed(1)
+    length: (entry.length / 1000).toFixed(1),
   }));
-  result.sort((a, b) => a.date.localeCompare(b.date))
-  return result
-})
+  result.sort((a, b) => a.date.localeCompare(b.date));
+  return result;
+});
+
+const journalMenu = ref();
+const deleteConfirm = ref();
+const contextMenuOpenedOn = ref<{ entryId: string; event: Event } | undefined>(undefined);
+
+const menuItems = ref<MenuItem[]>([
+  {
+    icon: "pi pi-delete",
+    label: t("shared.delete"),
+    command: () => {
+      setTimeout(() => {
+        if (!contextMenuOpenedOn.value) {
+          return;
+        }
+        deleteConfirm.value.show(new Event("click"), contextMenuOpenedOn.value.event.target);
+      });
+    },
+  },
+]);
+
+function showContextMenu(entryId: string, event: Event) {
+  contextMenuOpenedOn.value = { entryId, event };
+  journalMenu.value.show(event);
+}
+
+function deleteEntry() {
+  if (!contextMenuOpenedOn.value) {
+    return;
+  }
+  journalApi.deleteEntry(contextMenuOpenedOn.value.entryId);
+  store.deleteEntry(contextMenuOpenedOn.value.entryId);
+  deleteConfirm.value.hide();
+  contextMenuOpenedOn.value = undefined;
+}
 </script>
 
 <template>
@@ -68,6 +104,7 @@ const entries = computed(() => {
       :key="entry.id"
       class="list-none p-0 m-0 flex flex-column"
       v-tooltip="{ value: entry.parentName + ' ' + entry.trackName, showDelay: 500 }"
+      @contextmenu="showContextMenu(entry.id, $event)"
     >
       <RouterLink
         v-ripple
@@ -92,6 +129,10 @@ const entries = computed(() => {
       </RouterLink>
     </li>
   </ul>
+  <ContextMenu ref="journalMenu" :model="menuItems"></ContextMenu>
+  <OverlayPanel ref="deleteConfirm">
+    <Button @click="deleteEntry()">{{ t("shared.delete") }}</Button>
+  </OverlayPanel>
 </template>
 
 <style scoped>

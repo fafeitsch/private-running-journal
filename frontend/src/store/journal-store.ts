@@ -1,13 +1,14 @@
 import { defineStore } from "pinia";
-import {computed, ref} from "vue";
+import { ref } from "vue";
 import { journal } from "../../wailsjs/go/models";
 import { useJournalApi } from "../api/journal";
-import {TreeNode} from 'primevue/treenode';
+import {useRouter} from 'vue-router';
 
 export const useJournalStore = defineStore("journal", () => {
   const journalApi = useJournalApi();
   const listEntries = ref<journal.ListEntry[]>([]);
   const selectedEntryId = ref<string | undefined>(undefined);
+  const router = useRouter()
 
   async function loadEntries() {
     listEntries.value = [];
@@ -18,5 +19,12 @@ export const useJournalStore = defineStore("journal", () => {
     listEntries.value.push(entry);
   }
 
-  return { listEntries, loadEntries, addEntryToList, selectedEntryId };
+  function deleteEntry(toDelete: string) {
+    listEntries.value = listEntries.value.filter((entry) => toDelete !== entry.id);
+    if (selectedEntryId.value === toDelete) {
+      router.replace('/journal')
+    }
+  }
+
+  return { listEntries, loadEntries, addEntryToList, selectedEntryId, deleteEntry };
 });

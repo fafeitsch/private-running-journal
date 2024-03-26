@@ -32,7 +32,8 @@
     },
     "cancel": "Abbrechen",
     "save": "Speichen",
-    "add": "Hinzufügen"
+    "add": "Hinzufügen",
+    "delete": "Löschen"
   },
   "tracks": {
     "name": "Streckenname",

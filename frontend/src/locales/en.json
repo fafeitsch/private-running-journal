@@ -32,7 +32,8 @@
     },
     "cancel": "Cancel",
     "save": "Save",
-    "add": "Add"
+    "add": "Add",
+    "delete": "Delete"
   },
   "tracks": {
     "name": "Track name",

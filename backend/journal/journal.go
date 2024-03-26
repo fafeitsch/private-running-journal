@@ -87,7 +87,7 @@ func (j *Journal) ReadEntries() ([]ListEntry, error) {
 				return filepath.SkipDir
 			}
 			listEntry, err := j.readListEntry(
-				strings.Replace(strings.Replace(path, j.baseDirectory, "", 1), info.Name(), "", 1),
+				strings.Replace(strings.Replace(path, j.baseDirectory+"/", "", 1), "/"+info.Name(), "", 1),
 			)
 			if err != nil {
 				log.Printf("skipping journal entry \"%s\" because an error occurred: %v", path, err)
@@ -179,12 +179,14 @@ func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
 	if err != nil {
 		return ListEntry{}, fmt.Errorf("could not write file \"%s\": %v", entryFilePath, err)
 	}
+	shared.Send("journal entry changed", shared.JournalEntry{}, shared.JournalEntry{TrackId: trackId})
 	return j.readListEntry(id)
 }
 
 func (j *Journal) SaveEntry(entry Entry) error {
 	journalPath := filepath.Join(j.baseDirectory, entry.Id, "entry.json")
-	if _, err := os.Stat(journalPath); err != nil {
+	oldEntry, err := j.readListEntry(journalPath)
+	if err != nil {
 		return fmt.Errorf("could not update entry \"%s\": %v", entry.Id, err)
 	}
 	payload, _ := json.Marshal(
@@ -195,11 +197,26 @@ func (j *Journal) SaveEntry(entry Entry) error {
 			Laps:    entry.Laps,
 		},
 	)
-	err := os.WriteFile(journalPath, payload, 0644)
+	err = os.WriteFile(journalPath, payload, 0644)
 	if err != nil {
 		return fmt.Errorf("could not update entry \"%s\": %v", entry.Id, err)
 	}
+	shared.Send(
+		"journal entry changed",
+		shared.JournalEntry{TrackId: oldEntry.trackId},
+		shared.JournalEntry{TrackId: entry.Track.Id},
+	)
 	return nil
+}
+
+func (j *Journal) DeleteEntry(key string) error {
+	entry, err := j.readListEntry(key)
+	if err != nil {
+		return nil
+	}
+	journalPath := filepath.Join(j.baseDirectory, key)
+	shared.Send("journal entry changed", shared.JournalEntry{TrackId: entry.trackId}, shared.JournalEntry{})
+	return os.RemoveAll(journalPath)
 }
 
 var pathRegex = regexp.MustCompile("(\\d\\d\\d\\d)/(\\d\\d)/(\\d\\d)[a-z]?")

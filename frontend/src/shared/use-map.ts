@@ -77,10 +77,8 @@ export const useMap = () => {
     editTrackHandler = handler;
     editEnabled = value;
     if (!trackLayer) {
-      console.log("no track layer");
       return;
     }
-    console.log("track layer");
     trackLayer.removeEventListener({
       "editable:vertex:dragend": handleTrackEditEvent,
       "editable:vertex:new": handleTrackEditEvent,
@@ -124,7 +122,6 @@ export const useMap = () => {
     if (!trackLayer) {
       return;
     }
-    console.log(value);
     //@ts-expect-error
     trackLayer.editor.disable();
     //@ts-expect-error

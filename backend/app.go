@@ -97,6 +97,10 @@ func (a *App) CreateJournalEntry(date string, trackId string) (journal.ListEntry
 	return a.journal.CreateEntry(date, trackId)
 }
 
+func (a *App) DeleteJournalEntry(id string) error {
+	return a.journal.DeleteEntry(id)
+}
+
 func (a *App) GetTracks() []tracks.Track {
 	return a.tracks.RootTracks()
 }

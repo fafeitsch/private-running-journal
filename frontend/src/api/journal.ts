@@ -1,6 +1,6 @@
 import { journal } from "../../wailsjs/go/models";
 import {
-  CreateJournalEntry,
+  CreateJournalEntry, DeleteJournalEntry,
   GetJournalEntry,
   GetJournalListEntries,
   SaveJournalEntry
@@ -19,5 +19,8 @@ export function useJournalApi() {
   async function saveEntry(entry: journal.Entry) {
     return SaveJournalEntry(entry)
   }
-  return { getListEntries: getJournalEntries, getListEntry: getJournalEntry, createJournalEntry, saveEntry };
+  async function deleteEntry(entryId: string) {
+    return DeleteJournalEntry(entryId)
+  }
+  return { getListEntries: getJournalEntries, getListEntry: getJournalEntry, createJournalEntry, saveEntry, deleteEntry };
 }

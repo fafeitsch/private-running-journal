@@ -21,7 +21,6 @@ export const useSettingsStore = defineStore("settings", () => {
 
   async function loadSettings() {
     settings.value = await settingsApi.getSettings();
-    console.log(settings.value.mapSettings.tileServer);
   }
 
   return { settings, loadSettings };

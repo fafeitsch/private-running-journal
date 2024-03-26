@@ -12,7 +12,6 @@ const trackStore = useTrackStore();
 
 onMounted(async () => {
   try {
-    console.log('on mounted')
     await trackStore.loadTracks();
   } catch (e) {
     // TODO error handling

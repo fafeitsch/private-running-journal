@@ -42,7 +42,6 @@ export const useTrackStore = defineStore("tacks", () => {
   function addTrack(track: Track, parentKey?: string) {
     if (!parentKey) {
       availableTracks.value.push(track);
-      console.log(availableTracks.value)
       availableTracks.value.sort((a, b) => a.name.localeCompare(b.name));
       return;
     }

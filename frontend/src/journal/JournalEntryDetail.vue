@@ -45,13 +45,15 @@ watch(
   { immediate: true },
 );
 
-async function loadEntry(entryId: string) {
+async function loadEntry(entryId: string |  undefined) {
   selectedEntry.value = undefined;
   error.value = false;
   loading.value = true;
   selectedEntryId.value = entryId;
   if (!entryId) {
     await router.replace("/journal");
+    selectedEntry.value = undefined;
+    selectedDate.value = new Date()
     return;
   }
   try {
