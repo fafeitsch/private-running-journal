@@ -7,14 +7,18 @@ import { useRouter } from "vue-router";
 import { TreeSelectionKeys } from "primevue/tree";
 import { MenuItem } from "primevue/menuitem";
 import { useI18n } from "vue-i18n";
-import { shared } from "../../wailsjs/go/models";
 import { tracksToTreeNodes } from "../shared/track-utils";
-import Track = shared.Track;
 import CreateTrackOverlay from "./CreateTrackOverlay.vue";
+import Button from "primevue/button";
+import { useTracksApi } from "../api/tracks";
+import { tracks } from "../../wailsjs/go/models";
+import OverlayPanel from "primevue/overlaypanel";
+import Track = tracks.Track;
 
 const trackStore = useTrackStore();
 const { availableTracks, selectedTrackId } = storeToRefs(trackStore);
 const { t } = useI18n();
+const tracksApi = useTracksApi();
 
 const selectableTracks = computed(() => [
   {
@@ -69,27 +73,74 @@ function selectNode(node: TreeNode) {
 }
 
 const treeNodeMenu = ref();
-const contextMenuOpenedOn = ref<{ track: Track | "root"; event: any } | undefined>(undefined);
+const moreMenuOpenedOn = ref<{ track: Track | "root"; event: any } | undefined>(undefined);
 const addClickedOn = ref<{ parentId: string; target: HTMLElement } | undefined>(undefined);
+const deleteConfirm = ref();
+const deleteConfirmMessage = ref("");
 const menuItems = ref<MenuItem>([
   {
     label: t("shared.add"),
     icon: "pi pi-plus",
     command: async (event: Event) => {
-      if (!contextMenuOpenedOn.value) {
+      if (!moreMenuOpenedOn.value) {
         return;
       }
-      let clickedTrack = contextMenuOpenedOn.value.track;
+      let clickedTrack = moreMenuOpenedOn.value.track;
       addClickedOn.value = {
-        target: contextMenuOpenedOn.value.event.target,
+        target: moreMenuOpenedOn.value.event.target,
         parentId: clickedTrack === "root" ? clickedTrack : clickedTrack.id,
       };
     },
   },
 ]);
 
-function showContextMenu(track: Track | "root", event: any) {
-  contextMenuOpenedOn.value = { track, event };
+const deleteItem = {
+  label: t("shared.delete"),
+  icon: "pi pi-trash",
+  command: async (event: Event) => {
+    if (!moreMenuOpenedOn.value || moreMenuOpenedOn.value.track === "root") {
+      return;
+    }
+    const countChildren: (acc: number, track: Track) => number = (acc: number, track: Track) => {
+      return track.variants.reduce(countChildren, acc + 1);
+    };
+    const children = countChildren(-1, moreMenuOpenedOn.value.track);
+    deleteConfirmMessage.value = t("tracks.deleteConfirmation", {
+      children,
+      count: moreMenuOpenedOn.value.track.usages,
+    });
+    setTimeout(() =>
+      deleteConfirm.value.show(new Event("click"), moreMenuOpenedOn.value!.event.target),
+    );
+  },
+};
+
+async function deleteTrack() {
+  if (!moreMenuOpenedOn.value || moreMenuOpenedOn.value.track === "root") {
+    return;
+  }
+  try {
+    await tracksApi.deleteTrack(moreMenuOpenedOn.value.track.id);
+    trackStore.deleteTrack(moreMenuOpenedOn.value.track.id);
+    deleteConfirm.value.hide();
+    moreMenuOpenedOn.value = undefined;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function openMoreMenu(event: Event, track: Track | "root") {
+  if(moreMenuOpenedOn.value && moreMenuOpenedOn.value.track !== track) {
+    treeNodeMenu.value.hide()
+    moreMenuOpenedOn.value = undefined
+    return
+  }
+  if (track !== "root" && !menuItems.value.find((item: any) => item.icon === deleteItem.icon)) {
+    menuItems.value.push(deleteItem);
+  } else if (track === "root") {
+    menuItems.value = menuItems.value.filter((item: any) => item.icon !== deleteItem.icon);
+  }
+  moreMenuOpenedOn.value = { track, event };
   treeNodeMenu.value.show(event);
 }
 </script>
@@ -102,21 +153,30 @@ function showContextMenu(track: Track | "root", event: any) {
     v-model:expanded-keys="expansion"
     selection-mode="single"
     @node-select="selectNode"
-    :pt="{ label: { class: 'w-full flex' } }"
+    :pt="{ label: { class: 'w-full flex align-items-center overflow-hidden' } }"
   >
     <template #default="slotProps">
-      <span @contextmenu="showContextMenu(slotProps.node.data, $event)" class="w-full">{{
-        slotProps.node.label
-      }}</span>
-    </template>
-    <template #root="{ node }">
-      <span @contextmenu="showContextMenu('root', $event)" class="text-2xl w-full text-color">{{
-        node.label
-      }}</span>
+      <span
+        class="flex-grow-1 flex-shrink-1 white-space-nowrap text-overflow-ellipsis overflow-hidden"
+        >{{ slotProps.node.label }}</span
+      >
+      <Button
+        class="flex-shrink-0"
+        text
+        rounded
+        icon="pi pi-ellipsis-v"
+        @click.stop.prevent="openMoreMenu($event, slotProps.node.data || 'root')"
+      ></Button>
     </template>
   </Tree>
-  <ContextMenu ref="treeNodeMenu" :model="menuItems"></ContextMenu>
+  <Menu ref="treeNodeMenu" :model="menuItems" :popup="true"></Menu>
   <CreateTrackOverlay :show-event="addClickedOn"></CreateTrackOverlay>
+  <OverlayPanel ref="deleteConfirm">
+    <div class="flex align-items-center gap-2">
+      {{ deleteConfirmMessage }}
+      <Button @click="deleteTrack()">{{ t("shared.delete") }}</Button>
+    </div>
+  </OverlayPanel>
 </template>
 
 <style scoped></style>

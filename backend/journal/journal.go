@@ -53,6 +53,26 @@ func New(baseDirectory string) (*Journal, error) {
 			group.Done()
 		},
 	)
+	shared.RegisterHandler(
+		"track upserted", func(data ...any) {
+			newTrack, ok := data[0].(shared.Track)
+			if !ok {
+				panic(fmt.Errorf("received unexpected type for event \"track upserted\": %v", data[0]))
+			}
+			result.tracks[newTrack.Id] = &newTrack
+		},
+	)
+	shared.RegisterHandler(
+		"tracks deleted", func(data ...any) {
+			deletedTracks, ok := data[0].(map[string]bool)
+			if !ok {
+				panic(fmt.Errorf("received unexpected type for event \"track deleted\": %v", data[0]))
+			}
+			for key := range deletedTracks {
+				delete(result.tracks, key)
+			}
+		},
+	)
 	group.Wait()
 	err := os.MkdirAll(result.baseDirectory, os.ModePerm)
 	if err != nil {
@@ -185,9 +205,9 @@ func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
 
 func (j *Journal) SaveEntry(entry Entry) error {
 	journalPath := filepath.Join(j.baseDirectory, entry.Id, "entry.json")
-	oldEntry, err := j.readListEntry(journalPath)
+	oldEntry, err := j.readListEntry(entry.Id)
 	if err != nil {
-		return fmt.Errorf("could not update entry \"%s\": %v", entry.Id, err)
+		return fmt.Errorf("could not read old entry \"%s\": %v", entry.Id, err)
 	}
 	payload, _ := json.Marshal(
 		entryFile{

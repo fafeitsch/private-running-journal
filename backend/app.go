@@ -117,6 +117,10 @@ func (a *App) CreateNewTrack(track tracks.CreateTrack) (*tracks.Track, error) {
 	return a.tracks.CreateTrack(track)
 }
 
+func (a *App) DeleteTrack(id string) (int, error) {
+	return a.tracks.DeleteTracks(id)
+}
+
 func (a *App) SaveTrack(track tracks.SaveTrack) (*tracks.Track, error) {
 	return a.tracks.SaveTrack(track)
 }

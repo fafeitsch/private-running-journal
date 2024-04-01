@@ -1,10 +1,8 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import { TreeNode } from "primevue/treenode";
 import { useTracksApi } from "../api/tracks";
 import { tracks } from "../../wailsjs/go/models";
 import Track = tracks.Track;
-import SaveTrack = tracks.SaveTrack;
 
 export const useTrackStore = defineStore("tacks", () => {
   const trackApi = useTracksApi();
@@ -54,16 +52,31 @@ export const useTrackStore = defineStore("tacks", () => {
   }
 
   function updateTrack(track: Track) {
-    const existing = availableTracks.value.reduce(findTrack(track.id!), undefined)
-    if(!existing) {
-      return
+    const existing = availableTracks.value.reduce(findTrack(track.id!), undefined);
+    if (!existing) {
+      return;
     }
-    existing.name = track.name
-    existing.length = track.length
-    existing.parentNames = track.parentNames
-    existing.variants = track.variants
-    existing.usages = track.usages
+    existing.name = track.name;
+    existing.length = track.length;
+    existing.parentNames = track.parentNames;
+    existing.variants = track.variants;
+    existing.usages = track.usages;
   }
 
-  return { loadTracks, availableTracks, selectedTrackId, selectedTrack, addTrack, updateTrack };
+  function deleteTrack(id: string) {
+    availableTracks.value = availableTracks.value.filter((track) => track.id !== id);
+    availableTracks.value.forEach((track) => {
+      track.variants = track.variants.filter((v) => v.id !== id);
+    });
+  }
+
+  return {
+    loadTracks,
+    availableTracks,
+    selectedTrackId,
+    selectedTrack,
+    addTrack,
+    updateTrack,
+    deleteTrack,
+  };
 });

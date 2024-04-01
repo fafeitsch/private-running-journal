@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { journal } from "../../wailsjs/go/models";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import Button from "primevue/button";
@@ -52,36 +51,41 @@ const entries = computed(() => {
 
 const journalMenu = ref();
 const deleteConfirm = ref();
-const contextMenuOpenedOn = ref<{ entryId: string; event: Event } | undefined>(undefined);
+const moreMenuOpenedOn = ref<{ entryId: string; event: Event } | undefined>(undefined);
 
 const menuItems = ref<MenuItem[]>([
   {
-    icon: "pi pi-delete",
+    icon: "pi pi-trash",
     label: t("shared.delete"),
     command: () => {
       setTimeout(() => {
-        if (!contextMenuOpenedOn.value) {
+        if (!moreMenuOpenedOn.value) {
           return;
         }
-        deleteConfirm.value.show(new Event("click"), contextMenuOpenedOn.value.event.target);
+        deleteConfirm.value.show(new Event("click"), moreMenuOpenedOn.value.event.target);
       });
     },
   },
 ]);
 
-function showContextMenu(entryId: string, event: Event) {
-  contextMenuOpenedOn.value = { entryId, event };
-  journalMenu.value.show(event);
+function openMoreMenu(entryId: string, event: Event) {
+  if (moreMenuOpenedOn.value && moreMenuOpenedOn.value.entryId !== entryId) {
+    journalMenu.value.hide(event);
+    moreMenuOpenedOn.value = undefined
+  } else {
+    moreMenuOpenedOn.value = { entryId, event };
+    journalMenu.value.show(event);
+  }
 }
 
 function deleteEntry() {
-  if (!contextMenuOpenedOn.value) {
+  if (!moreMenuOpenedOn.value) {
     return;
   }
-  journalApi.deleteEntry(contextMenuOpenedOn.value.entryId);
-  store.deleteEntry(contextMenuOpenedOn.value.entryId);
+  journalApi.deleteEntry(moreMenuOpenedOn.value.entryId);
+  store.deleteEntry(moreMenuOpenedOn.value.entryId);
   deleteConfirm.value.hide();
-  contextMenuOpenedOn.value = undefined;
+  moreMenuOpenedOn.value = undefined;
 }
 </script>
 
@@ -102,13 +106,12 @@ function deleteEntry() {
     <li
       v-for="entry of entries"
       :key="entry.id"
-      class="list-none p-0 m-0 flex flex-column"
+      class="list-none p-0 m-0 flex"
       v-tooltip="{ value: entry.parentName + ' ' + entry.trackName, showDelay: 500 }"
-      @contextmenu="showContextMenu(entry.id, $event)"
     >
       <RouterLink
         v-ripple
-        class="flex gap-1 cursor-pointer p-ripple transition-colors hover:surface-100 transition-duration-150 text-700 p-3"
+        class="flex-grow-1 flex-shrink-1 flex gap-1 cursor-pointer p-ripple transition-colors hover:surface-100 transition-duration-150 text-700 p-3"
         :to="{ path: '/journal/' + entry.link }"
         active-class="surface-200"
         ><span class="font-medium">{{ d(entry.date) }}</span>
@@ -127,9 +130,17 @@ function deleteEntry() {
           <span class="pi pi-exclamation-triangle"></span>{{ t("journal.noTrack") }}
         </div>
       </RouterLink>
+      <Button
+        class="flex-shrink-0"
+        text
+        rounded
+        icon="pi pi-ellipsis-v"
+        :id="entry.id"
+        @click.stop.prevent="openMoreMenu(entry.id || 'root', $event)"
+      ></Button>
     </li>
   </ul>
-  <ContextMenu ref="journalMenu" :model="menuItems"></ContextMenu>
+  <Menu ref="journalMenu" :model="menuItems" popup></Menu>
   <OverlayPanel ref="deleteConfirm">
     <Button @click="deleteEntry()">{{ t("shared.delete") }}</Button>
   </OverlayPanel>

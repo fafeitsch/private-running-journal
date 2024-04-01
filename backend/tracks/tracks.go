@@ -134,6 +134,7 @@ func (t *Tracks) readTrack(path string, relativePath string, parentNames []strin
 
 func (t *Tracks) RootTracks() []Track {
 	result := make([]Track, 0, 0)
+	fmt.Printf("CACHE: %v", t.cache)
 	for key, value := range t.cache {
 		v := t.cache[key]
 		if len(value.ParentNames) == 0 {
@@ -183,6 +184,14 @@ func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
 		return nil, err
 	}
 	existingTrack, err := t.readTrack(trackDirectory, track.Id, track.Parents)
+	shared.Send(
+		"track upserted", shared.Track{
+			Id:          existingTrack.Id,
+			Length:      existingTrack.Length,
+			Name:        existingTrack.Name,
+			ParentNames: existingTrack.ParentNames,
+		},
+	)
 	return &existingTrack, err
 }
 
@@ -236,7 +245,63 @@ func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
 	if track.Parent != "" {
 		parent.Variants = append(parent.Variants, &newTrack)
 	}
+	shared.Send(
+		"track upserted", shared.Track{
+			Id:          newTrack.Id,
+			Length:      newTrack.Length,
+			Name:        newTrack.Name,
+			ParentNames: newTrack.ParentNames,
+		},
+	)
 	return &newTrack, nil
+}
+
+func (t *Tracks) DeleteTracks(id string) (int, error) {
+	track, ok := t.cache[id]
+	if !ok {
+		return 0, nil
+	}
+	children := make(map[string]bool)
+	children[track.Id] = true
+	var findChildren func(variants []*Track)
+	findChildren = func(variants []*Track) {
+		for _, child := range variants {
+			children[child.Id] = true
+			findChildren(child.Variants)
+		}
+	}
+	findChildren(track.Variants)
+	err := os.RemoveAll(filepath.Join(t.basePath, track.Id))
+	fmt.Printf("%s map: %v", id, t.cache)
+	if err == nil {
+		for key := range children {
+			delete(t.cache, key)
+		}
+	}
+	parent := t.findParent(id)
+	if parent != nil {
+		variants := make([]*Track, 0, len(parent.Variants))
+		for _, variant := range parent.Variants {
+			if variant.Id != id {
+				variants = append(variants, variant)
+			}
+		}
+		parent.Variants = variants
+	}
+	fmt.Printf("map: %v", t.cache)
+	shared.Send("tracks deleted", children)
+	return len(children), err
+}
+
+func (t *Tracks) findParent(id string) *Track {
+	for _, track := range t.cache {
+		for _, variant := range track.Variants {
+			if variant.Id == id {
+				return t.cache[track.Id]
+			}
+		}
+	}
+	return nil
 }
 
 type trackDescriptor struct {

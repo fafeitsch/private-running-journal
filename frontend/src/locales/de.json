@@ -44,7 +44,8 @@
     "usages": "Verwendungen",
     "changeJournalWarning": "Die Strecke wird in {count} Journal-Einträgen verwendet. Wenn Sie die Strecke speichern, werden diese Einträge aktualisiert. Sie können die Strecke stattdessen klonen.",
     "title": "Strecken",
-    "variant": "Variante"
+    "variant": "Variante",
+    "deleteConfirmation": "Die Strecke wird {count} mal verwendet und hat {children} Varianten."
   },
   "settings": {
     "mapSettings": {
