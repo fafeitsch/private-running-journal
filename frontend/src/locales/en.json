@@ -22,7 +22,8 @@
     },
     "noTrack": "Loading error",
     "createEntry": "Create",
-    "createEntryError": "Creation failed"
+    "createEntryError": "Creation failed",
+    "deleteConfirmation": "The entry is deleted."
   },
   "shared": {
     "confirm": {
@@ -45,7 +46,7 @@
     "changeJournalWarning": "The track is already used in {count} journal entries. Saving the track will change these entries. You can instead clone the track.",
     "title": "Tracks",
     "variant": "Variant",
-    "deleteConfirmation": "The track is used {count} times and has {children} variants.",
+    "deleteConfirmation": "The track is used {count} times.",
     "createFolder": "Create new folder",
     "folder": "Folder",
     "folderName": "Folder name"

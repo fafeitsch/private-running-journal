@@ -18,6 +18,8 @@ import TrackSelection from "./TrackSelection.vue";
 import { useJournalStore } from "../store/journal-store";
 import { storeToRefs } from "pinia";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
+import {useConfirm} from 'primevue/useconfirm';
+import ConfirmPopup from 'primevue/confirmpopup';
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -97,6 +99,36 @@ async function saveEntry() {
   }
 }
 
+const confirm = useConfirm()
+
+async function deleteEntry(event: Event) {
+  if(!selectedEntry.value) {
+    return
+  }
+  let resolveFn: (result: boolean) => void;
+  const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
+  confirm.require({
+    target: event.currentTarget as HTMLElement,
+    group: "journal",
+    header: t("shared.confirm.header"),
+    accept: () => resolveFn(true),
+    reject: () => resolveFn(false),
+    message: t("journal.deleteConfirmation" ),
+    rejectLabel: t("shared.cancel"),
+    acceptLabel: t("shared.delete"),
+  });
+  let choice = await result;
+  if(!choice) {
+    return
+  }
+  try {
+    await journalApi.deleteEntry(selectedEntry.value.id);
+    journalStore.deleteEntry(selectedEntry.value.id);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 useLeaveConfirmation(dirty);
 </script>
 
@@ -122,8 +154,14 @@ useLeaveConfirmation(dirty);
       v-else-if="selectedEntry"
       class="flex flex-column gap-2 w-full p-2 flex-grow-1 flex-shrink-1"
     >
-      <div class="flex">
+      <div class="flex gap-2">
         <Button icon="pi pi-save" :disabled="!dirty" @click="saveEntry"></Button>
+        <Button icon="pi pi-trash" @click="deleteEntry($event)"></Button>
+        <ConfirmPopup group="journal">
+          <template #message="{ message }">
+            <div style="max-width: 330px" class="p-2">{{ message.message }}</div>
+          </template>
+        </ConfirmPopup>
       </div>
       <InputGroup>
         <InputGroupAddon>

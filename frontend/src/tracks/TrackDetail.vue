@@ -16,6 +16,7 @@ import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import GpxData = tracks.GpxData;
 import SaveTrack = tracks.SaveTrack;
 import Coordinates = tracks.Coordinates;
+import OverlayPanel from "primevue/overlaypanel";
 
 const route = useRoute();
 const tracksStore = useTrackStore();
@@ -89,7 +90,7 @@ async function saveTrack(event: any) {
     const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
     confirm.require({
       target: event.currentTarget,
-      group: "journal",
+      group: "track",
       header: t("shared.confirm.header"),
       accept: () => resolveFn(true),
       reject: () => resolveFn(false),
@@ -118,18 +119,47 @@ async function saveTrack(event: any) {
   }
 }
 
+async function deleteTrack(event: Event) {
+  if(!track.value) {
+    return
+  }
+  let resolveFn: (result: boolean) => void;
+  const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
+  confirm.require({
+    target: event.currentTarget as HTMLElement,
+    group: "track",
+    header: t("shared.confirm.header"),
+    accept: () => resolveFn(true),
+    reject: () => resolveFn(false),
+    message: t("tracks.deleteConfirmation", { count: track.value.usages }),
+    rejectLabel: t("shared.cancel"),
+    acceptLabel: t("shared.delete"),
+  });
+  let choice = await result;
+  if(!choice) {
+    return
+  }
+  try {
+    await tracksApi.deleteTrack(track.value.id);
+    tracksStore.deleteTrack(track.value.id);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 useLeaveConfirmation(dirty);
 </script>
 
 <template>
   <div v-if="track" class="w-full p-2 flex flex-column h-full gap-2">
-    <div class="flex">
+    <div class="flex gap-2">
       <Button icon="pi pi-save" :disabled="!dirty" @click="saveTrack"></Button>
-      <ConfirmPopup group="journal">
+      <ConfirmPopup group="track">
         <template #message="{ message }">
           <div style="max-width: 330px" class="p-2">{{ message.message }}</div>
         </template>
       </ConfirmPopup>
+      <Button icon="pi pi-trash" @click="deleteTrack"></Button>
     </div>
     <div class="flex gap-2">
       <InputGroup>

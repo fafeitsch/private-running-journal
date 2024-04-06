@@ -8,6 +8,7 @@ import (
 	"github.com/fafeitsch/local-track-journal/backend/shared"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-gpx"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -36,8 +37,8 @@ func New(baseDir string) (*Tracks, error) {
 		return nil, fmt.Errorf("could not create tracks directory: %v", err)
 	}
 
-	err = filepath.Walk(
-		result.basePath, func(path string, info os.FileInfo, err error) error {
+	err = filepath.WalkDir(
+		result.basePath, func(path string, info os.DirEntry, err error) error {
 			if err != nil {
 				log.Printf("skipping directory \"%s\" because an error occurred: %v", path, err)
 				return filepath.SkipDir
@@ -234,7 +235,39 @@ func (t *Tracks) DeleteTrack(id string) error {
 	fmt.Printf("%s map: %v", id, t.cache)
 	fmt.Printf("map: %v", t.cache)
 	shared.Send("track deleted", id)
+	t.deleteEmptyDirectories(id)
 	return err
+}
+
+func (t *Tracks) deleteEmptyDirectories(id string) {
+	parts := strings.Split(id, string(filepath.Separator))
+	if len(parts) == 0 {
+		return
+	}
+	counter := 1
+	directory := filepath.Join(parts[:len(parts)-counter]...)
+	file, err := os.Open(filepath.Join(t.basePath, directory))
+	if err != nil {
+		log.Printf("could not check whether directory is empty: %v", err)
+		return
+	}
+	_, err = file.Readdirnames(1)
+	_ = file.Close()
+	for err == io.EOF && counter < len(parts) {
+		_ = file.Close()
+		log.Printf("deleting %v", directory)
+		_ = os.RemoveAll(filepath.Join(t.basePath, directory))
+		counter = counter + 1
+		directory = filepath.Join(parts[:len(parts)-counter]...)
+		file, err = os.Open(filepath.Join(t.basePath, directory))
+		if err != nil {
+			log.Printf("could not check whether directory is empty: %v", err)
+			return
+		}
+		_, err = file.Readdirnames(1)
+		log.Printf("%s %v", directory, err)
+	}
+	_ = file.Close()
 }
 
 type trackDescriptor struct {

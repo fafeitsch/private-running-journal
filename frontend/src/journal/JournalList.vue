@@ -48,44 +48,6 @@ const entries = computed(() => {
   return result;
 });
 
-const journalMenu = ref();
-const deleteConfirm = ref();
-const moreMenuOpenedOn = ref<{ entryId: string; event: Event } | undefined>(undefined);
-
-const menuItems = ref<MenuItem[]>([
-  {
-    icon: "pi pi-trash",
-    label: t("shared.delete"),
-    command: () => {
-      setTimeout(() => {
-        if (!moreMenuOpenedOn.value) {
-          return;
-        }
-        deleteConfirm.value.show(new Event("click"), moreMenuOpenedOn.value.event.target);
-      });
-    },
-  },
-]);
-
-function openMoreMenu(entryId: string, event: Event) {
-  if (moreMenuOpenedOn.value && moreMenuOpenedOn.value.entryId !== entryId) {
-    journalMenu.value.hide(event);
-    moreMenuOpenedOn.value = undefined
-  } else {
-    moreMenuOpenedOn.value = { entryId, event };
-    journalMenu.value.show(event);
-  }
-}
-
-function deleteEntry() {
-  if (!moreMenuOpenedOn.value) {
-    return;
-  }
-  journalApi.deleteEntry(moreMenuOpenedOn.value.entryId);
-  store.deleteEntry(moreMenuOpenedOn.value.entryId);
-  deleteConfirm.value.hide();
-  moreMenuOpenedOn.value = undefined;
-}
 </script>
 
 <template>
@@ -125,20 +87,8 @@ function deleteEntry() {
           <span class="pi pi-exclamation-triangle"></span>{{ t("journal.noTrack") }}
         </div>
       </RouterLink>
-      <Button
-        class="flex-shrink-0"
-        text
-        rounded
-        icon="pi pi-ellipsis-v"
-        :id="entry.id"
-        @click.stop.prevent="openMoreMenu(entry.id || 'root', $event)"
-      ></Button>
     </li>
   </ul>
-  <Menu ref="journalMenu" :model="menuItems" popup></Menu>
-  <OverlayPanel ref="deleteConfirm">
-    <Button @click="deleteEntry()">{{ t("shared.delete") }}</Button>
-  </OverlayPanel>
 </template>
 
 <style scoped>
