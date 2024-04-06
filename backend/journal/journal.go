@@ -13,12 +13,11 @@ import (
 )
 
 type ListEntry struct {
-	Id          string   `json:"id"`
-	Date        string   `json:"date"`
-	ParentNames []string `json:"trackParents"`
-	TrackName   string   `json:"trackName"`
-	Length      int      `json:"length"`
-	trackId     string
+	Id        string `json:"id"`
+	Date      string `json:"date"`
+	TrackName string `json:"trackName"`
+	Length    int    `json:"length"`
+	trackId   string
 }
 
 type entryFile struct {
@@ -63,14 +62,12 @@ func New(baseDirectory string) (*Journal, error) {
 		},
 	)
 	shared.RegisterHandler(
-		"tracks deleted", func(data ...any) {
-			deletedTracks, ok := data[0].(map[string]bool)
+		"track deleted", func(data ...any) {
+			deletedTrack, ok := data[0].(string)
 			if !ok {
 				panic(fmt.Errorf("received unexpected type for event \"track deleted\": %v", data[0]))
 			}
-			for key := range deletedTracks {
-				delete(result.tracks, key)
-			}
+			delete(result.tracks, deletedTrack)
 		},
 	)
 	group.Wait()
@@ -168,7 +165,6 @@ func (j *Journal) readListEntry(path string) (ListEntry, error) {
 	}
 	listEntry := ListEntry{Id: entry.Id, Date: entry.Date}
 	if entry.Track != nil {
-		listEntry.ParentNames = entry.Track.ParentNames
 		listEntry.TrackName = entry.Track.Name
 		listEntry.Length = entry.Track.Length * entry.Laps
 		listEntry.trackId = entry.LinkedTrack

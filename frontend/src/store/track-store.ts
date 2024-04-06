@@ -13,61 +13,30 @@ export const useTrackStore = defineStore("tacks", () => {
     availableTracks.value = await trackApi.getTracks();
   }
 
-  function findTrack(id: string) {
-    const findTrack: (acc: tracks.Track | undefined, node: Track) => tracks.Track | undefined = (
-      acc: tracks.Track | undefined,
-      node: Track,
-    ) => {
-      if (acc) {
-        return acc;
-      }
-      if (node.id === id) {
-        return node;
-      }
-      return node.variants.reduce(findTrack, undefined);
-    };
-    return findTrack;
-  }
-
   const selectedTrack = computed(() => {
     if (!selectedTrackId.value) {
       return undefined;
     }
 
-    return availableTracks.value.reduce(findTrack(selectedTrackId.value), undefined);
+    return availableTracks.value.find((t) => t.id === selectedTrackId.value);
   });
 
-  function addTrack(track: Track, parentKey?: string) {
-    if (!parentKey) {
-      availableTracks.value.push(track);
-      availableTracks.value.sort((a, b) => a.name.localeCompare(b.name));
-      return;
-    }
-    const parent = availableTracks.value.reduce(findTrack(parentKey), undefined);
-    if (!parent) {
-      return;
-    }
-    parent.variants.push(track);
-    parent.variants.sort((a, b) => a.name.localeCompare(b.name));
+  function addTrack(track: Track) {
+    availableTracks.value.push(track);
   }
 
   function updateTrack(track: Track) {
-    const existing = availableTracks.value.reduce(findTrack(track.id!), undefined);
+    const existing = availableTracks.value.find((t) => t.id === track.id);
     if (!existing) {
       return;
     }
     existing.name = track.name;
     existing.length = track.length;
-    existing.parentNames = track.parentNames;
-    existing.variants = track.variants;
     existing.usages = track.usages;
   }
 
   function deleteTrack(id: string) {
     availableTracks.value = availableTracks.value.filter((track) => track.id !== id);
-    availableTracks.value.forEach((track) => {
-      track.variants = track.variants.filter((v) => v.id !== id);
-    });
   }
 
   return {

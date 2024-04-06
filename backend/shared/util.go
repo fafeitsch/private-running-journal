@@ -18,8 +18,8 @@ func FindFreeFileName(base string) (string, error) {
 		)
 	}
 	id := ""
-	if modifier > 0 {
-		id = string(rune(modifier + 96))
+	if modifier > 1 {
+		id = string(rune(modifier - 1 + 96))
 	}
 	return base + id, nil
 }

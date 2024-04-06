@@ -13,6 +13,7 @@ import Button from "primevue/button";
 import { useTracksApi } from "../api/tracks";
 import { tracks } from "../../wailsjs/go/models";
 import OverlayPanel from "primevue/overlaypanel";
+import CreateEntryOverlay from "../journal/CreateEntryOverlay.vue";
 import Track = tracks.Track;
 
 const trackStore = useTrackStore();
@@ -20,16 +21,7 @@ const { availableTracks, selectedTrackId } = storeToRefs(trackStore);
 const { t } = useI18n();
 const tracksApi = useTracksApi();
 
-const selectableTracks = computed(() => [
-  {
-    label: t("tracks.title"),
-    selectable: false,
-    key: "root",
-    type: "root",
-    expandedIcon: "",
-    children: tracksToTreeNodes(availableTracks.value, true),
-  },
-]);
+const selectableTracks = computed(() => tracksToTreeNodes(availableTracks.value, true));
 
 const selection = ref<TreeSelectionKeys>({});
 
@@ -73,50 +65,35 @@ function selectNode(node: TreeNode) {
 }
 
 const treeNodeMenu = ref();
-const moreMenuOpenedOn = ref<{ track: Track | "root"; event: any } | undefined>(undefined);
+const moreMenuOpenedOn = ref<{ track: Track; event: any } | undefined>(undefined);
 const addClickedOn = ref<{ parentId: string; target: HTMLElement } | undefined>(undefined);
 const deleteConfirm = ref();
 const deleteConfirmMessage = ref("");
 const menuItems = ref<MenuItem>([
   {
-    label: t("shared.add"),
-    icon: "pi pi-plus",
+    label: t("shared.delete"),
+    icon: "pi pi-trash",
     command: async (event: Event) => {
       if (!moreMenuOpenedOn.value) {
         return;
       }
-      let clickedTrack = moreMenuOpenedOn.value.track;
-      addClickedOn.value = {
-        target: moreMenuOpenedOn.value.event.target,
-        parentId: clickedTrack === "root" ? clickedTrack : clickedTrack.id,
+      const countChildren: (acc: number, track: Track) => number = (acc: number, track: Track) => {
+        return 0;
       };
+      const children = countChildren(-1, moreMenuOpenedOn.value.track);
+      deleteConfirmMessage.value = t("tracks.deleteConfirmation", {
+        children,
+        count: moreMenuOpenedOn.value.track.usages,
+      });
+      setTimeout(() =>
+        deleteConfirm.value.show(new Event("click"), moreMenuOpenedOn.value!.event.target),
+      );
     },
   },
 ]);
 
-const deleteItem = {
-  label: t("shared.delete"),
-  icon: "pi pi-trash",
-  command: async (event: Event) => {
-    if (!moreMenuOpenedOn.value || moreMenuOpenedOn.value.track === "root") {
-      return;
-    }
-    const countChildren: (acc: number, track: Track) => number = (acc: number, track: Track) => {
-      return track.variants.reduce(countChildren, acc + 1);
-    };
-    const children = countChildren(-1, moreMenuOpenedOn.value.track);
-    deleteConfirmMessage.value = t("tracks.deleteConfirmation", {
-      children,
-      count: moreMenuOpenedOn.value.track.usages,
-    });
-    setTimeout(() =>
-      deleteConfirm.value.show(new Event("click"), moreMenuOpenedOn.value!.event.target),
-    );
-  },
-};
-
 async function deleteTrack() {
-  if (!moreMenuOpenedOn.value || moreMenuOpenedOn.value.track === "root") {
+  if (!moreMenuOpenedOn.value) {
     return;
   }
   try {
@@ -129,16 +106,11 @@ async function deleteTrack() {
   }
 }
 
-function openMoreMenu(event: Event, track: Track | "root") {
-  if(moreMenuOpenedOn.value && moreMenuOpenedOn.value.track !== track) {
-    treeNodeMenu.value.hide()
-    moreMenuOpenedOn.value = undefined
-    return
-  }
-  if (track !== "root" && !menuItems.value.find((item: any) => item.icon === deleteItem.icon)) {
-    menuItems.value.push(deleteItem);
-  } else if (track === "root") {
-    menuItems.value = menuItems.value.filter((item: any) => item.icon !== deleteItem.icon);
+function openMoreMenu(event: Event, track: Track, isFolder: boolean) {
+  if (moreMenuOpenedOn.value && moreMenuOpenedOn.value.track !== track) {
+    treeNodeMenu.value.hide();
+    moreMenuOpenedOn.value = undefined;
+    return;
   }
   moreMenuOpenedOn.value = { track, event };
   treeNodeMenu.value.show(event);
@@ -146,6 +118,10 @@ function openMoreMenu(event: Event, track: Track | "root") {
 </script>
 
 <template>
+  <header class="flex justify-content-between align-items-center">
+    <span class="text-2xl">{{ $t("tracks.title") }}</span
+    ><CreateTrackOverlay></CreateTrackOverlay>
+  </header>
   <Tree
     class="h-full overflow-auto"
     :value="selectableTracks"
@@ -165,12 +141,13 @@ function openMoreMenu(event: Event, track: Track | "root") {
         text
         rounded
         icon="pi pi-ellipsis-v"
-        @click.stop.prevent="openMoreMenu($event, slotProps.node.data || 'root')"
+        @click.stop.prevent="
+          openMoreMenu($event, slotProps.node.data, !!slotProps.node.children?.length)
+        "
       ></Button>
     </template>
   </Tree>
   <Menu ref="treeNodeMenu" :model="menuItems" :popup="true"></Menu>
-  <CreateTrackOverlay :show-event="addClickedOn"></CreateTrackOverlay>
   <OverlayPanel ref="deleteConfirm">
     <div class="flex align-items-center gap-2">
       {{ deleteConfirmMessage }}

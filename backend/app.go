@@ -102,7 +102,7 @@ func (a *App) DeleteJournalEntry(id string) error {
 }
 
 func (a *App) GetTracks() []tracks.Track {
-	return a.tracks.RootTracks()
+	return a.tracks.Tracks()
 }
 
 func (a *App) GetGpxData(id string) (tracks.GpxData, error) {
@@ -117,8 +117,8 @@ func (a *App) CreateNewTrack(track tracks.CreateTrack) (*tracks.Track, error) {
 	return a.tracks.CreateTrack(track)
 }
 
-func (a *App) DeleteTrack(id string) (int, error) {
-	return a.tracks.DeleteTracks(id)
+func (a *App) DeleteTrack(id string) error {
+	return a.tracks.DeleteTrack(id)
 }
 
 func (a *App) SaveTrack(track tracks.SaveTrack) (*tracks.Track, error) {

@@ -69,7 +69,7 @@ watch(
       @node-select="(node) => (selectedTrack = node.data)"
     >
       <template #value="props">
-        {{ props.value[0]?.selectedLabel }}
+        {{ props.value[0]?.label}}
       </template>
     </TreeSelect>
   </InputGroup>

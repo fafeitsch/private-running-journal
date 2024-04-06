@@ -40,9 +40,8 @@ async function load() {
 const entries = computed(() => {
   const result = listEntries.value.map((entry) => ({
     ...entry,
-    parentName: (entry.trackParents || []).join(" / "),
     link: encodeURIComponent(entry.id),
-    trackError: !entry.trackParents && !entry.trackName && !entry.length,
+    trackError: !entry.trackName && !entry.length,
     length: (entry.length / 1000).toFixed(1),
   }));
   result.sort((a, b) => a.date.localeCompare(b.date));
@@ -107,7 +106,7 @@ function deleteEntry() {
       v-for="entry of entries"
       :key="entry.id"
       class="list-none p-0 m-0 flex"
-      v-tooltip="{ value: entry.parentName + ' ' + entry.trackName, showDelay: 500 }"
+      v-tooltip="{ value: entry.trackName, showDelay: 500 }"
     >
       <RouterLink
         v-ripple
@@ -119,10 +118,6 @@ function deleteEntry() {
           <span
             class="font-normal flex-shrink-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
             >{{ entry.trackName }}</span
-          >
-          <span
-            class="font-light text-sm flex-grow-1 flex-shrink-1 overflow-hidden white-space-nowrap text-overflow-ellipsis variant"
-            >{{ entry.parentName }}</span
           >
           <span class="font-medium">{{ entry.length }}&nbsp;km</span>
         </template>

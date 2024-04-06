@@ -25,7 +25,7 @@ export function useTracksApi() {
   function createTrack(track: CreateTrack): Promise<tracks.Track> {
     return CreateNewTrack(track);
   }
-  function deleteTrack(trackId: string): Promise<number> {
+  function deleteTrack(trackId: string): Promise<void> {
     return DeleteTrack(trackId);
   }
 

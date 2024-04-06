@@ -42,13 +42,6 @@ watch(
   { immediate: true },
 );
 
-const prefix = computed(() => {
-  if (!track) {
-    return "";
-  }
-  return track.value?.parentNames.join("/") || "";
-});
-
 const gpxData = ref<GpxData | undefined>(undefined);
 const tracksApi = useTracksApi();
 const editedWaypoints = ref<Coordinates[]>([]);
@@ -143,13 +136,6 @@ useLeaveConfirmation(dirty);
         <InputGroupAddon>
           <label for="nameInput">{{ t("tracks.name") }}</label>
         </InputGroupAddon>
-        <InputText
-          v-if="prefix"
-          :value="prefix"
-          class="flex-shrink-0 flex-grow-0 w-auto"
-          disabled
-          :pt="{ root: { size: prefix.length } }"
-        ></InputText>
         <InputText
           id="nameInput"
           v-model="track!.name"

@@ -8,6 +8,7 @@ import (
 	"github.com/fafeitsch/local-track-journal/backend/shared"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-gpx"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -15,12 +16,11 @@ import (
 )
 
 type Track struct {
-	Id          string   `json:"id"`
-	Length      int      `json:"length"`
-	Name        string   `json:"name"`
-	Variants    []*Track `json:"variants"`
-	ParentNames []string `json:"parentNames"`
-	Usages      int      `json:"usages"`
+	Id        string   `json:"id"`
+	Length    int      `json:"length"`
+	Name      string   `json:"name"`
+	Usages    int      `json:"usages"`
+	Hierarchy []string `json:"hierarchy"`
 }
 
 type Tracks struct {
@@ -35,21 +35,30 @@ func New(baseDir string) (*Tracks, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not create tracks directory: %v", err)
 	}
-	baseDirEntries, err := os.ReadDir(result.basePath)
-	if err != nil {
-		return nil, fmt.Errorf("could not read %s: %v", result.basePath, err)
-	}
 
-	for _, baseTrack := range baseDirEntries {
-		if !baseTrack.IsDir() {
-			continue
-		}
-		track, err := result.readTrack(filepath.Join(result.basePath, baseTrack.Name()), baseTrack.Name(), []string{})
-		if err != nil {
-			fmt.Printf("could not read %s, skipping it: %v", result.basePath, err)
-			continue
-		}
-		trackCache[track.Id] = &track
+	err = filepath.Walk(
+		result.basePath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				log.Printf("skipping directory \"%s\" because an error occurred: %v", path, err)
+				return filepath.SkipDir
+			}
+			if info.IsDir() || info.Name() != "info.json" {
+				return nil
+			}
+			parent := strings.Replace(path, "/"+info.Name(), "", 1)
+			relativePath := strings.Replace(parent, result.basePath+"/", "", 1)
+			log.Printf("relative path: %s", relativePath)
+			track, err := result.readTrack(parent, relativePath)
+			if err != nil {
+				log.Printf("skipping track \"%s\" because an error occurred: %v", path, err)
+				return filepath.SkipDir
+			}
+			result.cache[track.Id] = &track
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not read tracks: %v", err)
 	}
 	shared.RegisterHandler(
 		"journal entry changed", func(data ...any) {
@@ -72,17 +81,16 @@ func sendInitEvent(trackCache map[string]*Track) {
 	for _, track := range trackCache {
 		list = append(
 			list, shared.Track{
-				Id:          track.Id,
-				Length:      track.Length,
-				Name:        track.Name,
-				ParentNames: track.ParentNames,
+				Id:     track.Id,
+				Length: track.Length,
+				Name:   track.Name,
 			},
 		)
 	}
 	shared.Send("tracks initialized", list)
 }
 
-func (t *Tracks) readTrack(path string, relativePath string, parentNames []string) (Track, error) {
+func (t *Tracks) readTrack(path string, relativePath string) (Track, error) {
 	descriptorPath := filepath.Join(path, "info.json")
 	var baseDescriptor trackDescriptor
 	fileContent, err := os.Open(descriptorPath)
@@ -103,43 +111,23 @@ func (t *Tracks) readTrack(path string, relativePath string, parentNames []strin
 		}
 	}
 
-	subFiles, err := os.ReadDir(path)
-	variants := make([]*Track, 0, 0)
 	if err != nil {
 		return Track{}, err
 	}
 
-	for _, subFile := range subFiles {
-		if !subFile.IsDir() {
-			continue
-		}
-		parents := append(parentNames, baseDescriptor.Name)
-		variant, err := t.readTrack(
-			filepath.Join(path, subFile.Name()), filepath.Join(relativePath, subFile.Name()), parents,
-		)
-		if err != nil {
-			return Track{}, fmt.Errorf("could not read variant path %s of %s: %e", subFile.Name(), variant, err)
-		}
-		t.cache[variant.Id] = &variant
-		variants = append(variants, &variant)
-	}
+	hierarchy := strings.Split(relativePath, string(os.PathSeparator))
 	return Track{
-		Id:          relativePath,
-		Length:      length,
-		Name:        baseDescriptor.Name,
-		Variants:    variants,
-		ParentNames: parentNames,
+		Id:        relativePath,
+		Length:    length,
+		Name:      baseDescriptor.Name,
+		Hierarchy: hierarchy[:len(hierarchy)-1],
 	}, nil
 }
 
-func (t *Tracks) RootTracks() []Track {
-	result := make([]Track, 0, 0)
-	fmt.Printf("CACHE: %v", t.cache)
-	for key, value := range t.cache {
-		v := t.cache[key]
-		if len(value.ParentNames) == 0 {
-			result = append(result, *v)
-		}
+func (t *Tracks) Tracks() []Track {
+	result := make([]Track, 0)
+	for _, track := range t.cache {
+		result = append(result, *track)
 	}
 	return result
 }
@@ -147,12 +135,11 @@ func (t *Tracks) RootTracks() []Track {
 type SaveTrack struct {
 	Id        string        `json:"id,omitempty"`
 	Name      string        `json:"name,omitempty"`
-	Parents   []string      `json:"parents,omitempty"`
 	Waypoints []Coordinates `json:"waypoints,omitempty"`
 }
 
 func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
-	trackDirectory := path.Join(t.basePath, path.Join(track.Parents...), track.Id)
+	trackDirectory := path.Join(t.basePath, track.Id)
 	stat, err := os.Stat(trackDirectory)
 	if err != nil || !stat.IsDir() {
 		return nil, fmt.Errorf("derived track directory \"%s\" does not seems to exist: %v", trackDirectory, err)
@@ -183,13 +170,12 @@ func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
 	if err != nil {
 		return nil, err
 	}
-	existingTrack, err := t.readTrack(trackDirectory, track.Id, track.Parents)
+	existingTrack, err := t.readTrack(trackDirectory, track.Id)
 	shared.Send(
 		"track upserted", shared.Track{
-			Id:          existingTrack.Id,
-			Length:      existingTrack.Length,
-			Name:        existingTrack.Name,
-			ParentNames: existingTrack.ParentNames,
+			Id:     existingTrack.Id,
+			Length: existingTrack.Length,
+			Name:   existingTrack.Name,
 		},
 	)
 	return &existingTrack, err
@@ -201,14 +187,7 @@ type CreateTrack struct {
 }
 
 func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
-	parent, ok := t.cache[track.Parent]
-	if !ok && track.Parent != "" {
-		return nil, fmt.Errorf("there is no parent track with id %s", track.Parent)
-	}
-	parentId := ""
-	if track.Parent != "" {
-		parentId = parent.Id
-	}
+	parentId := track.Parent
 	trackPath, err := shared.FindFreeFileName(filepath.Join(t.basePath, parentId, strings.ToLower(track.Name)))
 	if err != nil {
 		return nil, err
@@ -231,77 +210,31 @@ func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
 		return nil, err
 	}
 	id := strings.Replace(trackPath, t.basePath+"/", "", 1)
-	parents := make([]string, 0)
-	if track.Parent != "" {
-		parents = make([]string, 0, len(parent.ParentNames))
-		copy(parents, parent.ParentNames)
-		parents = append(parents, parent.Name)
-	}
-	newTrack, err := t.readTrack(trackPath, id, parents)
+	newTrack, err := t.readTrack(trackPath, id)
 	if err != nil {
 		return nil, err
 	}
 	t.cache[newTrack.Id] = &newTrack
-	if track.Parent != "" {
-		parent.Variants = append(parent.Variants, &newTrack)
-	}
 	shared.Send(
 		"track upserted", shared.Track{
-			Id:          newTrack.Id,
-			Length:      newTrack.Length,
-			Name:        newTrack.Name,
-			ParentNames: newTrack.ParentNames,
+			Id:     newTrack.Id,
+			Length: newTrack.Length,
+			Name:   newTrack.Name,
 		},
 	)
 	return &newTrack, nil
 }
 
-func (t *Tracks) DeleteTracks(id string) (int, error) {
+func (t *Tracks) DeleteTrack(id string) error {
 	track, ok := t.cache[id]
 	if !ok {
-		return 0, nil
+		return nil
 	}
-	children := make(map[string]bool)
-	children[track.Id] = true
-	var findChildren func(variants []*Track)
-	findChildren = func(variants []*Track) {
-		for _, child := range variants {
-			children[child.Id] = true
-			findChildren(child.Variants)
-		}
-	}
-	findChildren(track.Variants)
 	err := os.RemoveAll(filepath.Join(t.basePath, track.Id))
 	fmt.Printf("%s map: %v", id, t.cache)
-	if err == nil {
-		for key := range children {
-			delete(t.cache, key)
-		}
-	}
-	parent := t.findParent(id)
-	if parent != nil {
-		variants := make([]*Track, 0, len(parent.Variants))
-		for _, variant := range parent.Variants {
-			if variant.Id != id {
-				variants = append(variants, variant)
-			}
-		}
-		parent.Variants = variants
-	}
 	fmt.Printf("map: %v", t.cache)
-	shared.Send("tracks deleted", children)
-	return len(children), err
-}
-
-func (t *Tracks) findParent(id string) *Track {
-	for _, track := range t.cache {
-		for _, variant := range track.Variants {
-			if variant.Id == id {
-				return t.cache[track.Id]
-			}
-		}
-	}
-	return nil
+	shared.Send("track deleted", id)
+	return err
 }
 
 type trackDescriptor struct {

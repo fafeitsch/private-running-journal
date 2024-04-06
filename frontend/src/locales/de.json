@@ -45,7 +45,10 @@
     "changeJournalWarning": "Die Strecke wird in {count} Journal-Einträgen verwendet. Wenn Sie die Strecke speichern, werden diese Einträge aktualisiert. Sie können die Strecke stattdessen klonen.",
     "title": "Strecken",
     "variant": "Variante",
-    "deleteConfirmation": "Die Strecke wird {count} mal verwendet und hat {children} Varianten."
+    "deleteConfirmation": "Die Strecke wird {count} mal verwendet und hat {children} Varianten.",
+    "createFolder": "Neues Verzeichnis anlegen",
+    "folder": "Verzeichnis",
+    "folderName": "Verzeichnisname"
   },
   "settings": {
     "mapSettings": {
