@@ -1,4 +1,4 @@
-module github.com/fafeitsch/local-track-journal
+module github.com/fafeitsch/private-running-journal
 
 go 1.21
 

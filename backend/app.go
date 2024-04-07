@@ -2,10 +2,10 @@ package backend
 
 import (
 	"context"
-	"github.com/fafeitsch/local-track-journal/backend/httpapi"
-	"github.com/fafeitsch/local-track-journal/backend/journal"
-	"github.com/fafeitsch/local-track-journal/backend/settings"
-	"github.com/fafeitsch/local-track-journal/backend/tracks"
+	"github.com/fafeitsch/private-running-journal/backend/httpapi"
+	"github.com/fafeitsch/private-running-journal/backend/journal"
+	"github.com/fafeitsch/private-running-journal/backend/settings"
+	"github.com/fafeitsch/private-running-journal/backend/tracks"
 	"log"
 	"net/http"
 	"os"
@@ -68,7 +68,7 @@ func (a *App) setupConfigDirectory() {
 	if len(os.Args) > 1 {
 		a.configDirectory = os.Args[1]
 	} else if homeDirErr == nil {
-		a.configDirectory = filepath.Join(homeDir, ".local-track-journal")
+		a.configDirectory = filepath.Join(homeDir, ".private-running-journal")
 	} else {
 		log.Fatalf(
 			"cannot read home directory, please specify one by providing a command line argument: %v", homeDirErr,

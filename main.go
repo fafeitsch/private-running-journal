@@ -2,7 +2,7 @@ package main
 
 import (
 	"embed"
-	"github.com/fafeitsch/local-track-journal/backend"
+	"github.com/fafeitsch/private-running-journal/backend"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -18,7 +18,7 @@ func main() {
 	// Create application with options
 	err := wails.Run(
 		&options.App{
-			Title:  "local-track-journal",
+			Title:  "Privates Lauftagebuch",
 			Width:  1024,
 			Height: 768,
 			AssetServer: &assetserver.Options{

@@ -89,6 +89,9 @@
   },
   "about": {
     "dependencies": "Diese Anwendung nutzt die folgenden Abhängigkeiten:",
-    "version": "Version"
+    "version": "Version",
+    "license": "Diese Projekt wurde unter der MIT-Lizenz veröffentlicht.",
+    "copyright": "Copyright © 2024 – jetzt, Fabian Feitsch",
+    "issuesAndQuestions": "Jegliche Mitarbeit am Projekt ist willkommen: "
   }
 }

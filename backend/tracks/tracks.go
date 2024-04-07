@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/local-track-journal/backend/shared"
+	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-gpx"
 	"io"

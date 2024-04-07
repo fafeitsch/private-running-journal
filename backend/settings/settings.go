@@ -3,7 +3,7 @@ package settings
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/local-track-journal/backend/shared"
+	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"os"
 	"path/filepath"
 )

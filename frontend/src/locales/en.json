@@ -89,6 +89,9 @@
   },
   "about": {
     "dependencies": "This app uses the following dependencies:",
-    "version": "Version"
+    "version": "Version",
+    "license": "This project is made available under the MIT license.",
+    "copyright": "Copyright © 2024 – present, Fabian Feitsch",
+    "issuesAndQuestions": "Every help with this project is welcome: "
   }
 }

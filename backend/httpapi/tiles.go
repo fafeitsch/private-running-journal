@@ -2,7 +2,7 @@ package httpapi
 
 import (
 	"fmt"
-	"github.com/fafeitsch/local-track-journal/backend/shared"
+	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"io"
 	"net/http"
 	"os"
@@ -62,7 +62,7 @@ func (t *TileServer) ServeHTTP(resp http.ResponseWriter, originalRequest *http.R
 	url = strings.Replace(url, "{y}", y, 1)
 	client := http.Client{Timeout: time.Second * 10}
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "github.com/fafeitsch/local-track-journal")
+	req.Header.Set("User-Agent", "github.com/fafeitsch/private-running-journal")
 	response, err := client.Do(req)
 	if err != nil {
 		http.Error(resp, "could not get tile from tile server", http.StatusInternalServerError)
