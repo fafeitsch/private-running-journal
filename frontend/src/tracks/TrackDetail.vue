@@ -17,6 +17,7 @@ import GpxData = tracks.GpxData;
 import SaveTrack = tracks.SaveTrack;
 import Coordinates = tracks.Coordinates;
 import OverlayPanel from "primevue/overlaypanel";
+import MoveTrackOverlay from './MoveTrackOverlay.vue';
 
 const route = useRoute();
 const tracksStore = useTrackStore();
@@ -63,7 +64,7 @@ watch(
       console.error(e);
     }
   },
-  { deep: true },
+  { deep: true,immediate: true },
 );
 
 const length = ref(0);
@@ -160,6 +161,7 @@ useLeaveConfirmation(dirty);
         </template>
       </ConfirmPopup>
       <Button icon="pi pi-trash" @click="deleteTrack"></Button>
+      <MoveTrackOverlay></MoveTrackOverlay>
     </div>
     <div class="flex gap-2">
       <InputGroup>

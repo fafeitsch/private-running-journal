@@ -232,11 +232,35 @@ func (t *Tracks) DeleteTrack(id string) error {
 		return nil
 	}
 	err := os.RemoveAll(filepath.Join(t.basePath, track.Id))
-	fmt.Printf("%s map: %v", id, t.cache)
-	fmt.Printf("map: %v", t.cache)
+	delete(t.cache, id)
 	shared.Send("track deleted", id)
 	t.deleteEmptyDirectories(id)
 	return err
+}
+
+func (t *Tracks) MoveTrack(id string, newPath string) (*Track, error) {
+	_, ok := t.cache[id]
+	if !ok {
+		return nil, fmt.Errorf("could not find track with id %s", id)
+	}
+	lastSegment := id[strings.LastIndex(id, string(filepath.Separator))+1:]
+	newDirPath := filepath.Join(t.basePath, newPath)
+	err := os.Rename(filepath.Join(t.basePath, id), filepath.Join(newDirPath, lastSegment))
+	if err != nil {
+		return nil, fmt.Errorf("could not move track: %v", err)
+	}
+	movedTrack, err := t.readTrack(filepath.Join(newDirPath, lastSegment), filepath.Join(newPath, lastSegment))
+	delete(t.cache, id)
+	t.cache[movedTrack.Id] = &movedTrack
+	t.deleteEmptyDirectories(id)
+	shared.Send(
+		"track moved", id, shared.Track{
+			Id:     movedTrack.Id,
+			Length: movedTrack.Length,
+			Name:   movedTrack.Name,
+		},
+	)
+	return &movedTrack, err
 }
 
 func (t *Tracks) deleteEmptyDirectories(id string) {

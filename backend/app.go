@@ -121,6 +121,10 @@ func (a *App) DeleteTrack(id string) error {
 	return a.tracks.DeleteTrack(id)
 }
 
+func (a *App) MoveTrack(id string, newPath string) (*tracks.Track, error) {
+	return a.tracks.MoveTrack(id, newPath)
+}
+
 func (a *App) SaveTrack(track tracks.SaveTrack) (*tracks.Track, error) {
 	return a.tracks.SaveTrack(track)
 }

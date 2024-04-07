@@ -70,6 +70,39 @@ func New(baseDirectory string) (*Journal, error) {
 			delete(result.tracks, deletedTrack)
 		},
 	)
+	shared.RegisterHandler(
+		"track moved", func(data ...any) {
+			oldId, ok1 := data[0].(string)
+			track, ok2 := data[1].(shared.Track)
+			if !ok1 || !ok2 {
+				panic(
+					fmt.Errorf(
+						"expected the old id and the new track as the two event params, but was %v and %v",
+						data[0],
+						data[1],
+					),
+				)
+			}
+			delete(result.tracks, oldId)
+			result.tracks[track.Id] = &track
+			entries, err := result.ReadEntries()
+			if err != nil {
+				log.Printf("could not update the existing entries after track was moved: %v", err)
+				return
+			}
+			for _, listEntry := range entries {
+				entry, err := result.ReadJournalEntry(listEntry.Id)
+				if entry.LinkedTrack == oldId {
+					entry.LinkedTrack = track.Id
+					entry.Track = &track
+					err = result.SaveEntry(entry)
+					if err != nil {
+						log.Printf("could not update track id of %s: %v", listEntry.Id, err)
+					}
+				}
+			}
+		},
+	)
 	group.Wait()
 	err := os.MkdirAll(result.baseDirectory, os.ModePerm)
 	if err != nil {

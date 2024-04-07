@@ -31,6 +31,7 @@ const settingsApi = useSettingsApi()
 
 async function saveSettings() {
   try {
+    console.log(settings.value)
     await settingsApi.saveSettings(settings.value)
     settingsStore.settings = settings.value
     dirty.value = false
@@ -137,33 +138,33 @@ async function saveSettings() {
               <InputGroupAddon>
                 <label for="latInput">{{ t("settings.mapSettings.mapPosition.latitude") }}</label>
               </InputGroupAddon>
-              <InputText
+              <InputNumber
                 v-model="settings.mapSettings.center[0]"
                 id="latInput"
                 @update:model-value="dirty = true"
-              ></InputText>
+              ></InputNumber>
             </InputGroup>
             <InputGroup>
               <InputGroupAddon>
                 <label for="lonInput">{{ t("settings.mapSettings.mapPosition.longitude") }}</label>
               </InputGroupAddon>
-              <InputText
+              <InputNumber
                 v-model="settings.mapSettings.center[1]"
                 id="lonInput"
                 @update:model-value="dirty = true"
-              ></InputText>
+              ></InputNumber>
             </InputGroup>
             <InputGroup>
               <InputGroupAddon>
                 <label for="zoomInput">{{ t("settings.mapSettings.mapPosition.zoom") }}</label>
               </InputGroupAddon>
-              <InputText
+              <InputNumber
                 v-model="settings.mapSettings.zoomLevel"
                 id="zoomInput"
                 :min="1"
                 :max="19"
                 @update:model-value="dirty = true"
-              ></InputText>
+              ></InputNumber>
             </InputGroup>
           </div>
         </div>

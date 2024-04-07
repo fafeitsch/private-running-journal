@@ -18,7 +18,6 @@ import { tracksToTreeNodes } from "../shared/track-utils";
 const { locale, t } = useI18n();
 
 const overlayPanel = ref();
-const name = ref<string>("");
 const error = ref<boolean>(false);
 
 const tracksApi = useTracksApi();
@@ -63,18 +62,17 @@ const forbiddenFolderName = computed(() => folderName.value.includes(".."));
 
 const router = useRouter();
 
-async function createEntry() {
-  if (!name.value || !folderName.value) {
+async function moveTrack() {
+  if (folderName.value === undefined || !selectedTrack.value) {
     return;
   }
   error.value = false;
 
   try {
-    const track = await tracksApi.createTrack({
-      name: name.value,
-      parent: folderName.value.startsWith("/") ? folderName.value.substring(1) : folderName.value,
-    });
-    tracksStore.addTrack(track);
+    let newPath = folderName.value.startsWith("/") ? folderName.value.substring(1) : folderName.value
+    const track = await tracksApi.moveTrack(selectedTrack.value.id,newPath);
+    tracksStore.deleteTrack(selectedTrack.value.id)
+    tracksStore.addTrack(track)
     router.push("/tracks/" + encodeURIComponent(track.id));
     overlayPanel.value.hide();
   } catch (e) {
@@ -85,15 +83,9 @@ async function createEntry() {
 </script>
 
 <template>
-  <Button icon="pi pi-plus" @click="(event) => overlayPanel.toggle(event)"></Button>
+  <Button icon="pi pi-arrow-right" @click="(event) => overlayPanel.toggle(event)"></Button>
   <OverlayPanel ref="overlayPanel">
     <div v-focustrap class="flex flex-column gap-2 overlay">
-      <InputGroup class="flex w-full">
-        <InputGroupAddon>
-          <label for="newTrackName">{{ t("tracks.name") }}</label>
-        </InputGroupAddon>
-        <InputText class="flex-grow-1" id="newTrackName" v-model="name" autofocus></InputText>
-      </InputGroup>
       <InputGroup class="flex w-full">
         <InputGroupAddon>
           <label for="parentInput" class="px-2">{{ t("tracks.folder") }}</label>
@@ -120,13 +112,13 @@ async function createEntry() {
       </InputGroup>
       <div class="flex gap-2">
         <InlineMessage v-if="error" class="flex-grow-1 flex-shrink-1" severity="error">{{
-          t("journal.createEntryError")
+          t("tracks.moveFailed")
         }}</InlineMessage>
         <span v-else class="flex-grow-1"></span>
         <Button
-          :label="t('shared.add')"
-          @click="createEntry"
-          :disabled="!name || forbiddenFolderName"
+          :label="t('tracks.move')"
+          @click="moveTrack"
+          :disabled="forbiddenFolderName"
         ></Button>
       </div>
     </div>

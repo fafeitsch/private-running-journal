@@ -49,7 +49,9 @@
     "deleteConfirmation": "Die Strecke wird {count} mal verwendet.",
     "createFolder": "Neues Verzeichnis anlegen",
     "folder": "Verzeichnis",
-    "folderName": "Verzeichnisname"
+    "folderName": "Verzeichnisname",
+    "move": "Verschieben",
+    "moveFailed": "Die Strecke konnte nicht verschoben werden."
   },
   "settings": {
     "mapSettings": {

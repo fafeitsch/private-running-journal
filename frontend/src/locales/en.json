@@ -49,7 +49,9 @@
     "deleteConfirmation": "The track is used {count} times.",
     "createFolder": "Create new folder",
     "folder": "Folder",
-    "folderName": "Folder name"
+    "folderName": "Folder name",
+    "move": "Move",
+    "moveFailed": "The track could not be moved."
   },
   "settings": {
     "mapSettings": {
