@@ -245,7 +245,11 @@ func (t *Tracks) MoveTrack(id string, newPath string) (*Track, error) {
 	}
 	lastSegment := id[strings.LastIndex(id, string(filepath.Separator))+1:]
 	newDirPath := filepath.Join(t.basePath, newPath)
-	err := os.Rename(filepath.Join(t.basePath, id), filepath.Join(newDirPath, lastSegment))
+	err := os.MkdirAll(newDirPath, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("could not create directories: %v", err)
+	}
+	err = os.Rename(filepath.Join(t.basePath, id), filepath.Join(newDirPath, lastSegment))
 	if err != nil {
 		return nil, fmt.Errorf("could not move track: %v", err)
 	}
