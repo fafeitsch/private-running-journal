@@ -84,6 +84,11 @@
       "port": {
         "label": "Port",
         "help": "For the internal tile server. Requires restart."
+      },
+      "language": {
+        "label": "Language",
+        "de": "German",
+        "en": "English"
       }
     }
   },

@@ -1,23 +1,26 @@
 <script lang="ts" setup>
-import {computed, onMounted, ref, watch} from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { TabMenuChangeEvent } from "primevue/tabmenu";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useJournalStore } from "./store/journal-store";
 import { useTrackStore } from "./store/track-store";
-import ConfirmDialog from 'primevue/confirmdialog';
+import ConfirmDialog from "primevue/confirmdialog";
+import { useSettingsStore } from "./store/settings-store";
 
-const { t } = useI18n();
-
-const sidebarVisible = ref(false);
-
-function toggleSidebar() {
-  sidebarVisible.value = !sidebarVisible.value;
-}
+const { t, locale } = useI18n();
 
 const journalStoreRef = storeToRefs(useJournalStore());
 const trackStoreRef = storeToRefs(useTrackStore());
+const { settings } = storeToRefs(useSettingsStore());
+
+watch(
+  () => settings.value.language,
+  (language) => {
+    locale.value = language;
+  },
+);
 
 const navItems = computed(() => [
   {
@@ -33,13 +36,13 @@ const navItems = computed(() => [
   {
     label: t("sidenav.settings"),
     icon: "pi pi-cog",
-    link: `/settings/`
+    link: `/settings/`,
   },
   {
     label: t("sidenav.about"),
     icon: "pi pi-info-circle",
-    link: `/about/`
-  }
+    link: `/about/`,
+  },
 ]);
 const active = ref(0);
 

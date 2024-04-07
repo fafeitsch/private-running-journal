@@ -15,10 +15,15 @@ func main() {
 	// Create an instance of the app structure
 	app := backend.NewApp()
 
+	title := "Private Running Journal"
+	if app.Language() == "de" {
+		title = "Privates Lauftagebuch"
+	}
+
 	// Create application with options
 	err := wails.Run(
 		&options.App{
-			Title:  "Privates Lauftagebuch",
+			Title:  title,
 			Width:  1024,
 			Height: 768,
 			AssetServer: &assetserver.Options{

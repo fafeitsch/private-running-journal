@@ -7,9 +7,9 @@ import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import { storeToRefs } from "pinia";
 import Button from "primevue/button";
+import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
+import { useSettingsApi } from "../api/settings";
 import AppSettings = settingsType.AppSettings;
-import {useLeaveConfirmation} from '../shared/use-leave-confirmation';
-import {useSettingsApi} from '../api/settings';
 
 const settingsStore = useSettingsStore();
 const { t } = useI18n();
@@ -26,17 +26,17 @@ watch(
 
 const dirty = ref(false);
 
-useLeaveConfirmation(dirty)
-const settingsApi = useSettingsApi()
+useLeaveConfirmation(dirty);
+const settingsApi = useSettingsApi();
 
 async function saveSettings() {
   try {
-    console.log(settings.value)
-    await settingsApi.saveSettings(settings.value)
-    settingsStore.settings = settings.value
-    dirty.value = false
-  }catch (e) {
-    console.error(e)
+    console.log(settings.value);
+    await settingsApi.saveSettings(settings.value);
+    settingsStore.settings = settings.value;
+    dirty.value = false;
+  } catch (e) {
+    console.error(e);
   }
 }
 </script>
@@ -48,24 +48,35 @@ async function saveSettings() {
       <Button icon="pi pi-save" :disabled="!dirty" @click="saveSettings"></Button>
     </header>
     <div class="flex flex-column gap-2 flex-grow-1 flex-shrink-1 overflow-auto">
-      <Panel
-        :header="t('settings.general.header')"
-        :pt="{ content: { class: 'flex flex-column gap-2' } }"
-      >
-        <InputGroup>
+      <Panel :header="t('settings.general.header')" :pt="{ content: { class: 'flex align-items-baseline gap-2' } }">
+        <InputGroup class="flex-grow-1 w-2">
           <InputGroupAddon>
-            <label for="portInput">{{ t("settings.general.port.label") }}</label>
+            <label for="languageInput">{{ t("settings.general.language.label") }}</label>
           </InputGroupAddon>
-          <InputNumber
-            id="portInput"
-            v-model="settings.httpPort"
-            :use-grouping="false"
+          <Dropdown
+            id="languageInput"
+            v-model="settings.language"
+            :options="['de', 'en']"
+            :option-label="(option: string) => t('settings.general.language.' + option)"
             @update:model-value="dirty = true"
-            :max="65535"
-          ></InputNumber>
+          ></Dropdown>
         </InputGroup>
-        <div class="text-xs">
-          {{ t("settings.general.port.help") }}
+        <div class="flex flex-column gap-2 flex-grow-1">
+          <InputGroup>
+            <InputGroupAddon>
+              <label for="portInput">{{ t("settings.general.port.label") }}</label>
+            </InputGroupAddon>
+            <InputNumber
+              id="portInput"
+              v-model="settings.httpPort"
+              :use-grouping="false"
+              @update:model-value="dirty = true"
+              :max="65535"
+            ></InputNumber>
+          </InputGroup>
+          <div class="text-xs">
+            {{ t("settings.general.port.help") }}
+          </div>
         </div>
       </Panel>
       <Panel

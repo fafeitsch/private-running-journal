@@ -2,9 +2,11 @@
 
 The private running journal is a modern desktop app used to track one's running training.
 
+The project is currently in a beta state.
+
 ## Features
 
-* __Design Philosphy__: All data is only stored on the desktop itself. This is what sets this running journal apart from all the other similar apps in the web.
+* __Design Philosophy__: All data is only stored on the desktop itself. This is what sets this running journal apart from all the other similar apps in the web.
 * All data is stored as readable files in common formats. Thus, even without the app, the running journal's data is readable.
 * Creating and updating tracks
 * Creating journal entries after the training
@@ -13,6 +15,8 @@ The private running journal is a modern desktop app used to track one's running 
 ## Planned Features
 
 * Analytics of trainings
+* a lot of UI improvements
+* Windows and cross-platform copying of journal data (some "/" might be hardcoded at the moment ;)
 * Import and export of tracks via the UI (due to the open design principle, it's already possible to simply access the file system.)
 * Improved error handling (many errors are ignored in the current beta version)
 * many more …

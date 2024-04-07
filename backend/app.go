@@ -22,19 +22,24 @@ type App struct {
 	settings        *settings.Settings
 }
 
-// NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{}
-}
-
-func (a *App) Startup(ctx context.Context) {
+	a := &App{}
 	a.setupConfigDirectory()
-	a.ctx = ctx
 	var err error
 	a.settings, err = settings.New(a.configDirectory)
 	if err != nil {
 		log.Fatalf("could not read settings: %v", err)
 	}
+	return a
+}
+
+func (a *App) Language() string {
+	return a.settings.AppSettings().Language
+}
+
+func (a *App) Startup(ctx context.Context) {
+	a.ctx = ctx
+	var err error
 	group := sync.WaitGroup{}
 	group.Add(2)
 	go func() {

@@ -1,8 +1,9 @@
 import { defineStore } from "pinia";
 import { settings } from "../../wailsjs/go/models";
-import { ref } from "vue";
+import {ref, watch} from "vue";
 import { useSettingsApi } from "../api/settings";
 import AppSettings = settings.AppSettings;
+import {useI18n} from 'vue-i18n';
 
 export const defaultSettings = {
   mapSettings: {
@@ -18,6 +19,8 @@ export const defaultSettings = {
 const settingsApi = useSettingsApi();
 export const useSettingsStore = defineStore("settings", () => {
   const settings = ref<AppSettings>(new AppSettings(defaultSettings));
+
+  const i18n = useI18n()
 
   async function loadSettings() {
     settings.value = await settingsApi.getSettings();

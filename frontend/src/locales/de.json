@@ -84,6 +84,11 @@
       "port": {
         "label": "Port",
         "help": "Für den internen TileServer. Benötigt Neustart."
+      },
+      "language": {
+        "label": "Sprache",
+        "de": "Deutsch",
+        "en": "Englisch"
       }
     }
   },
