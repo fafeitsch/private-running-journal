@@ -34,6 +34,11 @@ const navItems = computed(() => [
     label: t("sidenav.settings"),
     icon: "pi pi-cog",
     link: `/settings/`
+  },
+  {
+    label: t("sidenav.about"),
+    icon: "pi pi-info-circle",
+    link: `/about/`
   }
 ]);
 const active = ref(0);

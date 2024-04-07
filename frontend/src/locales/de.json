@@ -3,7 +3,8 @@
     "menu": "Menü",
     "journal": "Tagebuch",
     "tracks": "Strecken",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "about": "Über"
   },
   "journal": {
     "entries": "Einträge",
@@ -85,5 +86,9 @@
         "help": "Für den internen TileServer. Benötigt Neustart."
       }
     }
+  },
+  "about": {
+    "dependencies": "Diese Anwendung nutzt die folgenden Abhängigkeiten:",
+    "version": "Version"
   }
 }

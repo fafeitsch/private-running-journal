@@ -3,7 +3,8 @@
     "menu": "Menu",
     "journal": "Journal",
     "tracks": "Tracks",
-    "settings": "Settings"
+    "settings": "Settings",
+    "about": "About"
   },
   "journal": {
     "entries": "Entries",
@@ -85,5 +86,9 @@
         "help": "For the internal tile server. Requires restart."
       }
     }
+  },
+  "about": {
+    "dependencies": "This app uses the following dependencies:",
+    "version": "Version"
   }
 }

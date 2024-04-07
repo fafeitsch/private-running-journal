@@ -19,6 +19,7 @@ export const useMap = () => {
 
   function initMap(id: MaybeRefOrGetter<string>, mapContainer: Ref) {
     const mapSettings = settingsStore.settings.mapSettings;
+    //@ts-expect-error
     map = L.map(toValue(id), { editable: true }).setView(
       mapSettings.center as [number, number],
       mapSettings.zoomLevel,
@@ -80,18 +81,22 @@ export const useMap = () => {
       return;
     }
     trackLayer.removeEventListener({
+      //@ts-expect-error
       "editable:vertex:dragend": handleTrackEditEvent,
       "editable:vertex:new": handleTrackEditEvent,
       "editable:vertex:deleted": handleTrackEditEvent,
     });
     if (value) {
+      //@ts-expect-error
       trackLayer.enableEdit();
       trackLayer.addEventListener({
+        //@ts-expect-error
         "editable:vertex:dragend": handleTrackEditEvent,
         "editable:vertex:new": handleTrackEditEvent,
         "editable:vertex:deleted": handleTrackEditEvent,
       });
     } else {
+      //@ts-expect-error
       trackLayer.disableEdit();
     }
   }

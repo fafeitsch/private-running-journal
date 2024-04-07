@@ -15,6 +15,7 @@ import TrackPage from "./tracks/TrackPage.vue";
 import FocusTrap from 'primevue/focustrap';
 import SettingsPage from './settings/SettingsPage.vue';
 import {useSettingsStore} from './store/settings-store';
+import AboutPage from './about/AboutPage.vue';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -26,6 +27,7 @@ const router = createRouter({
     },
     { path: "/tracks/:trackId?", component: TrackPage },
     { path: "/settings", component: SettingsPage },
+    { path: "/about", component: AboutPage },
   ],
 });
 

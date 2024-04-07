@@ -5,3 +5,4 @@ frontend/dist
 /.idea
 /frontend/components.d.ts
 /appdata/tiles/
+/frontend/src/about/vendor.LICENSE.txt
