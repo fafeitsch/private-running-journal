@@ -69,7 +69,7 @@ function selectNode(node: TreeNode) {
     v-model:expanded-keys="expansion"
     selection-mode="single"
     @node-select="selectNode"
-    :pt="{ label: { class: 'w-full flex align-items-center overflow-hidden' } }"
+    :pt="{ label: { class: 'w-full flex align-items-center white-space-nowrap' } }"
   >
   </Tree>
 </template>

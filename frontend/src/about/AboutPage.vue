@@ -6,6 +6,7 @@ import { useI18n } from "vue-i18n";
 import {BrowserOpenURL} from '../../wailsjs/runtime';
 
 const version = __APP_VERSION__
+const commitHash = __COMMIT_HASH__
 
 const licenseInfo = ref(dependencyLicenses);
 const manualLicenseInfo = ref(manualDependencyLicenses);
@@ -18,7 +19,7 @@ function openGithub() {
 
 <template>
   <div class="p-2 flex flex-column gap-2 overflow-hidden">
-    <span>{{t('about.version')}}: <span class="bold">{{version}}</span></span>
+    <span>{{t('about.version')}}: <span class="bold">{{version}} &mdash; {{commitHash}}</span></span>
     <span>{{t('about.license')}}</span>
     <span>{{t('about.copyright')}}</span>
     <span>{{ t("about.issuesAndQuestions")}} <a @click="openGithub()">https://github.com/fafeitsch/private-running-journal</a> </span>

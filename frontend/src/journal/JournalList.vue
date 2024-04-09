@@ -78,7 +78,7 @@ const entries = computed(() => {
         ><span class="font-medium">{{ d(entry.date) }}</span>
         <template v-if="!entry.trackError">
           <span
-            class="font-normal flex-shrink-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
+            class="font-normal flex-shrink-1 flex-grow-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
             >{{ entry.trackName }}</span
           >
           <span class="font-medium">{{ entry.length }}&nbsp;km</span>
