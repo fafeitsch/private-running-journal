@@ -18,8 +18,8 @@ import TrackSelection from "./TrackSelection.vue";
 import { useJournalStore } from "../store/journal-store";
 import { storeToRefs } from "pinia";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
-import {useConfirm} from 'primevue/useconfirm';
-import ConfirmPopup from 'primevue/confirmpopup';
+import { useConfirm } from "primevue/useconfirm";
+import ConfirmPopup from "primevue/confirmpopup";
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -47,7 +47,7 @@ watch(
   { immediate: true },
 );
 
-async function loadEntry(entryId: string |  undefined) {
+async function loadEntry(entryId: string | undefined) {
   selectedEntry.value = undefined;
   error.value = false;
   loading.value = true;
@@ -55,7 +55,7 @@ async function loadEntry(entryId: string |  undefined) {
   if (!entryId) {
     await router.replace("/journal");
     selectedEntry.value = undefined;
-    selectedDate.value = new Date()
+    selectedDate.value = new Date();
     return;
   }
   try {
@@ -99,11 +99,11 @@ async function saveEntry() {
   }
 }
 
-const confirm = useConfirm()
+const confirm = useConfirm();
 
 async function deleteEntry(event: Event) {
-  if(!selectedEntry.value) {
-    return
+  if (!selectedEntry.value) {
+    return;
   }
   let resolveFn: (result: boolean) => void;
   const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
@@ -113,13 +113,13 @@ async function deleteEntry(event: Event) {
     header: t("shared.confirm.header"),
     accept: () => resolveFn(true),
     reject: () => resolveFn(false),
-    message: t("journal.deleteConfirmation" ),
+    message: t("journal.deleteConfirmation"),
     rejectLabel: t("shared.cancel"),
     acceptLabel: t("shared.delete"),
   });
   let choice = await result;
-  if(!choice) {
-    return
+  if (!choice) {
+    return;
   }
   try {
     await journalApi.deleteEntry(selectedEntry.value.id);
@@ -167,12 +167,8 @@ useLeaveConfirmation(dirty);
         <InputGroupAddon>
           <label for="date">{{ t("journal.details.date") }}</label>
         </InputGroupAddon>
-        <Calendar
-          id="date"
-          v-model="selectedDate"
-          :date-format="locale === 'de' ? 'dd.mm.yy' : 'yyyy/mm/dd'"
-          :disabled="true"
-        ></Calendar>
+        <!--suppress TypeScriptValidateTypes -->
+        <InputText disabled :value="d(selectedDate, 'long')"></InputText>
       </InputGroup>
       <TrackSelection
         v-model="selectedEntry!.track"

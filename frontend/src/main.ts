@@ -1,5 +1,5 @@
 import { createApp } from "vue";
-import PrimeVue from "primevue/config";
+import PrimeVue, { defaultOptions } from "primevue/config";
 import App from "./App.vue";
 import "./style.scss";
 import "primevue/resources/themes/aura-light-green/theme.css";
@@ -46,9 +46,21 @@ const i18n = createI18n({
         month: "2-digit",
         year: "numeric",
       },
+      long: {
+        weekday: "long",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      },
     },
     de: {
       default: {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      },
+      long: {
+        weekday: "long",
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -58,7 +70,9 @@ const i18n = createI18n({
 });
 
 createApp(App)
-  .use(PrimeVue)
+  .use(PrimeVue, {
+    locale: { ...defaultOptions.locale, firstDayOfWeek: 1 },
+  })
   .use(i18n)
   .use(router)
   .use(createPinia())
