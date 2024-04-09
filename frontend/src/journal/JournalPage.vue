@@ -23,7 +23,7 @@ const selectedEntry = computed(() => route.params["entryId"]);
     </SplitterPanel>
     <SplitterPanel class="flex align-items-center justify-content-center" :size="80">
       <JournalEntryDetail v-if="selectedEntry" class="h-full w-full"> </JournalEntryDetail>
-      <div v-else>{{ t("journal.emptyState") }}</div>
+      <div v-else class="p-2">{{ t("journal.emptyState") }}</div>
     </SplitterPanel>
   </Splitter>
 </template>

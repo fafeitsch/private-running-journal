@@ -47,48 +47,49 @@ const entries = computed(() => {
   result.sort((a, b) => a.date.localeCompare(b.date));
   return result;
 });
-
 </script>
 
 <template>
-  <header class="flex justify-content-between align-items-center">
-    <span class="text-2xl">{{ $t("journal.entries") }}</span
-    ><CreateEntryOverlay></CreateEntryOverlay>
-  </header>
-  <div v-if="loading" class="h-full flex flex-column justify-content-center">
-    <ProgressSpinner></ProgressSpinner>
+  <div class="h-full overflow-hidden flex flex-column">
+    <header class="flex justify-content-between align-items-center">
+      <span class="text-2xl">{{ $t("journal.entries") }}</span
+      ><CreateEntryOverlay></CreateEntryOverlay>
+    </header>
+    <div v-if="loading" class="flex-grow-1 flex-shrink-1 flex flex-column justify-content-center">
+      <ProgressSpinner></ProgressSpinner>
+    </div>
+    <Message v-else-if="error" severity="error" :closable="false"
+      ><div class="flex align-items-center">
+        <span>{{ t("journal.loadingError") }}</span>
+        <Button severity="danger" rounded text icon="pi pi-replay" @click="load"></Button></div
+    ></Message>
+    <ul v-else class="list-none p-0 mt-3 flex-grow-1 flex-shrink-1 overflow-auto">
+      <li
+        v-for="entry of entries"
+        :key="entry.id"
+        class="list-none p-0 m-0 flex"
+        v-tooltip="{ value: entry.trackName, showDelay: 500 }"
+      >
+        <RouterLink
+          v-ripple
+          class="flex-grow-1 flex-shrink-1 flex gap-1 cursor-pointer p-ripple transition-colors hover:surface-100 transition-duration-150 text-700 py-3 px-1"
+          :to="{ path: '/journal/' + entry.link }"
+          active-class="surface-200"
+          ><span class="font-medium">{{ d(entry.date, 'default') }}</span>
+          <template v-if="!entry.trackError">
+            <span
+              class="font-normal flex-shrink-1 flex-grow-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
+              >{{ entry.trackName }}</span
+            >
+            <span class="font-medium">{{ entry.length }}&nbsp;km</span>
+          </template>
+          <div v-else class="flex overflow-hidden ml-2 flex gap-2 text-red-500">
+            <span class="pi pi-exclamation-triangle"></span><span class="white-space-nowrap overflow-hidden text-overflow-ellipsis">{{ t("journal.noTrack") }}</span>
+          </div>
+        </RouterLink>
+      </li>
+    </ul>
   </div>
-  <Message v-else-if="error" severity="error" :closable="false"
-    ><div class="flex align-items-center">
-      <span>{{ t("journal.loadingError") }}</span>
-      <Button severity="danger" rounded text icon="pi pi-replay" @click="load"></Button></div
-  ></Message>
-  <ul v-else class="list-none p-0 mt-3 h-full overflow-auto">
-    <li
-      v-for="entry of entries"
-      :key="entry.id"
-      class="list-none p-0 m-0 flex"
-      v-tooltip="{ value: entry.trackName, showDelay: 500 }"
-    >
-      <RouterLink
-        v-ripple
-        class="flex-grow-1 flex-shrink-1 flex gap-1 cursor-pointer p-ripple transition-colors hover:surface-100 transition-duration-150 text-700 p-3"
-        :to="{ path: '/journal/' + entry.link }"
-        active-class="surface-200"
-        ><span class="font-medium">{{ d(entry.date) }}</span>
-        <template v-if="!entry.trackError">
-          <span
-            class="font-normal flex-shrink-1 flex-grow-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-            >{{ entry.trackName }}</span
-          >
-          <span class="font-medium">{{ entry.length }}&nbsp;km</span>
-        </template>
-        <div v-else class="ml-2 flex gap-2 text-red-500">
-          <span class="pi pi-exclamation-triangle"></span>{{ t("journal.noTrack") }}
-        </div>
-      </RouterLink>
-    </li>
-  </ul>
 </template>
 
 <style scoped>

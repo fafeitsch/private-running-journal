@@ -58,20 +58,22 @@ function selectNode(node: TreeNode) {
 </script>
 
 <template>
-  <header class="flex justify-content-between align-items-center">
-    <span class="text-2xl">{{ $t("tracks.title") }}</span
-    ><CreateTrackOverlay></CreateTrackOverlay>
-  </header>
-  <Tree
-    class="h-full overflow-auto"
-    :value="selectableTracks"
-    v-model:selection-keys="selection"
-    v-model:expanded-keys="expansion"
-    selection-mode="single"
-    @node-select="selectNode"
-    :pt="{ label: { class: 'w-full flex align-items-center white-space-nowrap' } }"
-  >
-  </Tree>
+  <div class="flex h-full flex-column overflow-hidden gap-2">
+    <header class="flex justify-content-between align-items-center">
+      <span class="text-2xl">{{ $t("tracks.title") }}</span
+      ><CreateTrackOverlay></CreateTrackOverlay>
+    </header>
+    <Tree
+      class="flex-grow-1 flex-shrink-1 overflow-auto"
+      :value="selectableTracks"
+      v-model:selection-keys="selection"
+      v-model:expanded-keys="expansion"
+      selection-mode="single"
+      @node-select="selectNode"
+      :pt="{ label: { class: 'w-full flex align-items-center white-space-nowrap' } }"
+    >
+    </Tree>
+  </div>
 </template>
 
 <style scoped></style>

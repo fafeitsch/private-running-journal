@@ -12,10 +12,10 @@ import JournalPage from "./journal/JournalPage.vue";
 import { createPinia } from "pinia";
 import ConfirmationService from "primevue/confirmationservice";
 import TrackPage from "./tracks/TrackPage.vue";
-import FocusTrap from 'primevue/focustrap';
-import SettingsPage from './settings/SettingsPage.vue';
-import {useSettingsStore} from './store/settings-store';
-import AboutPage from './about/AboutPage.vue';
+import FocusTrap from "primevue/focustrap";
+import SettingsPage from "./settings/SettingsPage.vue";
+import { useSettingsStore } from "./store/settings-store";
+import AboutPage from "./about/AboutPage.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -27,7 +27,10 @@ const router = createRouter({
     },
     { path: "/tracks/:trackId?", component: TrackPage },
     { path: "/settings", component: SettingsPage },
-    { path: "/about", component: AboutPage },
+    {
+      path: "/about",
+      component: AboutPage,
+    },
   ],
 });
 
@@ -36,6 +39,22 @@ const i18n = createI18n({
   locale: "de",
   fallbackLocale: "en", // set fallback locale
   messages: { en, de },
+  datetimeFormats: {
+    en: {
+      default: {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      },
+    },
+    de: {
+      default: {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      },
+    },
+  },
 });
 
 createApp(App)
@@ -44,9 +63,9 @@ createApp(App)
   .use(router)
   .use(createPinia())
   .use(ConfirmationService)
-  .directive('focustrap', FocusTrap)
+  .directive("focustrap", FocusTrap)
   .directive("tooltip", Tooltip)
   .directive("ripple", Ripple)
   .mount("#app");
 
-useSettingsStore().loadSettings()
+useSettingsStore().loadSettings();
