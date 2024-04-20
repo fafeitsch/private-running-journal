@@ -90,6 +90,19 @@
         "de": "Deutsch",
         "en": "Englisch"
       }
+    },
+    "git": {
+      "enabled": "Commit nach jeder Änderung",
+      "help": "Die Git Integration ermöglicht automatisiertes Sichern des Lauftagebuchs an andere Computer.",
+      "pushEnabled": "Push nach jeder Änderung",
+      "pullEnabled": "Pull beim Anwendungsstart",
+      "moreInformation": {
+        "title": "Mehr Informationen",
+        "header": "Die Git-Integration ist eine fortgeschrittene Funktionalität. Grundkenntnisse in Git sind nötig. Voraussetzungen, bevor Git aktiviert werden kann:",
+        "directory": "Das Anwendungs-Verzeichnis muss ein Git-Repository sein.",
+        "executable": "Git muss installiert und ausführbar sein.",
+        "pushPull": "Push- und Pull-Operationen müssen ohne Argumente und Prompts funktionieren (z.B. indem SSH-Zertifikate für die Authentifizierung verwendet werden)."
+      }
     }
   },
   "about": {

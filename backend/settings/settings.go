@@ -24,7 +24,7 @@ type AppSettings struct {
 }
 
 type GitSettings struct {
-	Enabled         bool `json:"Enabled"`
+	Enabled         bool `json:"enabled"`
 	PushAfterCommit bool `json:"pushAfterCommit"`
 	PullOnStartUp   bool `json:"pullOnStartUp"`
 }

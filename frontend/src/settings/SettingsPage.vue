@@ -9,6 +9,7 @@ import { storeToRefs } from "pinia";
 import Button from "primevue/button";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import { useSettingsApi } from "../api/settings";
+import GitIntegrationSettings from "./GitIntegrationSettings.vue";
 import AppSettings = settingsType.AppSettings;
 
 const settingsStore = useSettingsStore();
@@ -31,7 +32,6 @@ const settingsApi = useSettingsApi();
 
 async function saveSettings() {
   try {
-    console.log(settings.value);
     await settingsApi.saveSettings(settings.value);
     settingsStore.settings = settings.value;
     dirty.value = false;
@@ -48,7 +48,10 @@ async function saveSettings() {
       <Button icon="pi pi-save" :disabled="!dirty" @click="saveSettings"></Button>
     </header>
     <div class="flex flex-column gap-2 flex-grow-1 flex-shrink-1 overflow-auto">
-      <Panel :header="t('settings.general.header')" :pt="{ content: { class: 'flex align-items-baseline gap-2' } }">
+      <Panel
+        :header="t('settings.general.header')"
+        :pt="{ content: { class: 'flex align-items-baseline gap-2' } }"
+      >
         <InputGroup class="flex-grow-1 w-2">
           <InputGroupAddon>
             <label for="languageInput">{{ t("settings.general.language.label") }}</label>
@@ -180,6 +183,7 @@ async function saveSettings() {
           </div>
         </div>
       </Panel>
+      <GitIntegrationSettings v-model="settings.gitSettings" @update:model-value="dirty = true" />
     </div>
   </div>
 </template>

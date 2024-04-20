@@ -90,6 +90,19 @@
         "de": "German",
         "en": "English"
       }
+    },
+    "git": {
+      "enabled": "Commit after every change",
+      "help": "The Git Integration allows to secure the running journal to other computers.",
+      "pushEnabled": "Push after every change",
+      "pullEnabled": "Pull on start up",
+      "moreInformation": {
+        "title": "More information",
+        "header": "The Git integration is an advanced feature. Basic knowledge in Git is necessary. Requirements before enabling Git:",
+        "directory": "The app directory must be a Git repository.",
+        "executable": "Git must be installed and executable.",
+        "pushPull": "Push- and Pull-Operations must work without further arguments or prompts (e.g. by using SSH-certificates for authentication)."
+      }
     }
   },
   "about": {

@@ -13,6 +13,12 @@ export const defaultSettings = {
     center: [0, 0],
     zoomLevel: 0,
   },
+  gitSettings: {
+    enabled: false,
+    pullOnStartUp: false,
+    pushAfterCommit: false,
+  },
+  language: "en",
   httpPort: 47836,
 };
 
