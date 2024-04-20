@@ -111,7 +111,7 @@ func New(baseDirectory string) (*Journal, error) {
 	entries, err := result.ReadEntries()
 	if err == nil {
 		for _, entry := range entries {
-			shared.Send("journal entry changed", shared.JournalEntry{}, shared.JournalEntry{TrackId: entry.trackId})
+			shared.Send("journal entry loaded", shared.JournalEntry{TrackId: entry.trackId})
 		}
 	} else {
 		return nil, err

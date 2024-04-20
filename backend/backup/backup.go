@@ -17,27 +17,27 @@ func Init(baseDirectory string, enabled bool, push bool) *Backup {
 	result := &Backup{baseDirectory: baseDirectory, enabled: enabled, push: push}
 	shared.RegisterHandler(
 		"track moved", func(data ...any) {
-			result.doBackup("move track")
+			go result.doBackup("move track")
 		},
 	)
 	shared.RegisterHandler(
 		"track deleted", func(data ...any) {
-			result.doBackup("delete track")
+			go result.doBackup("delete track")
 		},
 	)
 	shared.RegisterHandler(
 		"track upserted", func(data ...any) {
-			result.doBackup("upsert track")
+			go result.doBackup("upsert track")
 		},
 	)
 	shared.RegisterHandler(
 		"journal entry changed", func(data ...any) {
-			result.doBackup("change journal entry")
+			go result.doBackup("change journal entry")
 		},
 	)
 	shared.RegisterHandler(
 		"settings changed", func(data ...any) {
-			result.doBackup("change settings")
+			go result.doBackup("change settings")
 		},
 	)
 	shared.RegisterHandler(

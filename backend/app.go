@@ -33,10 +33,15 @@ func NewApp() *App {
 		log.Fatalf("could not read settings: %v", err)
 	}
 	a.backup = backup.Init(
-		a.configDirectory,
-		a.settings.GitSettings().Enabled,
-		a.settings.GitSettings().PushAfterCommit,
+		a.configDirectory, a.settings.GitSettings().Enabled, a.settings.GitSettings().PushAfterCommit,
 	)
+	if a.settings.GitSettings().Enabled && a.settings.GitSettings().PullOnStartUp {
+		log.Printf("pulling")
+		err = a.backup.Pull()
+		if err != nil {
+			log.Fatalf("could not pull: %v", err)
+		}
+	}
 	return a
 }
 
@@ -48,12 +53,6 @@ func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	shared.Context = ctx
 	var err error
-	if a.settings.GitSettings().Enabled && a.settings.GitSettings().PullOnStartUp {
-		err = a.backup.Pull()
-		if err != nil {
-			log.Fatalf("could not pull: %v", err)
-		}
-	}
 	group := sync.WaitGroup{}
 	group.Add(2)
 	go func() {
@@ -80,6 +79,7 @@ func (a *App) Startup(ctx context.Context) {
 			log.Fatalf("could not start tile server: %v", err)
 		}
 	}()
+	log.Printf("start up")
 }
 
 func (a *App) setupConfigDirectory() {

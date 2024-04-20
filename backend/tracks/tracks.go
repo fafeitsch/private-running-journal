@@ -61,6 +61,14 @@ func New(baseDir string) (*Tracks, error) {
 		return nil, fmt.Errorf("could not read tracks: %v", err)
 	}
 	shared.RegisterHandler(
+		"journal entry loaded", func(data ...any) {
+			entry := data[0].(shared.JournalEntry)
+			if track, ok := trackCache[entry.TrackId]; ok {
+				track.Usages = track.Usages + 1
+			}
+		},
+	)
+	shared.RegisterHandler(
 		"journal entry changed", func(data ...any) {
 			old := data[0].(shared.JournalEntry)
 			nevv := data[1].(shared.JournalEntry)
