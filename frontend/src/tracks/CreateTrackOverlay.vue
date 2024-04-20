@@ -64,7 +64,7 @@ const forbiddenFolderName = computed(() => folderName.value.includes(".."));
 const router = useRouter();
 
 async function createEntry() {
-  if (!name.value || !folderName.value) {
+  if (!name.value) {
     return;
   }
   error.value = false;

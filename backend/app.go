@@ -48,7 +48,7 @@ func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	shared.Context = ctx
 	var err error
-	if a.settings.GitSettings().PullOnStartUp {
+	if a.settings.GitSettings().Enabled && a.settings.GitSettings().PullOnStartUp {
 		err = a.backup.Pull()
 		if err != nil {
 			log.Fatalf("could not pull: %v", err)
