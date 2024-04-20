@@ -35,7 +35,8 @@
     "cancel": "Abbrechen",
     "save": "Speichern",
     "add": "Hinzufügen",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "gitError": "Fehler beim Ausführen von Git."
   },
   "tracks": {
     "name": "Streckenname",

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import { useI18n } from "vue-i18n";
 import { TabMenuChangeEvent } from "primevue/tabmenu";
 import { useRoute, useRouter } from "vue-router";
@@ -8,6 +8,9 @@ import { useJournalStore } from "./store/journal-store";
 import { useTrackStore } from "./store/track-store";
 import ConfirmDialog from "primevue/confirmdialog";
 import { useSettingsStore } from "./store/settings-store";
+import {EventsOn} from '../wailsjs/runtime';
+import {useToast} from 'primevue/usetoast';
+import Toast from 'primevue/toast'
 
 const { t, locale } = useI18n();
 
@@ -61,6 +64,14 @@ watch(
     }
   },
 );
+
+const toast = useToast();
+
+onMounted(() => {
+  EventsOn("git-error", (stack: string) => {
+    toast.add({closable: true, detail: stack, severity: 'error', summary: t('shared.gitError')})
+  })
+})
 </script>
 
 <template>
@@ -76,6 +87,7 @@ watch(
     </div>
   </div>
   <ConfirmDialog group="leave"></ConfirmDialog>
+  <Toast></Toast>
 </template>
 
 <style></style>

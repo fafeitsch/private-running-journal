@@ -23,8 +23,6 @@ watch(
 const gitDescription = ref();
 
 function moreInformationShown() {
-  console.log("test");
-  console.log(gitDescription.value);
   setTimeout(() => gitDescription.value?.scrollIntoView({ behavior: "smooth" }), 300);
 }
 </script>

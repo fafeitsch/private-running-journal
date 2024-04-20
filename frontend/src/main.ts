@@ -16,6 +16,7 @@ import FocusTrap from "primevue/focustrap";
 import SettingsPage from "./settings/SettingsPage.vue";
 import { useSettingsStore } from "./store/settings-store";
 import AboutPage from "./about/AboutPage.vue";
+import ToastService from 'primevue/toastservice';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -77,6 +78,7 @@ createApp(App)
   .use(router)
   .use(createPinia())
   .use(ConfirmationService)
+  .use(ToastService)
   .directive("focustrap", FocusTrap)
   .directive("tooltip", Tooltip)
   .directive("ripple", Ripple)

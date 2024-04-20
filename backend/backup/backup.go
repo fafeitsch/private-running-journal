@@ -2,6 +2,7 @@ package backup
 
 import (
 	"github.com/fafeitsch/private-running-journal/backend/shared"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"log"
 	"os/exec"
 )
@@ -56,33 +57,37 @@ func (b *Backup) doBackup(message string) {
 	if !b.enabled {
 		return
 	}
-	out, err := exec.Command("git", "-C", b.baseDirectory, "add", "--all").Output()
+	out, err := exec.Command("git", "-C", b.baseDirectory, "add", "--all").CombinedOutput()
 	log.Print(string(out))
 	if err != nil {
+		runtime.EventsEmit(shared.Context, "git-error", string(out))
 		log.Printf("Failed to execute git add command: %v", err)
 		return
 	}
-	out, err = exec.Command("git", "-C", b.baseDirectory, "commit", "-m", message).Output()
+	out, err = exec.Command("git", "-C", b.baseDirectory, "commit", "-m", message).CombinedOutput()
 	log.Print(string(out))
 	if err != nil {
+		runtime.EventsEmit(shared.Context, "git-error", string(out))
 		log.Printf("Failed to execute git commit command: %v", err)
 		return
 	}
 	if !b.push {
 		return
 	}
-	out, err = exec.Command("git", "-C", b.baseDirectory, "push").Output()
+	out, err = exec.Command("git", "-C", b.baseDirectory, "push").CombinedOutput()
 	log.Print(string(out))
 	if err != nil {
+		runtime.EventsEmit(shared.Context, "git-error", string(out))
 		log.Printf("Failed to execute git push command: %v", err)
 		return
 	}
 }
 
 func (b *Backup) Pull() error {
-	out, err := exec.Command("git", "-C", b.baseDirectory, "pull").Output()
+	out, err := exec.Command("git", "-C", b.baseDirectory, "pull").CombinedOutput()
 	log.Print(string(out))
 	if err != nil {
+		runtime.EventsEmit(shared.Context, "git-error", string(out))
 		return err
 	}
 	return nil

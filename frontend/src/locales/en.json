@@ -35,7 +35,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "add": "Add",
-    "delete": "Delete"
+    "delete": "Delete",
+    "gitError": "Error while executing Git."
   },
   "tracks": {
     "name": "Track name",

@@ -1,10 +1,15 @@
 package shared
 
-import "log"
+import (
+	"context"
+	"log"
+)
 
 type Handler func(data ...any)
 
 var handlers = make(map[string][]Handler)
+
+var Context context.Context
 
 func RegisterHandler(name string, handler Handler) {
 	_, ok := handlers[name]

@@ -6,6 +6,7 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
 	"github.com/fafeitsch/private-running-journal/backend/journal"
 	"github.com/fafeitsch/private-running-journal/backend/settings"
+	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"github.com/fafeitsch/private-running-journal/backend/tracks"
 	"log"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"sync"
 )
 
-// App struct
 type App struct {
 	ctx             context.Context
 	configDirectory string
@@ -46,6 +46,7 @@ func (a *App) Language() string {
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+	shared.Context = ctx
 	var err error
 	if a.settings.GitSettings().PullOnStartUp {
 		err = a.backup.Pull()
