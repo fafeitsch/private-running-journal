@@ -20,6 +20,13 @@ type AppSettings struct {
 	MapSettings MapSettings `json:"mapSettings"`
 	HttpPort    int         `json:"httpPort"`
 	Language    string      `json:"language"`
+	GitSettings GitSettings `json:"gitSettings"`
+}
+
+type GitSettings struct {
+	Enabled         bool `json:"Enabled"`
+	PushAfterCommit bool `json:"pushAfterCommit"`
+	PullOnStartUp   bool `json:"pullOnStartUp"`
 }
 
 type Settings struct {
@@ -67,8 +74,15 @@ func (s *Settings) SaveSettings(settings AppSettings) error {
 		shared.Send("tile-server-changed", settings.MapSettings.TileServer)
 	}
 	if settings.MapSettings.CacheTiles != s.appSettings.MapSettings.CacheTiles {
-		shared.Send("tile-server-cache-enabled-changed", settings.MapSettings.CacheTiles)
+		shared.Send("tile-server-cache-Enabled-changed", settings.MapSettings.CacheTiles)
 	}
+	if settings.GitSettings.Enabled != s.appSettings.GitSettings.Enabled {
+		shared.Send("git enablement changed", settings.GitSettings.Enabled)
+	}
+	if settings.GitSettings.PushAfterCommit != s.appSettings.GitSettings.PushAfterCommit {
+		shared.Send("git push changed", settings.GitSettings.PushAfterCommit)
+	}
+	shared.Send("settings changed")
 	s.appSettings = settings
 	return nil
 }
@@ -80,3 +94,5 @@ func (s *Settings) AppSettings() AppSettings {
 func (s *Settings) MapSettings() MapSettings {
 	return s.appSettings.MapSettings
 }
+
+func (s *Settings) GitSettings() GitSettings { return s.appSettings.GitSettings }

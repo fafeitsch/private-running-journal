@@ -48,7 +48,6 @@ func New(baseDir string) (*Tracks, error) {
 			}
 			parent := strings.Replace(path, "/"+info.Name(), "", 1)
 			relativePath := strings.Replace(parent, result.basePath+"/", "", 1)
-			log.Printf("relative path: %s", relativePath)
 			track, err := result.readTrack(parent, relativePath)
 			if err != nil {
 				log.Printf("skipping track \"%s\" because an error occurred: %v", path, err)
@@ -233,8 +232,8 @@ func (t *Tracks) DeleteTrack(id string) error {
 	}
 	err := os.RemoveAll(filepath.Join(t.basePath, track.Id))
 	delete(t.cache, id)
-	shared.Send("track deleted", id)
 	t.deleteEmptyDirectories(id)
+	shared.Send("track deleted", id)
 	return err
 }
 

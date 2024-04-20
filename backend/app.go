@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"github.com/fafeitsch/private-running-journal/backend/backup"
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
 	"github.com/fafeitsch/private-running-journal/backend/journal"
 	"github.com/fafeitsch/private-running-journal/backend/settings"
@@ -20,6 +21,7 @@ type App struct {
 	tracks          *tracks.Tracks
 	journal         *journal.Journal
 	settings        *settings.Settings
+	backup          *backup.Backup
 }
 
 func NewApp() *App {
@@ -30,6 +32,11 @@ func NewApp() *App {
 	if err != nil {
 		log.Fatalf("could not read settings: %v", err)
 	}
+	a.backup = backup.Init(
+		a.configDirectory,
+		a.settings.GitSettings().Enabled,
+		a.settings.GitSettings().PushAfterCommit,
+	)
 	return a
 }
 
@@ -40,6 +47,12 @@ func (a *App) Language() string {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	var err error
+	if a.settings.GitSettings().PullOnStartUp {
+		err = a.backup.Pull()
+		if err != nil {
+			log.Fatalf("could not pull: %v", err)
+		}
+	}
 	group := sync.WaitGroup{}
 	group.Add(2)
 	go func() {

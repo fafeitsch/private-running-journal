@@ -264,8 +264,11 @@ func (j *Journal) DeleteEntry(key string) error {
 		return nil
 	}
 	journalPath := filepath.Join(j.baseDirectory, key)
-	shared.Send("journal entry changed", shared.JournalEntry{TrackId: entry.trackId}, shared.JournalEntry{})
-	return os.RemoveAll(journalPath)
+	err = os.RemoveAll(journalPath)
+	if err == nil {
+		shared.Send("journal entry changed", shared.JournalEntry{TrackId: entry.trackId}, shared.JournalEntry{})
+	}
+	return err
 }
 
 var pathRegex = regexp.MustCompile("(\\d\\d\\d\\d)/(\\d\\d)/(\\d\\d)[a-z]?")
