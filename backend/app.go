@@ -45,6 +45,10 @@ func NewApp() *App {
 	return a
 }
 
+func (a *App) HeadlessMode() bool {
+	return a.settings.AppSettings().HeadlessMode
+}
+
 func (a *App) Language() string {
 	return a.settings.AppSettings().Language
 }
@@ -79,6 +83,7 @@ func (a *App) Startup(ctx context.Context) {
 			log.Fatalf("could not start tile server: %v", err)
 		}
 	}()
+	log.Printf("use headless mode: %v", a.HeadlessMode())
 	log.Printf("start up")
 }
 

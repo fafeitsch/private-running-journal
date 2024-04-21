@@ -30,7 +30,12 @@ export const useSettingsStore = defineStore("settings", () => {
 
   async function loadSettings() {
     settings.value = await settingsApi.getSettings();
+    i18n.locale.value = settings.value.language
   }
+
+  watch(() => settings.value.language, (language) => {
+    i18n.locale.value = language
+  })
 
   return { settings, loadSettings };
 });

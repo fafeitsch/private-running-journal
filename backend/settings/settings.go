@@ -17,10 +17,11 @@ type MapSettings struct {
 }
 
 type AppSettings struct {
-	MapSettings MapSettings `json:"mapSettings"`
-	HttpPort    int         `json:"httpPort"`
-	Language    string      `json:"language"`
-	GitSettings GitSettings `json:"gitSettings"`
+	MapSettings  MapSettings `json:"mapSettings"`
+	HttpPort     int         `json:"httpPort"`
+	Language     string      `json:"language"`
+	GitSettings  GitSettings `json:"gitSettings"`
+	HeadlessMode bool        `json:"headlessMode"`
 }
 
 type GitSettings struct {
@@ -49,8 +50,9 @@ func (s *Settings) initSettings() error {
 			ZoomLevel:   6,
 			Center:      [2]float64{51.330, 10.453},
 		},
-		HttpPort: 47836,
-		Language: "en",
+		HttpPort:     47836,
+		Language:     "en",
+		HeadlessMode: false,
 	}
 	_, err := os.Stat(s.settingsFile)
 	if nil == err {

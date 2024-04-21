@@ -45,7 +45,7 @@ async function saveSettings() {
   <div class="px-4 flex flex-column gap-2">
     <header class="flex gap-2 align-items-center">
       <h2 class="text-xl">{{ t("sidenav.settings") }}</h2>
-      <Button icon="pi pi-save" :disabled="!dirty" @click="saveSettings"></Button>
+      <Button icon="pi pi-save" :disabled="!dirty" @click="saveSettings" data-testid="save-settings-button"></Button>
     </header>
     <div class="flex flex-column gap-2 flex-grow-1 flex-shrink-1 overflow-auto">
       <Panel
@@ -62,6 +62,7 @@ async function saveSettings() {
             :options="['de', 'en']"
             :option-label="(option: string) => t('settings.general.language.' + option)"
             @update:model-value="dirty = true"
+            data-testid="language-input"
           ></Dropdown>
         </InputGroup>
         <div class="flex flex-column gap-2 flex-grow-1">

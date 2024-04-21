@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"github.com/fafeitsch/private-running-journal/backend"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed all:frontend/dist
@@ -31,6 +33,12 @@ func main() {
 			},
 			BackgroundColour: options.NewRGB(uint8(255), uint8(255), uint8(255)),
 			OnStartup:        app.Startup,
+			OnDomReady: func(ctx context.Context) {
+				if !app.HeadlessMode() {
+					runtime.Show(ctx)
+				}
+			},
+			StartHidden: true,
 			Bind: []interface{}{
 				app,
 			},
