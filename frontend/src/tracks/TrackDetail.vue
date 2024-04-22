@@ -13,16 +13,15 @@ import Button from "primevue/button";
 import ConfirmPopup from "primevue/confirmpopup";
 import { useConfirm } from "primevue/useconfirm";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
+import MoveTrackOverlay from "./MoveTrackOverlay.vue";
 import GpxData = tracks.GpxData;
 import SaveTrack = tracks.SaveTrack;
 import Coordinates = tracks.Coordinates;
-import OverlayPanel from "primevue/overlaypanel";
-import MoveTrackOverlay from './MoveTrackOverlay.vue';
 
 const route = useRoute();
 const tracksStore = useTrackStore();
 const { selectedTrackId, selectedTrack } = storeToRefs(tracksStore);
-const { t } = useI18n();
+const { t, n } = useI18n();
 const dirty = ref(false);
 
 const track = ref<Omit<tracks.Track, "convertValues"> | undefined>(undefined);
@@ -64,11 +63,11 @@ watch(
       console.error(e);
     }
   },
-  { deep: true,immediate: true },
+  { deep: true, immediate: true },
 );
 
 const length = ref(0);
-const formattedLength = computed(() => (length.value / 1000).toFixed(1));
+const formattedLength = computed(() => n(length.value / 1000, {maximumFractionDigits: 1, minimumFractionDigits: 1}));
 
 function trackChanged(props: { length: number; waypoints: Coordinates[] }) {
   length.value = props.length;
@@ -121,8 +120,8 @@ async function saveTrack(event: any) {
 }
 
 async function deleteTrack(event: Event) {
-  if(!track.value) {
-    return
+  if (!track.value) {
+    return;
   }
   let resolveFn: (result: boolean) => void;
   const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
@@ -137,8 +136,8 @@ async function deleteTrack(event: Event) {
     acceptLabel: t("shared.delete"),
   });
   let choice = await result;
-  if(!choice) {
-    return
+  if (!choice) {
+    return;
   }
   try {
     await tracksApi.deleteTrack(track.value.id);
@@ -154,13 +153,24 @@ useLeaveConfirmation(dirty);
 <template>
   <div v-if="track" class="w-full p-2 flex flex-column h-full gap-2">
     <div class="flex gap-2">
-      <Button icon="pi pi-save" :disabled="!dirty" @click="saveTrack"></Button>
+      <Button
+        icon="pi pi-save"
+        :disabled="!dirty"
+        @click="saveTrack"
+        :v-tooltip="t('shared.save')"
+        :aria-label="t('shared.save')"
+      ></Button>
       <ConfirmPopup group="track">
         <template #message="{ message }">
           <div style="max-width: 330px" class="p-2">{{ message.message }}</div>
         </template>
       </ConfirmPopup>
-      <Button icon="pi pi-trash" @click="deleteTrack"></Button>
+      <Button
+        icon="pi pi-trash"
+        @click="deleteTrack"
+        :v-tooltip="t('shared.delete')"
+        :aria-label="t('shared.delete')"
+      ></Button>
       <MoveTrackOverlay></MoveTrackOverlay>
     </div>
     <div class="flex gap-2">
@@ -176,9 +186,9 @@ useLeaveConfirmation(dirty);
       </InputGroup>
       <InputGroup class="flex-grow-0 w-2">
         <InputGroupAddon>
-          <label for="nameInput">{{ t("tracks.usages") }}</label>
+          <label for="usagesInput">{{ t("tracks.usages") }}</label>
         </InputGroupAddon>
-        <InputText id="nameInput" v-model="track!.usages"></InputText>
+        <InputText id="usagesInput" disabled v-model="track!.usages"></InputText>
       </InputGroup>
     </div>
     <div class="flex gap-2 align-items-center">

@@ -70,7 +70,10 @@ function selectNode(node: TreeNode) {
       v-model:expanded-keys="expansion"
       selection-mode="single"
       @node-select="selectNode"
-      :pt="{ label: { class: 'w-full flex align-items-center white-space-nowrap' } }"
+      :pt="{
+        label: { class: 'w-full flex align-items-center white-space-nowrap', 'data-testid': 'track-tree-node' },
+        toggler: {'data-testid': 'track-tree-node-toggler'}
+      }"
     >
     </Tree>
   </div>

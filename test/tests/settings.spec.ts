@@ -16,6 +16,13 @@ test('should show app in correct language', async ({ page }) => {
   await page.getByTestId(settingsSelectors.saveButton).click()
   await expect(page.getByTestId(globalSelectors.settingsTab)).toContainText('Settings')
 
-  const settings = JSON.parse(fs.readFileSync('testdata/settings.json') as any)
+  let settings = JSON.parse(fs.readFileSync('testdata/settings.json') as any)
   expect(settings.language).toEqual('en')
+  await expect(page.getByTestId(settingsSelectors.language)).toContainText('English')
+  await page.getByTestId(settingsSelectors.language).click()
+  await page.getByLabel('German').click()
+  await page.getByTestId(settingsSelectors.saveButton).click()
+  await expect(page.getByTestId(globalSelectors.settingsTab)).toContainText('Einstellungen')
+  settings = JSON.parse(fs.readFileSync('testdata/settings.json') as any)
+  expect(settings.language).toEqual('de')
 });
