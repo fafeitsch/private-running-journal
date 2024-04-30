@@ -33,7 +33,7 @@ export const useMap = () => {
 
   function createDistanceMarker(dm: tracks.DistanceMarker) {
     const icon = L.divIcon({
-      html: `${(dm.distance / 1000).toFixed(0)}`,
+      html: `<span data-testid="distance-marker">${(dm.distance / 1000).toFixed(0)}</span>`,
       className: "distance-marker",
       iconAnchor: [18, 18],
     });

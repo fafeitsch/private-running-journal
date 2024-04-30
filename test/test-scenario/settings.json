@@ -3,7 +3,7 @@
     "tileServer": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     "attribution": "\u0026copy; \u003ca href=\"http://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e",
     "cacheTiles": false,
-    "zoomLevel": 6,
+    "zoomLevel": 16,
     "center": [
       51.33,
       10.453

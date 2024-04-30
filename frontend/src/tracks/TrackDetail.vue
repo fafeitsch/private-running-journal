@@ -188,7 +188,7 @@ useLeaveConfirmation(dirty);
         <InputGroupAddon>
           <label for="usagesInput">{{ t("tracks.usages") }}</label>
         </InputGroupAddon>
-        <InputText id="usagesInput" disabled v-model="track!.usages"></InputText>
+        <InputText id="usagesInput" disabled :value="`${track!.usages}`"></InputText>
       </InputGroup>
     </div>
     <div class="flex gap-2 align-items-center">

@@ -2,7 +2,7 @@
 import OverlayPanel from "primevue/overlaypanel";
 import InlineMessage from "primevue/inlinemessage";
 import Button from "primevue/button";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useJournalStore } from "../store/journal-store";
 import { useRouter } from "vue-router";
@@ -44,7 +44,7 @@ const folders = computed(() => {
 const folderSelection = ref<{}>({});
 const selectedFolder = computed(() => Object.keys(folderSelection.value)[0]);
 
-watch(selectedTrack, value => {
+watch(selectedTrack, (value) => {
   if (!value) {
     return;
   }
@@ -85,7 +85,12 @@ async function createEntry() {
 </script>
 
 <template>
-  <Button icon="pi pi-plus" @click="(event) => overlayPanel.toggle(event)"></Button>
+  <Button
+    icon="pi pi-plus"
+    @click="(event) => overlayPanel.toggle(event)"
+    :aria-label="t('shared.add')"
+    :v-tooltip="t('shared.add')"
+  ></Button>
   <OverlayPanel ref="overlayPanel">
     <div v-focustrap class="flex flex-column gap-2 overlay">
       <InputGroup class="flex w-full">
@@ -127,6 +132,7 @@ async function createEntry() {
           :label="t('shared.add')"
           @click="createEntry"
           :disabled="!name || forbiddenFolderName"
+          data-testid="create-empty-track-button"
         ></Button>
       </div>
     </div>

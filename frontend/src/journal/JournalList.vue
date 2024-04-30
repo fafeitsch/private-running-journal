@@ -11,11 +11,10 @@ import { storeToRefs } from "pinia";
 import { MenuItem } from "primevue/menuitem";
 import { useJournalApi } from "../api/journal";
 
-const { t, d } = useI18n();
+const { t, d, n } = useI18n();
 const loading = ref(false);
 const error = ref<boolean>(false);
 const store = useJournalStore();
-const journalApi = useJournalApi();
 const { listEntries } = storeToRefs(store);
 
 const route = useRoute();
@@ -42,7 +41,7 @@ const entries = computed(() => {
     ...entry,
     link: encodeURIComponent(entry.id),
     trackError: !entry.trackName && !entry.length,
-    length: (entry.length / 1000).toFixed(1),
+    length: n(entry.length / 1000, {maximumFractionDigits: 1, minimumFractionDigits: 1}),
   }));
   result.sort((a, b) => a.date.localeCompare(b.date));
   return result;
@@ -69,6 +68,7 @@ const entries = computed(() => {
         :key="entry.id"
         class="list-none p-0 m-0 flex"
         v-tooltip="{ value: entry.trackName, showDelay: 500 }"
+        data-testid="journal-entry-item"
       >
         <RouterLink
           v-ripple

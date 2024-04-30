@@ -7,8 +7,8 @@ import { onMounted, ref, toRefs, watch } from "vue";
 import { shared } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import type { TreeNode } from "primevue/treenode";
+import { tracksToTreeNodes } from "../shared/track-utils";
 import Track = shared.Track;
-import {tracksToTreeNodes} from '../shared/track-utils';
 
 const { t } = useI18n();
 const tracksApi = useTracksApi();
@@ -22,7 +22,7 @@ const availableTracks = ref<TreeNode[]>([]);
 onMounted(async () => {
   try {
     const tracks = await tracksApi.getTracks();
-    availableTracks.value = tracksToTreeNodes(tracks)
+    availableTracks.value = tracksToTreeNodes(tracks);
   } catch (e) {
     // todo error handling
     console.error(e);
@@ -49,7 +49,7 @@ watch(
 <template>
   <InputGroup>
     <InputGroupAddon class="flex gap-2">
-      <label for="track">{{ t("journal.details.track") }}</label>
+      <label for="track-select">{{ t("journal.details.track") }}</label>
       <span
         v-if="!selectedTrack && linkedTrack"
         class="text-red-500 pi pi-exclamation-triangle"
@@ -60,16 +60,26 @@ watch(
       ></span>
     </InputGroupAddon>
     <TreeSelect
-      id="track"
+      id="track-select"
       v-model="selectedEntry"
       selection-mode="single"
       :options="availableTracks"
       placeholder="Select Item"
       class="md:w-20rem w-full"
       @node-select="(node) => (selectedTrack = node.data)"
+      data-testid="track-selection"
+      :pt="{
+        tree: {
+          label: {
+            class: 'w-full flex align-items-center white-space-nowrap',
+            'data-testid': 'track-tree-selection-node',
+          },
+          toggler: { 'data-testid': 'track-tree-selection-node-toggler' },
+        },
+      }"
     >
       <template #value="props">
-        {{ props.value[0]?.label}}
+        {{ props.value[0]?.label }}
       </template>
     </TreeSelect>
   </InputGroup>
