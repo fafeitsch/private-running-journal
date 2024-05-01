@@ -156,10 +156,10 @@ useLeaveConfirmation(dirty);
     >
       <div class="flex gap-2">
         <Button icon="pi pi-save" :disabled="!dirty" @click="saveEntry"></Button>
-        <Button icon="pi pi-trash" @click="deleteEntry($event)"></Button>
+        <Button icon="pi pi-trash" @click="deleteEntry($event)" :aria-label="t('shared.delete')" :v-tooltip="t('shared.delete')"></Button>
         <ConfirmPopup group="journal">
           <template #message="{ message }">
-            <div style="max-width: 330px" class="p-2">{{ message.message }}</div>
+            <div style="max-width: 330px" class="p-2" data-testid="delete-journal-entry-confirmation">{{ message.message }}</div>
           </template>
         </ConfirmPopup>
       </div>

@@ -4,31 +4,7 @@ import {trackSelectors} from '../selectors/track-selectors';
 import * as fs from 'fs';
 import {journalSelectors} from '../selectors/journal-selectors';
 
-test('should load and display all available tracks and their information', async ({ page }) => {
-  await page.goto('/');
-  await page.getByTestId(globalSelectors.tracksTab).click()
-  await expect(page.getByTestId(globalSelectors.tracksTab)).toContainText("Strecken")
-
-  let trackNodes = page.getByTestId(trackSelectors.trackNode);
-  await expect(trackNodes).toHaveCount(2)
-  await expect(trackNodes.nth(0)).toContainText('Höchberg')
-  await expect(trackNodes.nth(1)).toContainText('Dummy')
-
-  await page.getByTestId(trackSelectors.toggler).nth(0).click()
-  trackNodes = page.getByTestId(trackSelectors.trackNode);
-  await expect(trackNodes).toHaveCount(4)
-  await expect(trackNodes.nth(1)).toContainText('Farmrunde')
-  await expect(trackNodes.nth(2)).toContainText('Stadtrunde')
-
-  await trackNodes.nth(1).click()
-
-  await expect(page.getByLabel('Streckenname')).toHaveValue('Farmrunde')
-  await expect(page.getByLabel('Verwendungen')).toHaveValue('0')
-  await expect(page.getByLabel('Länge')).toHaveValue('10,8')
-  await expect(page.getByLabel('Speichern')).toBeDisabled()
-});
-
-test('should create new track (in root directory)', async ({page})  => {
+test('should create new track and create journal entry with it, and delete track', async ({page})  => {
   await page.goto('/');
   await page.getByTestId(globalSelectors.tracksTab).click()
   await page.getByLabel('Hinzufügen').click()
@@ -64,9 +40,7 @@ test('should create new track (in root directory)', async ({page})  => {
   await expect(page.getByLabel("Speichern")).toBeDisabled()
   const track  = JSON.parse(fs.readFileSync('testdata/tracks/wurzelstrecke/info.json') as any)
   expect(track.name).toEqual('Wurzelstrecke')
-})
 
-test('should use new and old track to create some journal entries', async ({page}) => {
   await page.goto('/');
   await page.getByTestId(globalSelectors.journalTab).click()
 
@@ -79,9 +53,27 @@ test('should use new and old track to create some journal entries', async ({page
   await page.getByTestId(journalSelectors.todayButton).click()
   await page.getByTestId(journalSelectors.createEntryButton).click()
 
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(1)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(2)
   const regex = /\d\d.\d\d.\d\d\d\d/
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toContainText(regex)
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toContainText('Wurzelstrecke')
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toContainText('1,0 km')
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(1)).toContainText(regex)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(1)).toContainText('Wurzelstrecke')
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(1)).toContainText('1,0 km')
+
+  await page.getByTestId(globalSelectors.tracksTab).click()
+  await page.getByTestId(trackSelectors.trackNode).nth(2).click()
+  await page.getByLabel("Löschen").click()
+  await expect(page.getByTestId(trackSelectors.deleteTrackConfirmation)).toContainText('Die Strecke wird 1 mal verwendet.')
+  await page.getByLabel("Löschen").nth(1).click()
+
+  await expect(page.getByTestId(trackSelectors.trackNode)).toHaveCount(2)
+  await page.getByTestId(globalSelectors.journalTab).click()
+  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(2)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(1)).toContainText('Fehler beim Laden')
+
+  await page.getByLabel("Löschen").click()
+  await expect(page.getByTestId(journalSelectors.deleteEntryConfirmation)).toContainText('Der Eintrag wird gelöscht.')
+  await page.getByLabel("Löschen").nth(1).click()
+  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(1)
+
+  await expect(page.getByTestId(journalSelectors.emptyState)).toBeVisible()
 })

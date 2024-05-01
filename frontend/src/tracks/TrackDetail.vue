@@ -162,7 +162,7 @@ useLeaveConfirmation(dirty);
       ></Button>
       <ConfirmPopup group="track">
         <template #message="{ message }">
-          <div style="max-width: 330px" class="p-2">{{ message.message }}</div>
+          <div style="max-width: 330px" class="p-2" data-testid="delete-track-confirmation">{{ message.message }}</div>
         </template>
       </ConfirmPopup>
       <Button
