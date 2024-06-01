@@ -1,0 +1,14 @@
+{
+  "mapSettings": {
+    "tileServer": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "attribution": "\u0026copy; \u003ca href=\"http://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e",
+    "cacheTiles": false,
+    "zoomLevel": 12,
+    "center": [
+      49,
+      10.453
+    ]
+  },
+  "httpPort": 47836,
+  "language": "de"
+}
