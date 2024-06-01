@@ -53,11 +53,11 @@ test('should create new track and create journal entry with it, and delete track
   await page.getByTestId(journalSelectors.todayButton).click()
   await page.getByTestId(journalSelectors.createEntryButton).click()
 
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(2)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(1)
   const regex = /\d\d.\d\d.\d\d\d\d/
-  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(1)).toContainText(regex)
-  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(1)).toContainText('Wurzelstrecke')
-  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(1)).toContainText('1,0 km')
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(0)).toContainText(regex)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(0)).toContainText('Wurzelstrecke')
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(0)).toContainText('1,0 km')
 
   await page.getByTestId(globalSelectors.tracksTab).click()
   await page.getByTestId(trackSelectors.trackNode).nth(2).click()
@@ -67,13 +67,13 @@ test('should create new track and create journal entry with it, and delete track
 
   await expect(page.getByTestId(trackSelectors.trackNode)).toHaveCount(2)
   await page.getByTestId(globalSelectors.journalTab).click()
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(2)
-  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(1)).toContainText('Fehler beim Laden')
+  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(1)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).nth(0)).toContainText('Fehler beim Laden')
 
   await page.getByLabel("Löschen").click()
   await expect(page.getByTestId(journalSelectors.deleteEntryConfirmation)).toContainText('Der Eintrag wird gelöscht.')
   await page.getByLabel("Löschen").nth(1).click()
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(1)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(0)
 
   await expect(page.getByTestId(journalSelectors.emptyState)).toBeVisible()
 })

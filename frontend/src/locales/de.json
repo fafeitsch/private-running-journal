@@ -36,7 +36,9 @@
     "save": "Speichern",
     "add": "Hinzufügen",
     "delete": "Löschen",
-    "gitError": "Fehler beim Ausführen von Git."
+    "gitError": "Fehler beim Ausführen von Git.",
+    "previousMonth": "Vorheriger Monat",
+    "nextMonth": "Nächster Monat"
   },
   "tracks": {
     "name": "Streckenname",

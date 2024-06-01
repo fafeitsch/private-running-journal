@@ -36,7 +36,9 @@
     "save": "Save",
     "add": "Add",
     "delete": "Delete",
-    "gitError": "Error while executing Git."
+    "gitError": "Error while executing Git.",
+    "previousMonth": "Previous Month",
+    "nextMonth": "Next Month"
   },
   "tracks": {
     "name": "Track name",

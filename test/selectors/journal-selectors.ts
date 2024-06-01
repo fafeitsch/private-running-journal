@@ -5,5 +5,5 @@ export const journalSelectors = {
   trackSelectionItem: "track-tree-selection-node",
   todayButton: 'create-entry-today-button',
   journalEntryItem: 'journal-entry-item',
-  deleteEntryConfirmation: 'delete-journal-entry-confirmation'
+  deleteEntryConfirmation: 'delete-journal-entry-confirmation',
 }

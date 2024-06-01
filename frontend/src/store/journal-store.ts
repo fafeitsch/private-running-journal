@@ -2,29 +2,37 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { journal } from "../../wailsjs/go/models";
 import { useJournalApi } from "../api/journal";
-import {useRouter} from 'vue-router';
+import { useRouter } from "vue-router";
 
 export const useJournalStore = defineStore("journal", () => {
   const journalApi = useJournalApi();
   const listEntries = ref<journal.ListEntry[]>([]);
   const selectedEntryId = ref<string | undefined>(undefined);
-  const router = useRouter()
+  const selectedMonth = ref<Date>(new Date(new Date(new Date(new Date().setHours(0)).setMinutes(0)).setSeconds(0)),);
+  const router = useRouter();
 
-  async function loadEntries() {
+  async function loadEntries(start: string, end: string) {
     listEntries.value = [];
-    listEntries.value = await journalApi.getListEntries();
+    listEntries.value = await journalApi.getListEntries(start, end);
   }
 
   function addEntryToList(entry: journal.ListEntry) {
-    listEntries.value.push(entry);
+    let month = selectedMonth.value;
+    const clone = new Date(month.getTime());
+    const end = new Date(clone.setMonth(month.getMonth() + 1));
+
+    const date = Date.parse(entry.date);
+    if (date >= month.getTime() && date <= end.getTime()) {
+      listEntries.value.push(entry);
+    }
   }
 
   function deleteEntry(toDelete: string) {
     listEntries.value = listEntries.value.filter((entry) => toDelete !== entry.id);
     if (selectedEntryId.value === toDelete) {
-      router.replace('/journal')
+      router.replace("/journal");
     }
   }
 
-  return { listEntries, loadEntries, addEntryToList, selectedEntryId, deleteEntry };
+  return { listEntries, loadEntries, addEntryToList, selectedEntryId, deleteEntry, selectedMonth };
 });

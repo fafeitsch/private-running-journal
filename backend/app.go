@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/backup"
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
 	"github.com/fafeitsch/private-running-journal/backend/journal"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 type App struct {
@@ -105,24 +107,24 @@ func (a *App) setupConfigDirectory() {
 	log.Printf("setting app's home dir to %s", a.configDirectory)
 }
 
-func (a *App) GetJournalListEntries() ([]journal.ListEntry, error) {
-	//var startDate *time.Time
-	//if start != nil {
-	//	date, err := time.Parse("2006-01-02", *start)
-	//	if err != nil {
-	//		return []tracks.Track, fmt.Errorf("could not parse start date: %v", err)
-	//	}
-	//	startDate = &date
-	//}
-	//var endDate *time.Time
-	//if end != nil {
-	//	date, err := time.Parse("2006-01-02", *end)
-	//	if err != nil {
-	//		return []tracks.Track, fmt.Errorf("could not parse end date: %v", err)
-	//	}
-	//	endDate = &date
-	//}
-	return a.journal.ListEntries(nil, nil), nil
+func (a *App) GetJournalListEntries(start *string, end *string) ([]journal.ListEntry, error) {
+	var startDate *time.Time
+	if start != nil {
+		date, err := time.Parse(time.RFC3339, *start)
+		if err != nil {
+			return []journal.ListEntry{}, fmt.Errorf("could not parse start date: %v", err)
+		}
+		startDate = &date
+	}
+	var endDate *time.Time
+	if end != nil {
+		date, err := time.Parse(time.RFC3339, *end)
+		if err != nil {
+			return []journal.ListEntry{}, fmt.Errorf("could not parse end date: %v", err)
+		}
+		endDate = &date
+	}
+	return a.journal.ListEntries(startDate, endDate), nil
 }
 
 func (a *App) GetJournalEntry(id string) (journal.Entry, error) {

@@ -7,8 +7,8 @@ import {
 } from "../../wailsjs/go/backend/App";
 
 export function useJournalApi() {
-  async function getJournalEntries(): Promise<journal.ListEntry[]> {
-    return GetJournalListEntries();
+  async function getJournalEntries(start: string, end: string): Promise<journal.ListEntry[]> {
+    return GetJournalListEntries(start, end);
   }
   async function getJournalEntry(id: string): Promise<journal.Entry> {
     return GetJournalEntry(id);
