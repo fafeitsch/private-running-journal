@@ -106,7 +106,23 @@ func (a *App) setupConfigDirectory() {
 }
 
 func (a *App) GetJournalListEntries() ([]journal.ListEntry, error) {
-	return a.journal.ReadEntries()
+	//var startDate *time.Time
+	//if start != nil {
+	//	date, err := time.Parse("2006-01-02", *start)
+	//	if err != nil {
+	//		return []tracks.Track, fmt.Errorf("could not parse start date: %v", err)
+	//	}
+	//	startDate = &date
+	//}
+	//var endDate *time.Time
+	//if end != nil {
+	//	date, err := time.Parse("2006-01-02", *end)
+	//	if err != nil {
+	//		return []tracks.Track, fmt.Errorf("could not parse end date: %v", err)
+	//	}
+	//	endDate = &date
+	//}
+	return a.journal.ListEntries(nil, nil), nil
 }
 
 func (a *App) GetJournalEntry(id string) (journal.Entry, error) {
