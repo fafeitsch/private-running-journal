@@ -8,7 +8,7 @@ export const useJournalStore = defineStore("journal", () => {
   const journalApi = useJournalApi();
   const listEntries = ref<journal.ListEntry[]>([]);
   const selectedEntryId = ref<string | undefined>(undefined);
-  const selectedMonth = ref<Date>(new Date(new Date(new Date(new Date().setHours(0)).setMinutes(0)).setSeconds(0)),);
+  const selectedMonth = ref<Date>(getCurrentMonth());
   const router = useRouter();
 
   async function loadEntries(start: string, end: string) {
@@ -36,3 +36,8 @@ export const useJournalStore = defineStore("journal", () => {
 
   return { listEntries, loadEntries, addEntryToList, selectedEntryId, deleteEntry, selectedMonth };
 });
+
+function getCurrentMonth() {
+  const date = new Date();
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
