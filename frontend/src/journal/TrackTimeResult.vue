@@ -4,8 +4,7 @@ import InputGroupAddon from "primevue/inputgroupaddon";
 import InputNumber from "primevue/inputnumber";
 import InputText from "primevue/inputtext";
 import { useI18n } from "vue-i18n";
-import { computed, watch } from "vue";
-import { toRefs } from "vue";
+import { computed, toRefs } from "vue";
 
 const { t } = useI18n();
 
@@ -17,8 +16,8 @@ const props = defineProps<{ trackLength: number | undefined }>();
 const { trackLength } = toRefs(props);
 
 const formattedLength = computed(() => {
-  if(trackLength.value == null) {
-    return ''
+  if (trackLength.value == null) {
+    return "";
   }
   return ((laps.value * trackLength.value) / 1000).toFixed(1) + " km";
 });
@@ -63,7 +62,12 @@ const pace = computed(() => {
       <InputGroupAddon>
         <label for="laps">{{ t("journal.details.laps") }}</label>
       </InputGroupAddon>
-      <InputNumber id="laps" v-model="laps" :min="1"></InputNumber>
+      <InputNumber
+        :pt="{ input: { root: { 'data-testid': 'laps-input' } } }"
+        id="laps"
+        v-model="laps"
+        :min="1"
+      ></InputNumber>
     </InputGroup>
   </div>
 </template>

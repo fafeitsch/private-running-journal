@@ -6,4 +6,5 @@ export const journalSelectors = {
   todayButton: 'create-entry-today-button',
   journalEntryItem: 'journal-entry-item',
   deleteEntryConfirmation: 'delete-journal-entry-confirmation',
+  lapsInput: 'laps-input',
 }

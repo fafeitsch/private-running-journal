@@ -27,6 +27,12 @@ export const useJournalStore = defineStore("journal", () => {
     }
   }
 
+  function updateEntry(updatedEntry: journal.ListEntry) {
+    listEntries.value = listEntries.value.map((entry) =>
+      updatedEntry.id === entry.id ? updatedEntry : entry,
+    );
+  }
+
   function deleteEntry(toDelete: string) {
     listEntries.value = listEntries.value.filter((entry) => toDelete !== entry.id);
     if (selectedEntryId.value === toDelete) {
@@ -34,7 +40,7 @@ export const useJournalStore = defineStore("journal", () => {
     }
   }
 
-  return { listEntries, loadEntries, addEntryToList, selectedEntryId, deleteEntry, selectedMonth };
+  return { listEntries, loadEntries, addEntryToList, selectedEntryId, deleteEntry, selectedMonth, updateEntry };
 });
 
 function getCurrentMonth() {

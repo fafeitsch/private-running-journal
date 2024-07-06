@@ -11,7 +11,6 @@ import InputGroupAddon from "primevue/inputgroupaddon";
 import InputGroup from "primevue/inputgroup";
 import { journal, tracks } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
-import Calendar from "primevue/calendar";
 import LeafletMap from "./LeafletMap.vue";
 import TrackTimeResult from "./TrackTimeResult.vue";
 import TrackSelection from "./TrackSelection.vue";
@@ -27,7 +26,8 @@ const journalApi = useJournalApi();
 const router = useRouter();
 
 const loading = ref(false);
-const error = ref(false);
+const loadError = ref(false);
+const editError = ref<string | undefined>(undefined);
 const dirty = ref(false);
 const selectedEntry = ref<journal.Entry | undefined>(undefined);
 const selectedDate = ref<Date>(new Date());
@@ -49,7 +49,7 @@ watch(
 
 async function loadEntry(entryId: string | undefined) {
   selectedEntry.value = undefined;
-  error.value = false;
+  loadError.value = false;
   loading.value = true;
   selectedEntryId.value = entryId;
   if (!entryId) {
@@ -63,7 +63,7 @@ async function loadEntry(entryId: string | undefined) {
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
   } catch (e) {
     console.error(e);
-    error.value = true;
+    loadError.value = true;
   } finally {
     loading.value = false;
   }
@@ -82,20 +82,29 @@ watch(
       gpxData.value = await tracksApi.getGpxData(selectedEntry.value.track.id);
     } catch (e) {
       console.error(e);
+      loadError.value = true;
     }
   },
   { deep: true },
 );
 
 async function saveEntry() {
-  if (!selectedEntry.value) {
+  let value = selectedEntry.value;
+  if (!value) {
     return;
   }
+  editError.value = undefined;
   try {
-    await journalApi.saveEntry(selectedEntry.value);
+    await journalApi.saveEntry(value);
+    journalStore.updateEntry({
+      ...value,
+      trackName: value.track!.name,
+      length: value.track!.length * value.laps,
+    });
     dirty.value = false;
   } catch (e) {
     console.error(e);
+    editError.value = "journal.saveError";
   }
 }
 
@@ -121,11 +130,13 @@ async function deleteEntry(event: Event) {
   if (!choice) {
     return;
   }
+  editError.value = undefined;
   try {
     await journalApi.deleteEntry(selectedEntry.value.id);
     journalStore.deleteEntry(selectedEntry.value.id);
   } catch (e) {
     console.error(e);
+    editError.value = "journal.deleteError";
   }
 }
 
@@ -137,7 +148,7 @@ useLeaveConfirmation(dirty);
     <div v-if="loading" class="flex w-full flex-grow-1 justify-content-center align-items-center">
       <ProgressSpinner></ProgressSpinner>
     </div>
-    <div v-else-if="error">
+    <div v-else-if="loadError" class="px-2">
       <Message severity="error" :closable="false"
         ><div class="flex align-items-center">
           <span>{{ t("journal.loadEntryError") }}</span>
@@ -155,13 +166,33 @@ useLeaveConfirmation(dirty);
       class="flex flex-column gap-2 w-full p-2 flex-grow-1 flex-shrink-1"
     >
       <div class="flex gap-2">
-        <Button icon="pi pi-save" :disabled="!dirty" @click="saveEntry"></Button>
-        <Button icon="pi pi-trash" @click="deleteEntry($event)" :aria-label="t('shared.delete')" :v-tooltip="t('shared.delete')"></Button>
+        <Button
+          icon="pi pi-save"
+          :disabled="!dirty"
+          :aria-label="t('shared.save')"
+          :v-tooltip="t('shared.delete')"
+          @click="saveEntry"
+        ></Button>
+        <Button
+          icon="pi pi-trash"
+          @click="deleteEntry($event)"
+          :aria-label="t('shared.delete')"
+          :v-tooltip="t('shared.delete')"
+        ></Button>
         <ConfirmPopup group="journal">
           <template #message="{ message }">
-            <div style="max-width: 330px" class="p-2" data-testid="delete-journal-entry-confirmation">{{ message.message }}</div>
+            <div
+              style="max-width: 330px"
+              class="p-2"
+              data-testid="delete-journal-entry-confirmation"
+            >
+              {{ message.message }}
+            </div>
           </template>
         </ConfirmPopup>
+        <Message class="m-0" v-if="editError" :severity="'error'" :closable="false">
+          {{ t(editError) }}
+        </Message>
       </div>
       <InputGroup>
         <InputGroupAddon>

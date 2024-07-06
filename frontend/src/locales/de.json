@@ -24,7 +24,9 @@
     "noTrack": "Fehler beim Laden",
     "createEntry": "Erstellen",
     "createEntryError": "Erstellen fehlgeschlagen",
-    "deleteConfirmation": "Der Eintrag wird gelöscht."
+    "deleteConfirmation": "Der Eintrag wird gelöscht.",
+    "saveError": "Der Eintrag konnte nicht gespeichert werden.",
+    "deleteError": "Der Eintrag konnte nicht gelöscht werden."
   },
   "shared": {
     "confirm": {
