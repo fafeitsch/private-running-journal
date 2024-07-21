@@ -22,10 +22,11 @@ type ListEntry struct {
 }
 
 type entryFile struct {
-	Track   string `json:"track"`
-	Time    string `json:"time"`
-	Comment string `json:"comment"`
-	Laps    int    `json:"laps"`
+	Track        string `json:"track"`
+	Time         string `json:"time"`
+	Comment      string `json:"comment"`
+	Laps         int    `json:"laps"`
+	CustomLength int    `json:"customLength,omitempty"`
 }
 
 var directoryRegex = regexp.MustCompile("\\d\\d[a-z]?|\\d\\d\\d\\d")
@@ -161,12 +162,13 @@ func (j *Journal) readEntries() ([]ListEntry, error) {
 }
 
 type Entry struct {
-	Id      string        `json:"id"`
-	Date    string        `json:"date"`
-	Track   *shared.Track `json:"track"`
-	Comment string        `json:"comment"`
-	Time    string        `json:"time"`
-	Laps    int           `json:"laps"`
+	Id           string        `json:"id"`
+	Date         string        `json:"date"`
+	Track        *shared.Track `json:"track"`
+	Comment      string        `json:"comment"`
+	Time         string        `json:"time"`
+	Laps         int           `json:"laps"`
+	CustomLength int           `json:"customLength,omitempty"`
 	//needed in FE if the Track file is missing to give a reference what track should be there
 	LinkedTrack string `json:"linkedTrack"`
 }
@@ -207,11 +209,12 @@ func (j *Journal) ReadJournalEntry(path string) (Entry, error) {
 		return Entry{}, err
 	}
 	journalEntry := Entry{
-		Id:          path,
-		Comment:     entryDescriptor.Comment,
-		Time:        entryDescriptor.Time,
-		Laps:        entryDescriptor.Laps,
-		LinkedTrack: entryDescriptor.Track,
+		Id:           path,
+		Comment:      entryDescriptor.Comment,
+		Time:         entryDescriptor.Time,
+		Laps:         entryDescriptor.Laps,
+		LinkedTrack:  entryDescriptor.Track,
+		CustomLength: entryDescriptor.CustomLength,
 	}
 	date, err := computeDateFromPath(path)
 	if err != nil {
@@ -235,6 +238,9 @@ func (j *Journal) readListEntry(path string) (ListEntry, error) {
 		listEntry.TrackName = entry.Track.Name
 		listEntry.Length = entry.Track.Length * entry.Laps
 		listEntry.trackId = entry.LinkedTrack
+	}
+	if entry.CustomLength != 0 {
+		listEntry.Length = entry.CustomLength
 	}
 	return listEntry, nil
 }
@@ -279,10 +285,11 @@ func (j *Journal) SaveEntry(entry Entry) error {
 	}
 	payload, _ := json.Marshal(
 		entryFile{
-			Track:   entry.Track.Id,
-			Time:    entry.Time,
-			Comment: entry.Comment,
-			Laps:    entry.Laps,
+			Track:        entry.Track.Id,
+			Time:         entry.Time,
+			Comment:      entry.Comment,
+			Laps:         entry.Laps,
+			CustomLength: entry.CustomLength,
 		},
 	)
 	err = os.WriteFile(journalPath, payload, 0644)

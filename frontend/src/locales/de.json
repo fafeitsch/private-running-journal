@@ -12,14 +12,16 @@
     "emptyState": "Kein Eintrag ausgewählt. Bitte wählen Sie einen Eintrag in der Liste links aus, oder erstellen Sie einen.",
     "loadEntryError": "Der Eintrag konnte nicht geladen werden.",
     "details": {
-      "length": "Länge",
+      "length": "Streckenlänge",
       "comment": "Kommentar",
       "time": "Zeit",
       "track": "Strecke",
       "date": "Datum",
       "pace": "Pace",
       "laps": "Runden",
-      "trackNotFound": "Die verlinkte Strecke \"{link}\" konnte nicht gefunden werden."
+      "trackNotFound": "Die verlinkte Strecke \"{link}\" konnte nicht gefunden werden.",
+      "customTotalLength": "Gesamtlänge",
+      "overwriteLength": "Streckenlänge überschreiben"
     },
     "noTrack": "Fehler beim Laden",
     "createEntry": "Erstellen",

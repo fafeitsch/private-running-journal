@@ -73,6 +73,10 @@ const i18n = createI18n({
 createApp(App)
   .use(PrimeVue, {
     locale: { ...defaultOptions.locale, firstDayOfWeek: 1 },
+    ripple: true,
+    zIndex: {
+      overlay: 1000
+    }
   })
   .use(i18n)
   .use(router)
@@ -81,7 +85,6 @@ createApp(App)
   .use(ToastService)
   .directive("focustrap", FocusTrap)
   .directive("tooltip", Tooltip)
-  .directive("ripple", Ripple)
   .mount("#app");
 
 useSettingsStore().loadSettings();

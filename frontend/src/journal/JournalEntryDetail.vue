@@ -29,6 +29,8 @@ const loading = ref(false);
 const loadError = ref(false);
 const editError = ref<string | undefined>(undefined);
 const dirty = ref(false);
+const customLengthEnabled = ref(false);
+const journalEntryLength = ref<number | undefined>(undefined);
 const selectedEntry = ref<journal.Entry | undefined>(undefined);
 const selectedDate = ref<Date>(new Date());
 const journalStore = useJournalStore();
@@ -60,6 +62,14 @@ async function loadEntry(entryId: string | undefined) {
   }
   try {
     selectedEntry.value = await journalApi.getListEntry(entryId);
+    customLengthEnabled.value = !!selectedEntry.value.customLength;
+    let length = undefined;
+    if (customLengthEnabled.value) {
+      length = selectedEntry.value.customLength;
+    } else {
+      length = selectedEntry.value.track?.length || undefined;
+    }
+    journalEntryLength.value = (length || 0) / 1000;
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
   } catch (e) {
     console.error(e);
@@ -93,13 +103,21 @@ async function saveEntry() {
   if (!value) {
     return;
   }
+  if (customLengthEnabled.value) {
+    value.customLength = journalEntryLength.value! * 1000;
+  } else {
+    value.customLength = undefined;
+  }
   editError.value = undefined;
   try {
     await journalApi.saveEntry(value);
+    const length = customLengthEnabled.value
+      ? value.customLength!
+      : value.track!.length * value.laps;
     journalStore.updateEntry({
       ...value,
       trackName: value.track!.name,
-      length: value.track!.length * value.laps,
+      length,
     });
     dirty.value = false;
   } catch (e) {
@@ -140,6 +158,13 @@ async function deleteEntry(event: Event) {
   }
 }
 
+function onChangeCustomLengthEnabled() {
+  if (!customLengthEnabled.value && selectedEntry.value?.track) {
+    journalEntryLength.value = selectedEntry.value.track.length / 1000;
+  }
+  dirty.value = true;
+}
+
 useLeaveConfirmation(dirty);
 </script>
 
@@ -170,14 +195,14 @@ useLeaveConfirmation(dirty);
           icon="pi pi-save"
           :disabled="!dirty"
           :aria-label="t('shared.save')"
-          :v-tooltip="t('shared.delete')"
+          v-tooltip="{ value: t('shared.delete'), showDelay: 500 }"
           @click="saveEntry"
         ></Button>
         <Button
           icon="pi pi-trash"
           @click="deleteEntry($event)"
           :aria-label="t('shared.delete')"
-          :v-tooltip="t('shared.delete')"
+          v-tooltip="{ value: t('shared.delete'), showDelay: 500 }"
         ></Button>
         <ConfirmPopup group="journal">
           <template #message="{ message }">
@@ -209,9 +234,12 @@ useLeaveConfirmation(dirty);
       <TrackTimeResult
         v-model:laps="selectedEntry!.laps"
         v-model:time="selectedEntry!.time"
-        :track-length="selectedEntry!.track?.length || undefined"
+        v-model:track-length="journalEntryLength"
+        v-model:custom-length="customLengthEnabled"
+        @update:track-length="() => (dirty = true)"
         @update:laps="() => (dirty = true)"
         @update:time="() => (dirty = true)"
+        @update:custom-length="onChangeCustomLengthEnabled"
       ></TrackTimeResult>
       <InputGroup>
         <InputGroupAddon>

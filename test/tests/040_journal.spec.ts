@@ -16,7 +16,7 @@ test('should load and display all available journal entries and filter with the 
   await expect(page.getByLabel('Kommentar')).toHaveValue('Regnerisch')
   await expect(page.getByLabel('Zeit')).toHaveValue('00:51:31')
   await expect(page.getByLabel('Pace')).toHaveValue('00:05:01')
-  await expect(page.getByLabel('Länge')).toHaveValue('10.3 km')
+  await expect(page.getByLabel('Länge')).toHaveValue('10.3')
   await expect(page.getByTestId(journalSelectors.lapsInput)).toHaveValue('1')
 
   await page.getByLabel('Nächster Monat').click()
