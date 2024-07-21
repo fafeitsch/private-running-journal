@@ -12,14 +12,16 @@
     "emptyState": "No entry selected. Please select an entry on the left or create an entry.",
     "loadEntryError": "The entry could not be loaded.",
     "details": {
-      "length": "Length",
+      "length": "Tracklength",
       "comment": "Comment",
       "time": "Time",
       "track": "Track",
       "date": "Date",
       "pace": "Pace",
       "laps": "Laps",
-      "trackNotFound": "The linked track \"{link}\" could not be found."
+      "trackNotFound": "The linked track \"{link}\" could not be found.",
+      "customTotalLength": "Total length",
+      "overwriteLength": "Overwrite track length"
     },
     "noTrack": "Loading error",
     "createEntry": "Create",

@@ -80,7 +80,6 @@ const entries = computed(() => {
         data-testid="journal-entry-item"
       >
         <RouterLink
-          v-ripple
           class="flex-grow-1 flex-shrink-1 flex gap-1 cursor-pointer p-ripple transition-colors hover:surface-100 transition-duration-150 text-700 py-3 px-1"
           :to="{ path: '/journal/' + entry.link }"
           active-class="surface-200"

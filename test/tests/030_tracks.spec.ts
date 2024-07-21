@@ -21,8 +21,8 @@ test('should load and display all available tracks and their information', async
   await trackNodes.nth(1).click()
 
   await expect(page.getByLabel('Streckenname')).toHaveValue('Farmrunde')
-  await expect(page.getByLabel('Verwendungen')).toHaveValue('0')
-  await expect(page.getByLabel('Länge')).toHaveValue('10,8')
+  await expect(page.getByLabel('Verwendungen')).toHaveValue('1')
+  await expect(page.getByLabel('Streckenlänge')).toHaveValue('10,8')
   await expect(page.getByLabel('Speichern')).toBeDisabled()
 });
 
@@ -46,6 +46,6 @@ test('should show usages correctly', async ({page}) => {
 
   await expect(page.getByLabel('Streckenname')).toHaveValue('Stadtrunde')
   await expect(page.getByLabel('Verwendungen')).toHaveValue('1')
-  await expect(page.getByLabel('Länge')).toHaveValue('10,3')
+  await expect(page.getByLabel('Streckenlänge')).toHaveValue('10,3')
   await expect(page.getByLabel('Speichern')).toBeDisabled()
 })

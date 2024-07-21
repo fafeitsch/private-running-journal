@@ -7,4 +7,8 @@ export const journalSelectors = {
   journalEntryItem: 'journal-entry-item',
   deleteEntryConfirmation: 'delete-journal-entry-confirmation',
   lapsInput: 'laps-input',
+  lengthInput: 'journal-length-input',
+  customLengthWarningIndicator: 'laps-input-no-effect-warning-indicator',
+  customLengthWarning: 'laps-input-no-effect-warning',
+  editCustomLengthButton: 'edit-custom-length-button'
 }

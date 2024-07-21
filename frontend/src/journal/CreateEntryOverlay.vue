@@ -46,7 +46,7 @@ async function createEntry() {
     icon="pi pi-plus"
     @click="(event) => overlayPanel.toggle(event)"
     :aria-label="t('shared.add')"
-    :v-tooltip="t('shared.add')"
+    v-tooltip="{ value: t('shared.add'), showDelay: 500 }"
   ></Button>
   <OverlayPanel ref="overlayPanel">
     <div class="flex flex-column gap-2 overlay">

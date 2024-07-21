@@ -67,7 +67,9 @@ watch(
 );
 
 const length = ref(0);
-const formattedLength = computed(() => n(length.value / 1000, {maximumFractionDigits: 1, minimumFractionDigits: 1}));
+const formattedLength = computed(() =>
+  n(length.value / 1000, { maximumFractionDigits: 1, minimumFractionDigits: 1 }),
+);
 
 function trackChanged(props: { length: number; waypoints: Coordinates[] }) {
   length.value = props.length;
@@ -157,18 +159,20 @@ useLeaveConfirmation(dirty);
         icon="pi pi-save"
         :disabled="!dirty"
         @click="saveTrack"
-        :v-tooltip="t('shared.save')"
+        v-tooltip="{ value: t('shared.save'), showDelay: 500 }"
         :aria-label="t('shared.save')"
       ></Button>
       <ConfirmPopup group="track">
         <template #message="{ message }">
-          <div style="max-width: 330px" class="p-2" data-testid="delete-track-confirmation">{{ message.message }}</div>
+          <div style="max-width: 330px" class="p-2" data-testid="delete-track-confirmation">
+            {{ message.message }}
+          </div>
         </template>
       </ConfirmPopup>
       <Button
         icon="pi pi-trash"
         @click="deleteTrack"
-        :v-tooltip="t('shared.delete')"
+        v-tooltip="{ value: t('shared.delete'), showDelay: 500 }"
         :aria-label="t('shared.delete')"
       ></Button>
       <MoveTrackOverlay></MoveTrackOverlay>
