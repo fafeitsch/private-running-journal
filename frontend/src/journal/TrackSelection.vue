@@ -49,7 +49,7 @@ watch(
 <template>
   <InputGroup>
     <InputGroupAddon class="flex gap-2">
-      <label for="track-select">{{ t("journal.details.track") }}</label>
+      <label for="track-select">{{ t("journal.details.track") }}*</label>
       <span
         v-if="!selectedTrack && linkedTrack"
         class="text-red-500 pi pi-exclamation-triangle"
@@ -65,6 +65,7 @@ watch(
       selection-mode="single"
       :options="availableTracks"
       placeholder="Select Item"
+
       class="md:w-20rem w-full"
       @node-select="(node) => (selectedTrack = node.data)"
       data-testid="track-selection"

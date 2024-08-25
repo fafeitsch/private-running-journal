@@ -25,7 +25,6 @@
     },
     "noTrack": "Loading error",
     "createEntry": "Create",
-    "createEntryError": "Creation failed",
     "deleteConfirmation": "The entry is deleted.",
     "saveError": "The entry could not be saved.",
     "deleteError": "The entry could not be deleted."

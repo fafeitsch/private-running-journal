@@ -42,8 +42,9 @@ test('it should not display journal entry if in wrong month', async ({page}) => 
   await page.getByTestId(journalSelectors.trackSelection).getByRole('button').click()
   await expect (page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(2)
   await page.getByTestId(journalSelectors.trackSelectionItem).nth(1).click()
+  await page.getByTestId(journalSelectors.entryDateInput).click()
   await page.getByTestId(journalSelectors.todayButton).click()
-  await page.getByTestId(journalSelectors.createEntryButton).click()
+  await page.getByLabel("Speichern").click()
 
   await expect(journalItem).toHaveCount(1)
 
@@ -54,12 +55,13 @@ test('it should not display journal entry if in wrong month', async ({page}) => 
 
   await page.getByLabel("Hinzufügen").click()
 
-  await page.getByTestId(journalSelectors.trackSelection).nth(1).getByRole('button').click()
-  await expect (page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(2)
-  await page.getByTestId(journalSelectors.trackSelection).nth(1).click()
-  await page.getByTestId(journalSelectors.trackSelectionItem).nth(0).click()
+  await page.getByTestId(journalSelectors.trackSelection).getByRole('button').click()
+  await expect(page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(2)
+  await page.getByLabel('Höchberg').getByTestId('track-tree-selection-node-toggler').click()
+  await page.getByTestId(journalSelectors.trackSelectionItem).nth(1).click()
+  await page.getByTestId(journalSelectors.entryDateInput).click()
   await page.getByTestId(journalSelectors.todayButton).click()
-  await page.getByTestId(journalSelectors.createEntryButton).click()
+  await page.getByLabel("Speichern").click()
   await expect(journalItem).toHaveCount(2)
 
   await page.getByLabel("Löschen").nth(0).click()
@@ -130,6 +132,57 @@ test('should correctly load and display entries with overwritten length', async 
   expect(entry.time).toEqual('01:56:29')
   expect(entry.comment).toEqual('Hitze, deswegen mit vielen Schleifen')
   expect(entry.laps).toEqual(2)
+})
+
+test('should be possible to add new entry if there is an load error', async ({page}) => {
+  await page.goto('#/journal/does-not-exist');
+  await expect(page.getByTestId(journalSelectors.loadError)).toHaveCount(1)
+  await page.getByLabel('Hinzufügen').click()
+  await expect(page.getByTestId(journalSelectors.loadError)).toHaveCount(0)
+  await expect(page.getByTestId(journalSelectors.trackSelection)).toHaveCount(1)
+})
+
+test('should be possible to view other entry on error and then create new entry and jump to current month', async ({page}) => {
+  await page.goto('#/journal/does-not-exist');
+  await goToMay2024(page)
+  await expect(page.getByTestId(journalSelectors.loadError)).toHaveCount(1)
+  await page.getByTestId(journalSelectors.journalEntryItem).nth(0).click()
+  await expect(page.getByLabel("Kommentar")).toHaveValue("Regnerisch")
+  await page.getByLabel('Hinzufügen').click()
+
+  await expect(page.getByLabel("Kommentar")).toHaveValue("")
+  await expect(page.getByTestId(journalSelectors.lapsInput)).toHaveValue("1")
+  await expect(page.getByLabel("Zeit")).toHaveValue("")
+  const year = `${new Date().getFullYear()}`.padStart(4, "0");
+  const month = `${new Date().getMonth() + 1}`.padStart(2, "0");
+  const day = `${new Date().getDate()}`.padStart(2, "0");
+  await expect(page.getByTestId(journalSelectors.entryDateInput).getByRole('combobox')).toHaveValue(`${day}.${month}.${year}`)
+  await page.getByTestId(journalSelectors.trackSelection).getByRole('button').click()
+  await expect(page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(2)
+  await page.getByLabel('Höchberg').getByTestId('track-tree-selection-node-toggler').click()
+  await page.getByTestId(journalSelectors.trackSelectionItem).nth(1).click()
+  await page.getByTestId(journalSelectors.entryDateInput).click()
+  await page.getByTestId(journalSelectors.todayButton).click()
+  await page.getByLabel("Speichern").click()
+
+  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(1)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toContainText(`${day}.${month}.${year}`)
+
+  await page.getByLabel("Löschen").nth(0).click()
+  await expect(page.getByTestId(journalSelectors.deleteEntryConfirmation)).toContainText('Der Eintrag wird gelöscht.')
+  await page.getByLabel("Löschen").nth(1).click()
+})
+
+test('should not be possible to save journal entry without track', async ({page}) => {
+  await page.goto('/');
+  await page.getByLabel("Hinzufügen").click()
+  await page.getByLabel("Kommentar").fill("Sehr warm")
+  await expect(page.getByLabel("Speichern")).toBeDisabled()
+  await page.getByTestId(journalSelectors.trackSelection).getByRole('button').click()
+  await expect(page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(2)
+  await page.getByLabel('Höchberg').getByTestId('track-tree-selection-node-toggler').click()
+  await page.getByTestId(journalSelectors.trackSelectionItem).nth(1).click()
+  await expect(page.getByLabel("Speichern")).toBeEnabled()
 })
 
 async function goToMay2024(page: Page) {

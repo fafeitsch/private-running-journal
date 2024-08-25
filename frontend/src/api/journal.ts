@@ -13,8 +13,8 @@ export function useJournalApi() {
   async function getJournalEntry(id: string): Promise<journal.Entry> {
     return GetJournalEntry(id);
   }
-  async function createJournalEntry(date: string, trackId: string): Promise<journal.ListEntry> {
-    return CreateJournalEntry(date, trackId)
+  async function createJournalEntry(entry: journal.Entry): Promise<journal.ListEntry> {
+    return CreateJournalEntry(entry)
   }
   async function saveEntry(entry: journal.Entry) {
     return SaveJournalEntry(entry)

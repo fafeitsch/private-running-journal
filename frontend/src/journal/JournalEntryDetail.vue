@@ -19,6 +19,8 @@ import { storeToRefs } from "pinia";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import { useConfirm } from "primevue/useconfirm";
 import ConfirmPopup from "primevue/confirmpopup";
+import Calendar from "primevue/calendar";
+import Entry = journal.Entry;
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -50,8 +52,20 @@ watch(
 );
 
 async function loadEntry(entryId: string | undefined) {
-  selectedEntry.value = undefined;
   loadError.value = false;
+  if (entryId === "new") {
+    selectedEntry.value = new Entry({
+      id: entryId,
+      date: new Date().toISOString(),
+      comment: "",
+      laps: 1,
+      time: "",
+      track: undefined,
+    });
+    selectedDate.value = new Date();
+    return;
+  }
+  selectedEntry.value = undefined;
   loading.value = true;
   selectedEntryId.value = entryId;
   if (!entryId) {
@@ -63,13 +77,7 @@ async function loadEntry(entryId: string | undefined) {
   try {
     selectedEntry.value = await journalApi.getListEntry(entryId);
     customLengthEnabled.value = !!selectedEntry.value.customLength;
-    let length = undefined;
-    if (customLengthEnabled.value) {
-      length = selectedEntry.value.customLength;
-    } else {
-      length = selectedEntry.value.track?.length || undefined;
-    }
-    journalEntryLength.value = (length || 0) / 1000;
+    calculateLength();
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
   } catch (e) {
     console.error(e);
@@ -110,10 +118,21 @@ async function saveEntry() {
   }
   editError.value = undefined;
   try {
-    await journalApi.saveEntry(value);
     const length = customLengthEnabled.value
-      ? value.customLength!
-      : value.track!.length * value.laps;
+        ? value.customLength!
+        : value.track!.length * value.laps;
+    if (value.id === "new") {
+      const year = `${selectedDate.value.getFullYear()}`.padStart(4, "0");
+      const month = `${selectedDate.value.getMonth() + 1}`.padStart(2, "0");
+      const day = `${selectedDate.value.getDate()}`.padStart(2, "0");
+      value.date = `${year}-${month}-${day}`;
+      const result = await journalApi.createJournalEntry(value);
+      dirty.value = false
+      journalStore.addEntryToList(result)
+      router.replace('/journal/' + encodeURIComponent(result.id));
+      return;
+    }
+    await journalApi.saveEntry(value);
     journalStore.updateEntry({
       ...value,
       trackName: value.track!.name,
@@ -165,6 +184,24 @@ function onChangeCustomLengthEnabled() {
   dirty.value = true;
 }
 
+function onTrackSelectionChanged() {
+  calculateLength();
+  dirty.value = true;
+}
+
+function calculateLength() {
+  if (!selectedEntry.value) {
+    return;
+  }
+  let length = undefined;
+  if (customLengthEnabled.value) {
+    length = selectedEntry.value.customLength;
+  } else {
+    length = selectedEntry.value.track?.length || undefined;
+  }
+  journalEntryLength.value = (length || 0) / 1000;
+}
+
 useLeaveConfirmation(dirty);
 </script>
 
@@ -173,7 +210,7 @@ useLeaveConfirmation(dirty);
     <div v-if="loading" class="flex w-full flex-grow-1 justify-content-center align-items-center">
       <ProgressSpinner></ProgressSpinner>
     </div>
-    <div v-else-if="loadError" class="px-2">
+    <div v-else-if="loadError" class="px-2" data-testid="journal-entry-load-error">
       <Message severity="error" :closable="false"
         ><div class="flex align-items-center">
           <span>{{ t("journal.loadEntryError") }}</span>
@@ -193,9 +230,9 @@ useLeaveConfirmation(dirty);
       <div class="flex gap-2">
         <Button
           icon="pi pi-save"
-          :disabled="!dirty"
           :aria-label="t('shared.save')"
-          v-tooltip="{ value: t('shared.delete'), showDelay: 500 }"
+          v-tooltip="{ value: t('shared.save'), showDelay: 500 }"
+          :disabled="!dirty || !selectedEntry.track"
           @click="saveEntry"
         ></Button>
         <Button
@@ -223,13 +260,24 @@ useLeaveConfirmation(dirty);
         <InputGroupAddon>
           <label for="date">{{ t("journal.details.date") }}</label>
         </InputGroupAddon>
-        <!--suppress TypeScriptValidateTypes -->
-        <InputText disabled :value="d(selectedDate, 'long')"></InputText>
+        <Calendar
+          id="date"
+          v-model="selectedDate"
+          show-button-bar
+          :date-format="locale === 'de' ? 'dd.mm.yy' : 'yyyy/mm/dd'"
+          data-testid="entry-date-input"
+          :pt="{
+            todayButton: {
+              root: { 'data-testid': 'journal-entry-today-button' },
+            },
+          }"
+          :disabled="selectedEntry?.id !== 'new'"
+        ></Calendar>
       </InputGroup>
       <TrackSelection
         v-model="selectedEntry!.track"
         :linked-track="selectedEntry!.linkedTrack"
-        @update:model-value="() => (dirty = true)"
+        @update:model-value="() => onTrackSelectionChanged()"
       ></TrackSelection>
       <TrackTimeResult
         v-model:laps="selectedEntry!.laps"

@@ -21,7 +21,6 @@ watch(gpxData, (value) => (mapApi.gpxData.value = value));
 </script>
 
 <template>
-  <div ref="mapContainer" :id="mapId"></div>
+  <div ref="mapContainer" :id="mapId" style="z-index: 0"></div>
 </template>
 
-<style scoped></style>

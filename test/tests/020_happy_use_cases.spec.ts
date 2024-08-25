@@ -50,8 +50,7 @@ test('should create new track and create journal entry with it, and delete track
   await page.getByTestId(journalSelectors.trackSelection).getByRole('button').click()
   await expect (page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(3)
   await page.getByTestId(journalSelectors.trackSelectionItem).nth(2).click()
-  await page.getByTestId(journalSelectors.todayButton).click()
-  await page.getByTestId(journalSelectors.createEntryButton).click()
+  await page.getByLabel("Speichern").click()
 
   await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(1)
   const regex = /\d\d.\d\d.\d\d\d\d/

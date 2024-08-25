@@ -4,8 +4,7 @@ import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
-import CreateEntryOverlay from "./CreateEntryOverlay.vue";
+import { useRoute, useRouter } from "vue-router";
 import { useJournalStore } from "../store/journal-store";
 import { storeToRefs } from "pinia";
 import MonthChooser from "./MonthChooser.vue";
@@ -15,6 +14,8 @@ const loading = ref(false);
 const error = ref<boolean>(false);
 const store = useJournalStore();
 const { listEntries, selectedMonth } = storeToRefs(store);
+
+const router = useRouter();
 
 const route = useRoute();
 
@@ -59,8 +60,13 @@ const entries = computed(() => {
 <template>
   <div class="h-full overflow-hidden flex flex-column gap-2">
     <header class="flex justify-content-between align-items-center">
-      <span class="text-2xl">{{ $t("journal.entries") }}</span
-      ><CreateEntryOverlay></CreateEntryOverlay>
+      <span class="text-2xl">{{ $t("journal.entries") }}</span>
+      <Button
+        icon="pi pi-plus"
+        @click="router.push('/journal/new')"
+        :aria-label="t('shared.add')"
+        v-tooltip="{ value: t('shared.add'), showDelay: 500 }"
+      ></Button>
     </header>
     <MonthChooser v-model="selectedMonth"></MonthChooser>
     <div v-if="loading" class="flex-grow-1 flex-shrink-1 flex flex-column justify-content-center">

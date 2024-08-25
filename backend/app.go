@@ -135,8 +135,8 @@ func (a *App) SaveJournalEntry(entry journal.Entry) error {
 	return a.journal.SaveEntry(entry)
 }
 
-func (a *App) CreateJournalEntry(date string, trackId string) (journal.ListEntry, error) {
-	return a.journal.CreateEntry(date, trackId)
+func (a *App) CreateJournalEntry(entry journal.Entry) (journal.ListEntry, error) {
+	return a.journal.CreateEntry(entry)
 }
 
 func (a *App) DeleteJournalEntry(id string) error {

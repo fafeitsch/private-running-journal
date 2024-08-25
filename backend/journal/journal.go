@@ -247,10 +247,10 @@ func (j *Journal) readListEntry(path string) (ListEntry, error) {
 
 var dateRegex = regexp.MustCompile("(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)")
 
-func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
-	regexResult := dateRegex.FindStringSubmatch(date)
+func (j *Journal) CreateEntry(entry Entry) (ListEntry, error) {
+	regexResult := dateRegex.FindStringSubmatch(entry.Date)
 	if regexResult == nil {
-		return ListEntry{}, fmt.Errorf("the date \"%s\" is not a valid date of the format yyyy-mm-dd", date)
+		return ListEntry{}, fmt.Errorf("the date \"%s\" is not a valid date of the format yyyy-mm-dd", entry.Date)
 	}
 	id := filepath.Join(regexResult[1], regexResult[2], regexResult[3])
 	path, err := shared.FindFreeFileName(filepath.Join(j.baseDirectory, id))
@@ -263,12 +263,20 @@ func (j *Journal) CreateEntry(date string, trackId string) (ListEntry, error) {
 		return ListEntry{}, fmt.Errorf("could not create directory %s: %v", id, err)
 	}
 	entryFilePath := filepath.Join(j.baseDirectory, id, "entry.json")
-	payload, _ := json.Marshal(entryFile{Track: trackId, Laps: 1, Time: "", Comment: ""})
+	payload, _ := json.Marshal(
+		entryFile{
+			Track:        entry.Track.Id,
+			Laps:         entry.Laps,
+			Time:         entry.Time,
+			Comment:      entry.Comment,
+			CustomLength: entry.CustomLength,
+		},
+	)
 	err = os.WriteFile(entryFilePath, payload, 0644)
 	if err != nil {
 		return ListEntry{}, fmt.Errorf("could not write file \"%s\": %v", entryFilePath, err)
 	}
-	shared.Send("journal entry changed", shared.JournalEntry{}, shared.JournalEntry{TrackId: trackId})
+	shared.Send("journal entry changed", shared.JournalEntry{}, shared.JournalEntry{TrackId: entry.Track.Id})
 	listEntry, err := j.readListEntry(id)
 	if err != nil {
 		return ListEntry{}, fmt.Errorf("could not read file \"%s\": %v", entryFilePath, err)

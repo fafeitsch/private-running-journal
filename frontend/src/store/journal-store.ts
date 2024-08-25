@@ -17,14 +17,10 @@ export const useJournalStore = defineStore("journal", () => {
   }
 
   function addEntryToList(entry: journal.ListEntry) {
-    let month = selectedMonth.value;
-    const clone = new Date(month.getTime());
-    const end = new Date(clone.setMonth(month.getMonth() + 1));
-
-    const date = Date.parse(entry.date);
-    if (date >= month.getTime() && date <= end.getTime()) {
-      listEntries.value.push(entry);
-    }
+    const date = new Date(Date.parse(entry.date));
+    const month = new Date(date.getFullYear(), date.getMonth(), 1);
+    selectedMonth.value = new Date(date.getFullYear(), date.getMonth(), 1);
+    listEntries.value.push(entry);
   }
 
   function updateEntry(updatedEntry: journal.ListEntry) {
@@ -40,7 +36,15 @@ export const useJournalStore = defineStore("journal", () => {
     }
   }
 
-  return { listEntries, loadEntries, addEntryToList, selectedEntryId, deleteEntry, selectedMonth, updateEntry };
+  return {
+    listEntries,
+    loadEntries,
+    addEntryToList,
+    selectedEntryId,
+    deleteEntry,
+    selectedMonth,
+    updateEntry,
+  };
 });
 
 function getCurrentMonth() {
