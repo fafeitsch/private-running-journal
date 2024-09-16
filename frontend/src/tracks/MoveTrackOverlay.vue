@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import OverlayPanel from "primevue/overlaypanel";
-import InlineMessage from "primevue/inlinemessage";
+import Popover from "primevue/popover";
 import Button from "primevue/button";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed,  ref, watch } from "vue";
+import Message from "primevue/message";
 import { useI18n } from "vue-i18n";
-import { useJournalStore } from "../store/journal-store";
 import { useRouter } from "vue-router";
 import { useTracksApi } from "../api/tracks";
 import InputGroup from "primevue/inputgroup";
@@ -83,8 +82,8 @@ async function moveTrack() {
 
 <template>
   <Button icon="pi pi-arrow-right" @click="(event) => overlayPanel.toggle(event)"></Button>
-  <OverlayPanel ref="overlayPanel">
-    <div v-focustrap class="flex flex-column gap-2 overlay">
+  <Popover ref="overlayPanel">
+    <div v-focustrap class="flex flex-col gap-2 overlay">
       <InputGroup class="flex w-full">
         <InputGroupAddon>
           <label for="parentInput" class="px-2">{{ t("tracks.folder") }}</label>
@@ -103,17 +102,17 @@ async function moveTrack() {
           <label for="newFolderName">{{ t("tracks.folderName") }}</label>
         </InputGroupAddon>
         <InputText
-          class="flex-grow-1"
+          class="grow"
           id="newFolderName"
           v-model="folderName"
           autofocus
         ></InputText>
       </InputGroup>
       <div class="flex gap-2">
-        <InlineMessage v-if="error" class="flex-grow-1 flex-shrink-1" severity="error">{{
+        <Message v-if="error" class="grow shrink" severity="error">{{
           t("tracks.moveFailed")
-        }}</InlineMessage>
-        <span v-else class="flex-grow-1"></span>
+        }}</Message>
+        <span v-else class="grow"></span>
         <Button
           :label="t('tracks.move')"
           @click="moveTrack"
@@ -121,7 +120,7 @@ async function moveTrack() {
         ></Button>
       </div>
     </div>
-  </OverlayPanel>
+  </Popover>
 </template>
 
 <style scoped>

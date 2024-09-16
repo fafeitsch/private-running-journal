@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { TabMenuChangeEvent } from "primevue/tabmenu";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useJournalStore } from "./store/journal-store";
@@ -11,12 +10,15 @@ import { useSettingsStore } from "./store/settings-store";
 import { EventsOn } from "../wailsjs/runtime";
 import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
+import Tabs from "primevue/tabs";
+import Tab from "primevue/tab";
+import TabList from "primevue/tablist";
 
 const { t, locale } = useI18n();
 
 const journalStoreRef = storeToRefs(useJournalStore());
 const trackStoreRef = storeToRefs(useTrackStore());
-const { settings, loaded: settingsLoaded} = storeToRefs(useSettingsStore());
+const { settings, loaded: settingsLoaded } = storeToRefs(useSettingsStore());
 
 watch(
   () => settings.value.language,
@@ -53,12 +55,8 @@ const navItems = computed(() => [
 ]);
 const active = ref(0);
 
-const router = useRouter();
-function tabChangeEvent(event: TabMenuChangeEvent) {
-  router.push(navItems.value[event.index].link);
-}
-
 const route = useRoute();
+const router = useRouter();
 watch(
   () => route.fullPath,
   (value) => {
@@ -79,17 +77,25 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="settingsLoaded" class="h-full flex flex-column">
-    <TabMenu
-      class="flex-shrink-0"
-      :model="navItems"
-      v-model:active-index="active"
-      @tab-change="tabChangeEvent"
-      :pt="{
-        menuItem: (item: any) => ({ 'data-testid': 'nav-' + item.context.item.testId }),
-      }"
-    ></TabMenu>
-    <div class="flex-grow-1 flex-shrink-1 w-full overflow-hidden">
+  <div v-if="settingsLoaded" class="h-full flex flex-col">
+    <Tabs v-model:value="active" class="shrink-0">
+      <TabList>
+        <Tab
+          v-for="(tab, index) in navItems"
+          :key="tab.link"
+          :value="index"
+          :data-testid="'nav-' + tab.testId"
+          @click="router.push(tab.link)"
+        >
+          <router-link :to="tab.link" v-slot="{ href, navigate }" custom
+            ><a :href="href" @click="navigate" class="flex gap-1 items-center"
+              ><i :class="tab.icon"></i>{{ tab.label }}</a
+            >
+          </router-link>
+        </Tab>
+      </TabList>
+    </Tabs>
+    <div class="grow shrink w-full overflow-hidden">
       <router-view class="h-full w-full"></router-view>
     </div>
   </div>

@@ -158,7 +158,7 @@ useLeaveConfirmation(dirty);
 </script>
 
 <template>
-  <div v-if="track" class="w-full p-2 flex flex-column h-full gap-2">
+  <div v-if="track" class="w-full p-2 flex flex-col h-full gap-2">
     <div class="flex gap-2">
       <Button
         v-if="selectedTrackId !== 'new'"
@@ -201,15 +201,15 @@ useLeaveConfirmation(dirty);
           @update:model-value="dirty = true"
         ></InputText>
       </InputGroup>
-      <InputGroup class="flex-grow-0 w-2">
+      <InputGroup class="grow-0 w-2/12">
         <InputGroupAddon>
           <label for="usagesInput">{{ t("tracks.usages") }}</label>
         </InputGroupAddon>
         <InputText id="usagesInput" disabled :value="`${track!.usages}`"></InputText>
       </InputGroup>
     </div>
-    <div class="flex gap-2 align-items-center">
-      <InputGroup class="flex-shrink-1 flex-grow-1 w-auto">
+    <div class="flex gap-2 items-center">
+      <InputGroup class="shrink grow w-auto">
         <InputGroupAddon>
           <label for="lengthInput">{{ t("journal.details.length") }}</label>
         </InputGroupAddon>
@@ -230,7 +230,7 @@ useLeaveConfirmation(dirty);
         :allow-empty="false"
       ></SelectButton>
     </div>
-    <div class="flex-shrink-1 flex-grow-1">
+    <div class="shrink grow">
       <TrackEditor
         class="h-full w-full"
         :gpx-data="gpxData"

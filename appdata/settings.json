@@ -10,5 +10,11 @@
     ]
   },
   "httpPort": 47836,
-  "language": "de"
+  "language": "de",
+  "gitSettings": {
+    "enabled": false,
+    "pushAfterCommit": false,
+    "pullOnStartUp": false
+  },
+  "headlessMode": false
 }

@@ -16,12 +16,12 @@ const selectedEntry = computed(() => route.params["entryId"]);
 
 <template>
   <Splitter>
-    <SplitterPanel class="flex flex-column p-2" :size="20">
+    <SplitterPanel class="flex flex-col p-2" :size="20">
       <div class="h-full overflow-hidden">
         <JournalList></JournalList>
       </div>
     </SplitterPanel>
-    <SplitterPanel class="flex align-items-center justify-content-center" :size="80">
+    <SplitterPanel class="flex items-center justify-center" :size="80">
       <JournalEntryDetail v-if="selectedEntry" class="h-full w-full"> </JournalEntryDetail>
       <div v-else class="p-2" data-testid="empty-journal-state">{{ t("journal.emptyState") }}</div>
     </SplitterPanel>

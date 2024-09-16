@@ -19,7 +19,7 @@ import { storeToRefs } from "pinia";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import { useConfirm } from "primevue/useconfirm";
 import ConfirmPopup from "primevue/confirmpopup";
-import Calendar from "primevue/calendar";
+import DatePicker from "primevue/datepicker";
 import Entry = journal.Entry;
 
 const { t, d, locale } = useI18n();
@@ -206,13 +206,13 @@ useLeaveConfirmation(dirty);
 </script>
 
 <template>
-  <div class="flex flex-column">
-    <div v-if="loading" class="flex w-full flex-grow-1 justify-content-center align-items-center">
+  <div class="flex flex-col">
+    <div v-if="loading" class="flex w-full grow justify-center items-center">
       <ProgressSpinner></ProgressSpinner>
     </div>
     <div v-else-if="loadError" class="px-2" data-testid="journal-entry-load-error">
       <Message severity="error" :closable="false"
-        ><div class="flex align-items-center">
+        ><div class="flex items-center">
           <span>{{ t("journal.loadEntryError") }}</span>
           <Button
             severity="danger"
@@ -225,7 +225,7 @@ useLeaveConfirmation(dirty);
     </div>
     <div
       v-else-if="selectedEntry"
-      class="flex flex-column gap-2 w-full p-2 flex-grow-1 flex-shrink-1"
+      class="flex flex-col gap-2 w-full p-2 grow shrink"
     >
       <div class="flex gap-2">
         <Button
@@ -260,19 +260,19 @@ useLeaveConfirmation(dirty);
         <InputGroupAddon>
           <label for="date">{{ t("journal.details.date") }}</label>
         </InputGroupAddon>
-        <Calendar
+        <DatePicker
           id="date"
           v-model="selectedDate"
           show-button-bar
           :date-format="locale === 'de' ? 'dd.mm.yy' : 'yyyy/mm/dd'"
           data-testid="entry-date-input"
           :pt="{
-            todayButton: {
+            pcTodayButton: {
               root: { 'data-testid': 'journal-entry-today-button' },
             },
           }"
           :disabled="selectedEntry?.id !== 'new'"
-        ></Calendar>
+        ></DatePicker>
       </InputGroup>
       <TrackSelection
         v-model="selectedEntry!.track"
@@ -299,7 +299,7 @@ useLeaveConfirmation(dirty);
           @update:model-value="() => (dirty = true)"
         ></InputText>
       </InputGroup>
-      <div class="flex-shrink-1 flex-grow-1">
+      <div class="shrink grow">
         <LeafletMap class="h-full w-full" :gpx-data="gpxData"></LeafletMap>
       </div>
     </div>

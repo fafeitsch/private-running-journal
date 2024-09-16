@@ -42,17 +42,17 @@ async function saveSettings() {
 </script>
 
 <template>
-  <div class="px-4 flex flex-column gap-2">
-    <header class="flex gap-2 align-items-center">
+  <div class="px-6 py-2 flex flex-col gap-2">
+    <header class="flex gap-2 items-center">
       <h2 class="text-xl">{{ t("sidenav.settings") }}</h2>
       <Button icon="pi pi-save" :disabled="!dirty" @click="saveSettings" data-testid="save-settings-button"></Button>
     </header>
-    <div class="flex flex-column gap-2 flex-grow-1 flex-shrink-1 overflow-auto">
+    <div class="flex flex-col gap-2 grow shrink overflow-auto">
       <Panel
         :header="t('settings.general.header')"
-        :pt="{ content: { class: 'flex align-items-baseline gap-2' } }"
+        :pt="{ content: { class: 'flex items-baseline gap-2' } }"
       >
-        <InputGroup class="flex-grow-1 w-2">
+        <InputGroup class="grow !w-2/12">
           <InputGroupAddon>
             <label for="languageInput">{{ t("settings.general.language.label") }}</label>
           </InputGroupAddon>
@@ -65,7 +65,7 @@ async function saveSettings() {
             data-testid="language-input"
           ></Dropdown>
         </InputGroup>
-        <div class="flex flex-column gap-2 flex-grow-1">
+        <div class="flex flex-col gap-2 grow">
           <InputGroup>
             <InputGroupAddon>
               <label for="portInput">{{ t("settings.general.port.label") }}</label>
@@ -85,9 +85,9 @@ async function saveSettings() {
       </Panel>
       <Panel
         :header="t('settings.mapSettings.header')"
-        :pt="{ content: { class: 'flex-column flex gap-4' } }"
+        :pt="{ content: { class: 'flex-col flex gap-4' } }"
       >
-        <div class="flex flex-column gap-2">
+        <div class="flex flex-col gap-2">
           <InputGroup>
             <InputGroupAddon>
               <label for="tileServerInput">{{ t("settings.mapSettings.tileServer.label") }}</label>
@@ -107,14 +107,14 @@ async function saveSettings() {
             <a
               href="https://wiki.openstreetmap.org/wiki/Raster_tile_providers"
               target="_blank"
-              class="inline-flex align-items-baseline"
+              class="inline-flex items-baseline"
             >
               <span class="pi pi-external-link"></span>&nbsp;
               {{ $t("settings.mapSettings.tileServer.help.link") }}
             </a>
           </i18n-t>
         </div>
-        <div class="flex flex-column gap-2">
+        <div class="flex flex-col gap-2">
           <InputGroup>
             <InputGroupAddon>
               <label for="tileAttributionInput">{{
@@ -129,7 +129,7 @@ async function saveSettings() {
           </InputGroup>
           <div class="text-xs">{{ t("settings.mapSettings.attribution.help") }}</div>
         </div>
-        <div class="flex flex-column gap-2">
+        <div class="flex flex-col gap-2">
           <InputGroup>
             <InputGroupAddon>
               <Checkbox
@@ -140,13 +140,13 @@ async function saveSettings() {
                 @update:model-value="dirty = true"
               ></Checkbox>
             </InputGroupAddon>
-            <InputGroupAddon class="flex-grow-1 justify-content-start">
+            <InputGroupAddon class="grow justify-start">
               <label for="cacheTilesInput">{{ t("settings.mapSettings.cache.label") }}</label>
             </InputGroupAddon>
           </InputGroup>
           <div class="text-xs">{{ t("settings.mapSettings.cache.help") }}</div>
         </div>
-        <div class="flex flex-column gap-2">
+        <div class="flex flex-col gap-2">
           <h4 class="m-0 p-0">{{ t("settings.mapSettings.mapPosition.general") }}</h4>
           <div class="flex gap-2">
             <InputGroup>

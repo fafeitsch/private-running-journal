@@ -59,8 +59,8 @@ function selectNode(node: TreeNode) {
 </script>
 
 <template>
-  <div class="flex h-full flex-column overflow-hidden gap-2">
-    <header class="flex justify-content-between align-items-center">
+  <div class="flex h-full flex-col overflow-hidden gap-2">
+    <header class="flex justify-between items-center">
       <span class="text-2xl">{{ $t("tracks.title") }}</span>
       <Button
         icon="pi pi-plus"
@@ -70,18 +70,18 @@ function selectNode(node: TreeNode) {
       ></Button>
     </header>
     <Tree
-      class="flex-grow-1 flex-shrink-1 overflow-auto"
+      class="grow shrink overflow-auto"
       :value="selectableTracks"
       v-model:selection-keys="selection"
       v-model:expanded-keys="expansion"
       selection-mode="single"
       @node-select="selectNode"
       :pt="{
-        label: {
-          class: 'w-full flex align-items-center white-space-nowrap',
+        nodeLabel: {
+          class: 'w-full flex items-center whitespace-nowrap',
           'data-testid': 'track-tree-node',
         },
-        toggler: { 'data-testid': 'track-tree-node-toggler' },
+        nodeToggleButton: { 'data-testid': 'track-tree-node-toggler' },
       }"
     >
     </Tree>

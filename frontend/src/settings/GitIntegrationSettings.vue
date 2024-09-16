@@ -27,7 +27,7 @@ function moreInformationShown() {
 }
 </script>
 <template>
-  <Panel :header="'Git Integration'" :pt="{ content: { class: 'flex flex-column gap-4' } }">
+  <Panel :header="'Git Integration'" :pt="{ content: { class: 'flex flex-col gap-4' } }">
     {{ t("settings.git.help") }}
     <div class="flex gap-2">
       <InputGroup>
@@ -39,7 +39,7 @@ function moreInformationShown() {
             :binary="true"
           ></Checkbox>
         </InputGroupAddon>
-        <InputGroupAddon class="flex-grow-1 justify-content-start">
+        <InputGroupAddon class="grow !justify-start">
           <label for="gitEnabledInput">{{ t("settings.git.enabled") }}</label>
         </InputGroupAddon>
       </InputGroup>
@@ -52,7 +52,7 @@ function moreInformationShown() {
             :binary="true"
           ></Checkbox>
         </InputGroupAddon>
-        <InputGroupAddon class="flex-grow-1 justify-content-start">
+        <InputGroupAddon class="grow !justify-start">
           <label for="gitPushEnabledInput">{{ t("settings.git.pushEnabled") }}</label>
         </InputGroupAddon>
       </InputGroup>
@@ -65,7 +65,7 @@ function moreInformationShown() {
             :binary="true"
           ></Checkbox>
         </InputGroupAddon>
-        <InputGroupAddon class="flex-grow-1 justify-content-start">
+        <InputGroupAddon class="grow !justify-start">
           <label for="gitPullEnabledInput">{{ t("settings.git.pullEnabled") }}</label>
         </InputGroupAddon>
       </InputGroup>

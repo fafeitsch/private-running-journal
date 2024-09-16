@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import OverlayPanel from "primevue/overlaypanel";
-import InlineMessage from "primevue/inlinemessage";
+import Popover from "primevue/popover";
+import Message from "primevue/message";
 import Button from "primevue/button";
 import { computed, ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -104,8 +104,8 @@ async function createEntry() {
     :disabled="!name || name === 'new'"
     v-tooltip="{ value: t('shared.save'), showDelay: 500 }"
   ></Button>
-  <OverlayPanel ref="overlayPanel">
-    <div v-focustrap class="flex flex-column gap-2 overlay">
+  <Popover ref="overlayPanel">
+    <div v-focustrap class="flex flex-col gap-2 overlay">
       <InputGroup class="flex w-full">
         <InputGroupAddon>
           <label for="parentInput" class="px-2">{{ t("tracks.folder") }}</label>
@@ -123,18 +123,13 @@ async function createEntry() {
         <InputGroupAddon>
           <label for="newFolderName">{{ t("tracks.folderName") }}</label>
         </InputGroupAddon>
-        <InputText
-          class="flex-grow-1"
-          id="newFolderName"
-          v-model="folderName"
-          autofocus
-        ></InputText>
+        <InputText class="grow" id="newFolderName" v-model="folderName" autofocus></InputText>
       </InputGroup>
       <div class="flex gap-2">
-        <InlineMessage v-if="error" class="flex-grow-1 flex-shrink-1" severity="error"
+        <Message v-if="error" class="grow shrink" severity="error"
           >{{ t("journal.createEntryError") }}
-        </InlineMessage>
-        <span v-else class="flex-grow-1"></span>
+        </Message>
+        <span v-else class="grow"></span>
         <Button
           :label="t('shared.add')"
           @click="createEntry"
@@ -143,7 +138,7 @@ async function createEntry() {
         ></Button>
       </div>
     </div>
-  </OverlayPanel>
+  </Popover>
 </template>
 
 <style scoped>

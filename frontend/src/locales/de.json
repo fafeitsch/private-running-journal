@@ -21,7 +21,8 @@
       "laps": "Runden",
       "trackNotFound": "Die verlinkte Strecke \"{link}\" konnte nicht gefunden werden.",
       "customTotalLength": "Gesamtlänge",
-      "overwriteLength": "Streckenlänge überschreiben"
+      "overwriteLength": "Streckenlänge überschreiben",
+      "lengthOverwrittenHint": "Die Streckenlänge wurde manuell überschrieben, daher haben die Runden keinen Einfluss auf die Gesamtstrecke."
     },
     "noTrack": "Fehler beim Laden",
     "createEntry": "Erstellen",

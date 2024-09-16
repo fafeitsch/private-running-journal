@@ -21,7 +21,8 @@
       "laps": "Laps",
       "trackNotFound": "The linked track \"{link}\" could not be found.",
       "customTotalLength": "Total length",
-      "overwriteLength": "Overwrite track length"
+      "overwriteLength": "Overwrite track length",
+      "lengthOverwrittenHint": "The track length has been overwritten manually. Thus, the laps do not have any influence on the total length of the entry."
     },
     "noTrack": "Loading error",
     "createEntry": "Create",

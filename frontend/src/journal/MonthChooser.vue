@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
+import DatePicker from "primevue/datepicker";
 
 const { t } = useI18n();
 const selectedMonth = defineModel<Date>({ required: true });
@@ -14,29 +15,29 @@ function previousMonth() {
 </script>
 
 <template>
-  <div class="flex gap-1 align-items-center">
+  <div class="flex gap-1 items-center">
     <Button
       icon="pi pi-arrow-left"
       text
       :aria-label="t('shared.previousMonth')"
       @click="previousMonth()"
     ></Button>
-    <Calendar
+    <DatePicker
       v-model="selectedMonth"
       view="month"
       :date-format="'MM yy'"
-      class="flex-grow-1"
+      class="grow"
       show-button-bar
       :pt="{
-        input: { 'data-testid': 'month-chooser-component-input' },
-        todayButton: {
+        pcInput: { root: { 'data-testid': 'month-chooser-component-input' } },
+        pcTodayButton: {
           root: { 'data-testid': 'month-chooser-component-today-button' },
         },
-        clearButton: {
-          root: {style: 'display:none'}
-        }
+        pcClearButton: {
+          root: { style: 'display:none' },
+        },
       }"
-    ></Calendar>
+    ></DatePicker>
     <Button
       icon="pi pi-arrow-right"
       text

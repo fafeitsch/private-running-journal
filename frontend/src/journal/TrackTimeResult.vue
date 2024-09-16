@@ -3,7 +3,7 @@ import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputNumber from "primevue/inputnumber";
 import InputText from "primevue/inputtext";
-import OverlayPanel from "primevue/overlaypanel";
+import Popover from "primevue/popover";
 import { useI18n } from "vue-i18n";
 import { computed, ref } from "vue";
 
@@ -56,7 +56,7 @@ const lapsWarningOverlay = ref();
         :min-fraction-digits="1"
         :max-fraction-digits="1"
         :locale="locale"
-        :pt="{ input: { root: { 'data-testid': 'journal-length-input', style: 'min-width:80px' } } }"
+        :pt="{ pcInput: { root: { 'data-testid': 'journal-length-input', style: 'min-width:80px' } } }"
       ></InputNumber>
       <InputGroupAddon>km</InputGroupAddon>
     </InputGroup>
@@ -74,7 +74,7 @@ const lapsWarningOverlay = ref();
         <label for="laps">{{ t("journal.details.laps") }}</label>
       </InputGroupAddon>
       <InputNumber
-          :pt="{ input: { root: { 'data-testid': 'laps-input' } } }"
+          :pt="{ pcInput: { root: { 'data-testid': 'laps-input' } } }"
           id="laps"
           v-model="laps"
           :min="1"
@@ -93,12 +93,11 @@ const lapsWarningOverlay = ref();
       <InputText id="pace" :value="pace" disabled></InputText>
     </InputGroup>
   </div>
-  <OverlayPanel ref="lapsWarningOverlay">
+  <Popover ref="lapsWarningOverlay">
     <div style="width: 300px" data-testid="laps-input-no-effect-warning">
-      Die Streckenlänge wurde manuell überschrieben, daher haben die Runden keinen Einfluss auf die
-      Gesamtstrecke.
+      {{ t('journal.details.lengthOverwrittenHint')}}
     </div>
-  </OverlayPanel>
+  </Popover>
 </template>
 
 <style scoped>

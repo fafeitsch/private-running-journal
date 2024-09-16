@@ -2,7 +2,6 @@ import { createApp } from "vue";
 import PrimeVue, { defaultOptions } from "primevue/config";
 import App from "./App.vue";
 import "./style.scss";
-import "primevue/resources/themes/aura-light-green/theme.css";
 import { createI18n } from "vue-i18n";
 import { de, en } from "./locales";
 import { createRouter, createWebHashHistory } from "vue-router";
@@ -17,6 +16,7 @@ import SettingsPage from "./settings/SettingsPage.vue";
 import { useSettingsStore } from "./store/settings-store";
 import AboutPage from "./about/AboutPage.vue";
 import ToastService from 'primevue/toastservice';
+import Aura from '@primevue/themes/aura';
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -72,6 +72,7 @@ const i18n = createI18n({
 
 createApp(App)
   .use(PrimeVue, {
+    theme: {preset: Aura, prefix: 'p'},
     locale: { ...defaultOptions.locale, firstDayOfWeek: 1 },
     ripple: true,
     zIndex: {

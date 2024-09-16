@@ -66,16 +66,16 @@ watch(
       :options="availableTracks"
       placeholder="Select Item"
 
-      class="md:w-20rem w-full"
+      class="md:w-80 w-full"
       @node-select="(node) => (selectedTrack = node.data)"
       data-testid="track-selection"
       :pt="{
-        tree: {
-          label: {
-            class: 'w-full flex align-items-center white-space-nowrap',
+        pcTree: {
+          nodeLabel: {
+            class: 'w-full flex items-center whitespace-nowrap',
             'data-testid': 'track-tree-selection-node',
           },
-          toggler: { 'data-testid': 'track-tree-selection-node-toggler' },
+          nodeToggleButton: { 'data-testid': 'track-tree-selection-node-toggler' },
         },
       }"
     >

@@ -1,6 +1,8 @@
 @use "leaflet/dist/leaflet.css";
 @import "primeicons/primeicons.css";
-@import "primeflex/primeflex.scss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 html {
 }
