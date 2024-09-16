@@ -119,10 +119,6 @@ func (t *Tracks) readTrack(path string, relativePath string) (Track, error) {
 		}
 	}
 
-	if err != nil {
-		return Track{}, err
-	}
-
 	hierarchy := strings.Split(relativePath, string(os.PathSeparator))
 	return Track{
 		Id:        relativePath,
@@ -164,21 +160,14 @@ func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not save base information: %v", err)
 	}
-	coords := make([]geom.Coord, 0)
-	for _, coordinate := range track.Waypoints {
-		coords = append(coords, []float64{coordinate.Longitude, coordinate.Latitude})
-	}
-	linestring, _ := geom.NewLineString(geom.XY).SetCoords(coords)
-	segment := gpx.NewTrkSegType(linestring)
-	trackSegment := &gpx.TrkType{TrkSeg: []*gpx.TrkSegType{segment}}
-	gpxPayload := gpx.GPX{Trk: []*gpx.TrkType{trackSegment}}
-	writer := bytes.Buffer{}
-	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
-	err = os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
+	err = writeGpxFile(track, trackDirectory)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not save gpx file: %v", err)
 	}
 	existingTrack, err := t.readTrack(trackDirectory, track.Id)
+	if err != nil {
+		return nil, fmt.Errorf("could not read track: %v", err)
+	}
 	shared.Send(
 		"track upserted", shared.Track{
 			Id:     existingTrack.Id,
@@ -189,8 +178,22 @@ func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
 	return &existingTrack, err
 }
 
+func writeGpxFile(track SaveTrack, trackDirectory string) error {
+	coords := make([]geom.Coord, 0)
+	for _, coordinate := range track.Waypoints {
+		coords = append(coords, []float64{coordinate.Longitude, coordinate.Latitude})
+	}
+	linestring, _ := geom.NewLineString(geom.XY).SetCoords(coords)
+	segment := gpx.NewTrkSegType(linestring)
+	trackSegment := &gpx.TrkType{TrkSeg: []*gpx.TrkSegType{segment}}
+	gpxPayload := gpx.GPX{Trk: []*gpx.TrkType{trackSegment}}
+	writer := bytes.Buffer{}
+	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
+	return os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
+}
+
 type CreateTrack struct {
-	Name   string `json:"name"`
+	*SaveTrack
 	Parent string `json:"parent"`
 }
 
@@ -210,10 +213,7 @@ func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
 	if err != nil {
 		return nil, err
 	}
-	gpxPayload := gpx.GPX{Trk: []*gpx.TrkType{{}}}
-	writer := bytes.Buffer{}
-	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
-	err = os.WriteFile(filepath.Join(trackPath, "track.gpx"), writer.Bytes(), 0644)
+	err = writeGpxFile(*track.SaveTrack, trackPath)
 	if err != nil {
 		return nil, err
 	}

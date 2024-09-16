@@ -15,7 +15,7 @@ export const useMap = () => {
   let map: L.Map | undefined = undefined;
   const settingsStore = useSettingsStore();
 
-  let gpxData = ref<GpxData | undefined>();
+  let gpxData = ref<GpxData>();
 
   function initMap(id: MaybeRefOrGetter<string>, mapContainer: Ref) {
     const mapSettings = settingsStore.settings.mapSettings;
@@ -43,27 +43,27 @@ export const useMap = () => {
   let trackLayer: L.Polyline | undefined = undefined;
   let distanceMarkerLayer: L.Layer | undefined = undefined;
 
-  watch(gpxData, () => {
+  watch(gpxData, (newValue) => {
     if (!map) {
       return;
     }
     trackLayer?.removeFrom(map);
     distanceMarkerLayer?.removeFrom(map);
-    if (!gpxData.value) {
+    if (!newValue) {
       return;
     }
     trackLayer = L.polyline(
-      gpxData.value!.waypoints.map((wp) => L.latLng(wp.latitude, wp.longitude)),
+      newValue.waypoints.map((wp) => L.latLng(wp.latitude, wp.longitude)),
       { color: "red" },
     ).addTo(map);
     enableEditing();
-    if (gpxData.value?.waypoints.length) {
+    if (newValue.waypoints.length) {
       map.setView(
         L.latLng(gpxData.value!.waypoints[0].latitude, gpxData.value!.waypoints[0].longitude),
       );
     }
     distanceMarkerLayer = L.layerGroup(
-      gpxData.value?.distanceMarkers.map((dm) => createDistanceMarker(dm)),
+      newValue.distanceMarkers.map((dm) => createDistanceMarker(dm)),
     ).addTo(map);
   });
 
@@ -71,16 +71,23 @@ export const useMap = () => {
   let editTrackHandler: (props: { length: number; waypoints: Coordinates[] }) => void = () =>
     void 0;
 
+  function createTrackLayerIfNecessary() {
+    if(!map) {
+      throw new Error('map is not initialized yet')
+    }
+    if (!trackLayer) {
+      trackLayer = L.polyline([], { color: "red" }).addTo(map);
+    }
+  }
+
   function enableEditing(
     value: boolean = editEnabled,
     handler: (props: { length: number; waypoints: Coordinates[] }) => void = editTrackHandler,
   ) {
     editTrackHandler = handler;
     editEnabled = value;
-    if (!trackLayer) {
-      return;
-    }
-    trackLayer.removeEventListener({
+    createTrackLayerIfNecessary();
+    trackLayer!.removeEventListener({
       //@ts-expect-error
       "editable:vertex:dragend": handleTrackEditEvent,
       "editable:vertex:new": handleTrackEditEvent,
@@ -88,8 +95,8 @@ export const useMap = () => {
     });
     if (value) {
       //@ts-expect-error
-      trackLayer.enableEdit();
-      trackLayer.addEventListener({
+      trackLayer!.enableEdit();
+      trackLayer!.addEventListener({
         //@ts-expect-error
         "editable:vertex:dragend": handleTrackEditEvent,
         "editable:vertex:new": handleTrackEditEvent,
@@ -97,7 +104,7 @@ export const useMap = () => {
       });
     } else {
       //@ts-expect-error
-      trackLayer.disableEdit();
+      trackLayer!.disableEdit();
     }
   }
 
@@ -124,9 +131,7 @@ export const useMap = () => {
   }
 
   function changeEditDirection(value: "backward" | "drag" | "forward") {
-    if (!trackLayer) {
-      return;
-    }
+    createTrackLayerIfNecessary()
     //@ts-expect-error
     trackLayer.editor.disable();
     //@ts-expect-error

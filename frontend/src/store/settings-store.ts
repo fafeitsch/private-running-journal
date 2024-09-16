@@ -25,17 +25,19 @@ export const defaultSettings = {
 const settingsApi = useSettingsApi();
 export const useSettingsStore = defineStore("settings", () => {
   const settings = ref<AppSettings>(new AppSettings(defaultSettings));
+  const loaded = ref(false)
 
   const i18n = useI18n()
 
   async function loadSettings() {
     settings.value = await settingsApi.getSettings();
     i18n.locale.value = settings.value.language
+    loaded.value = true
   }
 
   watch(() => settings.value.language, (language) => {
     i18n.locale.value = language
   })
 
-  return { settings, loadSettings };
+  return { settings, loadSettings, loaded };
 });

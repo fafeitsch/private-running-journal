@@ -8,6 +8,7 @@ import { TreeSelectionKeys } from "primevue/tree";
 import { useI18n } from "vue-i18n";
 import { tracksToTreeNodes } from "../shared/track-utils";
 import CreateTrackOverlay from "./CreateTrackOverlay.vue";
+import Button from "primevue/button";
 
 const trackStore = useTrackStore();
 const { availableTracks, selectedTrackId } = storeToRefs(trackStore);
@@ -60,8 +61,13 @@ function selectNode(node: TreeNode) {
 <template>
   <div class="flex h-full flex-column overflow-hidden gap-2">
     <header class="flex justify-content-between align-items-center">
-      <span class="text-2xl">{{ $t("tracks.title") }}</span
-      ><CreateTrackOverlay></CreateTrackOverlay>
+      <span class="text-2xl">{{ $t("tracks.title") }}</span>
+      <Button
+        icon="pi pi-plus"
+        @click="router.push('/tracks/new')"
+        :aria-label="t('shared.add')"
+        v-tooltip="{ value: t('shared.add'), showDelay: 500 }"
+      ></Button>
     </header>
     <Tree
       class="flex-grow-1 flex-shrink-1 overflow-auto"
@@ -71,8 +77,11 @@ function selectNode(node: TreeNode) {
       selection-mode="single"
       @node-select="selectNode"
       :pt="{
-        label: { class: 'w-full flex align-items-center white-space-nowrap', 'data-testid': 'track-tree-node' },
-        toggler: {'data-testid': 'track-tree-node-toggler'}
+        label: {
+          class: 'w-full flex align-items-center white-space-nowrap',
+          'data-testid': 'track-tree-node',
+        },
+        toggler: { 'data-testid': 'track-tree-node-toggler' },
       }"
     >
     </Tree>

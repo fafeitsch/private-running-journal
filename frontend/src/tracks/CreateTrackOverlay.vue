@@ -2,7 +2,7 @@
 import OverlayPanel from "primevue/overlaypanel";
 import InlineMessage from "primevue/inlinemessage";
 import Button from "primevue/button";
-import { computed, ref, watch } from "vue";
+import { computed, ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useJournalStore } from "../store/journal-store";
 import { useRouter } from "vue-router";
@@ -14,11 +14,17 @@ import TreeSelect from "primevue/treeselect";
 import { storeToRefs } from "pinia";
 import { TreeNode } from "primevue/treenode";
 import { tracksToTreeNodes } from "../shared/track-utils";
+import { tracks } from "../../wailsjs/go/models";
+import CreateTrack = tracks.CreateTrack;
+import Coordinates = tracks.Coordinates;
 
 const { locale, t } = useI18n();
 
+const props = defineProps<{ name: string; waypoints: Coordinates[] }>();
+
+const { name, waypoints } = toRefs(props);
+
 const overlayPanel = ref();
-const name = ref<string>("");
 const error = ref<boolean>(false);
 
 const tracksApi = useTracksApi();
@@ -63,6 +69,8 @@ const forbiddenFolderName = computed(() => folderName.value.includes(".."));
 
 const router = useRouter();
 
+const emit = defineEmits<{ trackCreated: [] }>();
+
 async function createEntry() {
   if (!name.value) {
     return;
@@ -70,10 +78,14 @@ async function createEntry() {
   error.value = false;
 
   try {
-    const track = await tracksApi.createTrack({
-      name: name.value,
-      parent: folderName.value.startsWith("/") ? folderName.value.substring(1) : folderName.value,
-    });
+    const track = await tracksApi.createTrack(
+      new CreateTrack({
+        name: name.value,
+        parent: folderName.value.startsWith("/") ? folderName.value.substring(1) : folderName.value,
+        waypoints: waypoints.value,
+      }),
+    );
+    emit("trackCreated");
     tracksStore.addTrack(track);
     router.push("/tracks/" + encodeURIComponent(track.id));
     overlayPanel.value.hide();
@@ -86,19 +98,14 @@ async function createEntry() {
 
 <template>
   <Button
-    icon="pi pi-plus"
+    icon="pi pi-save"
     @click="(event) => overlayPanel.toggle(event)"
-    :aria-label="t('shared.add')"
-    v-tooltip="{value: t('shared.add'), showDelay: 500}"
+    :aria-label="t('shared.save')"
+    :disabled="!name || name === 'new'"
+    v-tooltip="{ value: t('shared.save'), showDelay: 500 }"
   ></Button>
   <OverlayPanel ref="overlayPanel">
     <div v-focustrap class="flex flex-column gap-2 overlay">
-      <InputGroup class="flex w-full">
-        <InputGroupAddon>
-          <label for="newTrackName">{{ t("tracks.name") }}</label>
-        </InputGroupAddon>
-        <InputText class="flex-grow-1" id="newTrackName" v-model="name" autofocus></InputText>
-      </InputGroup>
       <InputGroup class="flex w-full">
         <InputGroupAddon>
           <label for="parentInput" class="px-2">{{ t("tracks.folder") }}</label>
@@ -124,9 +131,9 @@ async function createEntry() {
         ></InputText>
       </InputGroup>
       <div class="flex gap-2">
-        <InlineMessage v-if="error" class="flex-grow-1 flex-shrink-1" severity="error">{{
-          t("journal.createEntryError")
-        }}</InlineMessage>
+        <InlineMessage v-if="error" class="flex-grow-1 flex-shrink-1" severity="error"
+          >{{ t("journal.createEntryError") }}
+        </InlineMessage>
         <span v-else class="flex-grow-1"></span>
         <Button
           :label="t('shared.add')"

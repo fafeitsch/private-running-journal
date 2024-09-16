@@ -16,7 +16,7 @@ const { t, locale } = useI18n();
 
 const journalStoreRef = storeToRefs(useJournalStore());
 const trackStoreRef = storeToRefs(useTrackStore());
-const { settings } = storeToRefs(useSettingsStore());
+const { settings, loaded: settingsLoaded} = storeToRefs(useSettingsStore());
 
 watch(
   () => settings.value.language,
@@ -79,7 +79,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-column">
+  <div v-if="settingsLoaded" class="h-full flex flex-column">
     <TabMenu
       class="flex-shrink-0"
       :model="navItems"

@@ -17,6 +17,9 @@ export const useTrackStore = defineStore("tacks", () => {
     if (!selectedTrackId.value) {
       return undefined;
     }
+    if (selectedTrackId.value === "new") {
+      return { name: "", usages: 0, length: 0, hierarchy: [], id: 'new' };
+    }
 
     return availableTracks.value.find((t) => t.id === selectedTrackId.value);
   });

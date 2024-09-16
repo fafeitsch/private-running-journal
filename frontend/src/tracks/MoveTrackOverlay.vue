@@ -22,7 +22,6 @@ const error = ref<boolean>(false);
 
 const tracksApi = useTracksApi();
 const tracksStore = useTrackStore();
-const store = useJournalStore();
 const { availableTracks, selectedTrack } = storeToRefs(tracksStore);
 const folders = computed(() => {
   const filterFolders = (folder: TreeNode) => !!folder.children?.length;

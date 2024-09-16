@@ -14,6 +14,7 @@ import ConfirmPopup from "primevue/confirmpopup";
 import { useConfirm } from "primevue/useconfirm";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import MoveTrackOverlay from "./MoveTrackOverlay.vue";
+import CreateTrackOverlay from "./CreateTrackOverlay.vue";
 import GpxData = tracks.GpxData;
 import SaveTrack = tracks.SaveTrack;
 import Coordinates = tracks.Coordinates;
@@ -43,22 +44,28 @@ watch(
   { immediate: true },
 );
 
-const gpxData = ref<GpxData | undefined>(undefined);
+const gpxData = ref<GpxData>(new GpxData({waypoints: [], distanceMarkers: []}));
 const tracksApi = useTracksApi();
 const editedWaypoints = ref<Coordinates[]>([]);
+const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
+
+const length = ref(0);
 
 watch(
   selectedTrack,
   async () => {
-    if (!selectedTrack.value) {
-      gpxData.value = undefined;
+    if (!selectedTrack.value || selectedTrackId.value === "new") {
+      gpxData.value = new GpxData({ waypoints: [], distanceMarkers: [] });
       editedWaypoints.value = [];
+      trackEditDirection.value = 'forward'
+      length.value = 0;
       return;
     }
     try {
       gpxData.value = await tracksApi.getGpxData(selectedTrack.value.id);
       editedWaypoints.value = gpxData.value.waypoints;
       length.value = selectedTrack.value.length;
+      trackEditDirection.value = 'drag'
     } catch (e) {
       console.error(e);
     }
@@ -66,7 +73,6 @@ watch(
   { deep: true, immediate: true },
 );
 
-const length = ref(0);
 const formattedLength = computed(() =>
   n(length.value / 1000, { maximumFractionDigits: 1, minimumFractionDigits: 1 }),
 );
@@ -76,8 +82,6 @@ function trackChanged(props: { length: number; waypoints: Coordinates[] }) {
   editedWaypoints.value = props.waypoints;
   dirty.value = true;
 }
-
-const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
 
 const confirm = useConfirm();
 
@@ -102,22 +106,23 @@ async function saveTrack(event: any) {
     });
     choice = await result;
   }
-  if (choice) {
-    try {
-      const updated = await tracksApi.saveTrack(
-        new SaveTrack({
-          id: track.value.id,
-          name: track.value.name,
-          parents: [],
-          waypoints: editedWaypoints.value,
-        }),
-      );
-      dirty.value = false;
-      tracksStore.updateTrack(updated);
-    } catch (e) {
-      // TODO error handling
-      console.error(e);
-    }
+  if (!choice) {
+    return;
+  }
+  try {
+    const updated = await tracksApi.saveTrack(
+      new SaveTrack({
+        id: track.value.id,
+        name: track.value.name,
+        parents: [],
+        waypoints: editedWaypoints.value,
+      }),
+    );
+    dirty.value = false;
+    tracksStore.updateTrack(updated);
+  } catch (e) {
+    // TODO error handling
+    console.error(e);
   }
 }
 
@@ -156,12 +161,19 @@ useLeaveConfirmation(dirty);
   <div v-if="track" class="w-full p-2 flex flex-column h-full gap-2">
     <div class="flex gap-2">
       <Button
+        v-if="selectedTrackId !== 'new'"
         icon="pi pi-save"
         :disabled="!dirty"
         @click="saveTrack"
         v-tooltip="{ value: t('shared.save'), showDelay: 500 }"
         :aria-label="t('shared.save')"
       ></Button>
+      <CreateTrackOverlay
+        v-else
+        :name="track!.name"
+        :waypoints="editedWaypoints"
+        @track-created="dirty = false"
+      ></CreateTrackOverlay>
       <ConfirmPopup group="track">
         <template #message="{ message }">
           <div style="max-width: 330px" class="p-2" data-testid="delete-track-confirmation">
@@ -170,12 +182,13 @@ useLeaveConfirmation(dirty);
         </template>
       </ConfirmPopup>
       <Button
+        v-if="selectedTrackId !== 'new'"
         icon="pi pi-trash"
         @click="deleteTrack"
         v-tooltip="{ value: t('shared.delete'), showDelay: 500 }"
         :aria-label="t('shared.delete')"
       ></Button>
-      <MoveTrackOverlay></MoveTrackOverlay>
+      <MoveTrackOverlay v-if="selectedTrackId !== 'new'"></MoveTrackOverlay>
     </div>
     <div class="flex gap-2">
       <InputGroup>
@@ -214,6 +227,7 @@ useLeaveConfirmation(dirty);
         v-model="trackEditDirection"
         option-value="value"
         option-label="name"
+        :allow-empty="false"
       ></SelectButton>
     </div>
     <div class="flex-shrink-1 flex-grow-1">

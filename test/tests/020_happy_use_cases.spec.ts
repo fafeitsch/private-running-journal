@@ -9,18 +9,13 @@ test('should create new track and create journal entry with it, and delete track
   await page.getByTestId(globalSelectors.tracksTab).click()
   await page.getByLabel('Hinzufügen').click()
   await page.getByLabel('Streckenname').fill('Wurzelstrecke')
-  await page.getByTestId(trackSelectors.createTrackButton).click()
 
-  let trackNodes = page.getByTestId(trackSelectors.trackNode);
-  await expect(trackNodes).toHaveCount(3)
-
-  await expect(page.getByLabel('Streckenname').nth(1)).toHaveValue('Wurzelstrecke')
-  await expect(page.getByLabel('Streckenname').nth(1)).toBeVisible()
+  await expect(page.getByLabel('Streckenname')).toHaveValue('Wurzelstrecke')
+  await expect(page.getByLabel('Streckenname')).toBeVisible()
   await expect(page.getByLabel('Verwendungen')).toHaveValue('0')
   await expect(page.getByLabel('Streckenlänge')).toHaveValue('0,0')
-  await expect(page.getByLabel('Speichern')).toBeDisabled()
+  await expect(page.getByLabel('Speichern')).toBeEnabled()
 
-  await page.getByLabel('Vorwärts').click()
   await page.mouse.click(560, 500)
   await page.mouse.click(640, 450)
   await page.mouse.click(720, 390)
@@ -37,6 +32,10 @@ test('should create new track and create journal entry with it, and delete track
   await expect(page.getByLabel('Streckenlänge')).toHaveValue('1,0')
 
   await page.getByLabel("Speichern").click()
+  await page.getByTestId(trackSelectors.createTrackButton).click()
+
+  let trackNodes = page.getByTestId(trackSelectors.trackNode);
+  await expect(trackNodes).toHaveCount(3)
   await expect(page.getByLabel("Speichern")).toBeDisabled()
   const track  = JSON.parse(fs.readFileSync('testdata/tracks/wurzelstrecke/info.json') as any)
   expect(track.name).toEqual('Wurzelstrecke')
