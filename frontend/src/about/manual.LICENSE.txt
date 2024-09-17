@@ -1,5 +1,5 @@
 Name: Wails
-Version: 2.8.0
+Version: 2.9.1
 License: MIT
 Description:  Create beautiful applications using Go
 Repository: git+https://github.com/wailsapp/wails?tab=MIT-1-ov-file#readme
