@@ -129,6 +129,18 @@ func New(baseDirectory string) (*Journal, error) {
 	return result, nil
 }
 
+func (j *Journal) ReadAllEntries() ([]shared.JournalEntry, error) {
+	entries, err := j.readEntries()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]shared.JournalEntry, 0)
+	for _, entry := range entries {
+		result = append(result, shared.JournalEntry{TrackId: entry.trackId})
+	}
+	return result, nil
+}
+
 func (j *Journal) readEntries() ([]ListEntry, error) {
 	result := make([]ListEntry, 0, 0)
 	err := filepath.Walk(

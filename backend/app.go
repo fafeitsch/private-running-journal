@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/backup"
+	"github.com/fafeitsch/private-running-journal/backend/cache"
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
 	"github.com/fafeitsch/private-running-journal/backend/journal"
 	"github.com/fafeitsch/private-running-journal/backend/settings"
@@ -24,6 +25,7 @@ type App struct {
 	journal         *journal.Journal
 	settings        *settings.Settings
 	backup          *backup.Backup
+	cache           *cache.Cache
 }
 
 func NewApp() *App {
@@ -31,6 +33,7 @@ func NewApp() *App {
 	a.setupConfigDirectory()
 	var err error
 	a.settings, err = settings.New(a.configDirectory)
+	a.cache = cache.New(a.configDirectory)
 	if err != nil {
 		log.Fatalf("could not read settings: %v", err)
 	}
@@ -76,6 +79,16 @@ func (a *App) Startup(ctx context.Context) {
 		group.Done()
 	}()
 	group.Wait()
+	if !a.cache.Initialized() {
+		entries, err := a.journal.ReadAllEntries()
+		if err != nil {
+			log.Fatalf("could not read entries: %v", err)
+		}
+		err = a.cache.Build(a.tracks.GetTracks(), entries)
+		if err != nil {
+			log.Fatalf("could not initialize cache: %v", err)
+		}
+	}
 	tileServer := httpapi.NewTileServer(
 		a.configDirectory, a.settings.MapSettings().TileServer, a.settings.MapSettings().CacheTiles,
 	)

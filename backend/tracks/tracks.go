@@ -98,6 +98,14 @@ func sendInitEvent(trackCache map[string]*Track) {
 	shared.Send("tracks initialized", list)
 }
 
+func (t *Tracks) GetTracks() []shared.Track {
+	result := make([]shared.Track, 0)
+	for _, track := range t.cache {
+		result = append(result, shared.Track{Id: track.Id, Length: track.Length, Name: track.Name})
+	}
+	return result
+}
+
 func (t *Tracks) readTrack(path string, relativePath string) (Track, error) {
 	descriptorPath := filepath.Join(path, "info.json")
 	var baseDescriptor trackDescriptor
