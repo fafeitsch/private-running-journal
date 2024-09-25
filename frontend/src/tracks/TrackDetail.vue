@@ -6,7 +6,7 @@ import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
-import { tracks } from "../../wailsjs/go/models";
+import { trackEditor, tracks } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import TrackEditor from "./TrackEditor.vue";
 import Button from "primevue/button";
@@ -15,17 +15,19 @@ import { useConfirm } from "primevue/useconfirm";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import MoveTrackOverlay from "./MoveTrackOverlay.vue";
 import CreateTrackOverlay from "./CreateTrackOverlay.vue";
-import GpxData = tracks.GpxData;
 import SaveTrack = tracks.SaveTrack;
 import Coordinates = tracks.Coordinates;
+import TrackDto = trackEditor.TrackDto;
+import CoordinateDto = trackEditor.CoordinateDto;
 
 const route = useRoute();
 const tracksStore = useTrackStore();
-const { selectedTrackId, selectedTrack } = storeToRefs(tracksStore);
+const { selectedTrack } = storeToRefs(tracksStore);
 const { t, n } = useI18n();
 const dirty = ref(false);
 
-const track = ref<Omit<tracks.Track, "convertValues"> | undefined>(undefined);
+const track = ref<Omit<TrackDto, "convertValues"> | undefined>(undefined);
+const tracksApi = useTracksApi();
 
 watch(selectedTrack, (value) => {
   dirty.value = false;
@@ -36,41 +38,39 @@ watch(selectedTrack, (value) => {
   track.value = { ...value };
 });
 
-watch(
-  () => route.params.trackId as string,
-  (trackId) => {
-    selectedTrackId.value = trackId;
-  },
-  { immediate: true },
-);
-
-const gpxData = ref<GpxData>(new GpxData({waypoints: [], distanceMarkers: []}));
-const tracksApi = useTracksApi();
+const gpxData = ref<{
+  waypoints: CoordinateDto[];
+  distanceMarkers: (CoordinateDto & { distance: number })[];
+}>({ waypoints: [], distanceMarkers: [] });
 const editedWaypoints = ref<Coordinates[]>([]);
+const length = ref(0);
 const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
 
-const length = ref(0);
-
 watch(
-  selectedTrack,
-  async () => {
-    if (!selectedTrack.value || selectedTrackId.value === "new") {
-      gpxData.value = new GpxData({ waypoints: [], distanceMarkers: [] });
-      editedWaypoints.value = [];
-      trackEditDirection.value = 'forward'
-      length.value = 0;
-      return;
+  () => route.params.trackId as string,
+  async (trackId) => {
+    if (trackId !== "new") {
+      selectedTrack.value = await tracksApi.getTrack(trackId);
+      gpxData.value = {
+        waypoints: selectedTrack.value.waypoints,
+        distanceMarkers: selectedTrack.value.distanceMarkers,
+      };
+    } else {
+      selectedTrack.value = new TrackDto({
+        id: "new",
+        length: 0,
+        name: "",
+        usages: [],
+        parents: [],
+        waypoints: [],
+        distanceMarkers: [],
+      });
     }
-    try {
-      gpxData.value = await tracksApi.getGpxData(selectedTrack.value.id);
-      editedWaypoints.value = gpxData.value.waypoints;
-      length.value = selectedTrack.value.length;
-      trackEditDirection.value = 'drag'
-    } catch (e) {
-      console.error(e);
-    }
+    editedWaypoints.value = selectedTrack.value.waypoints;
+    length.value = selectedTrack.value.length;
+    trackEditDirection.value = "drag";
   },
-  { deep: true, immediate: true },
+  { immediate: true },
 );
 
 const formattedLength = computed(() =>
@@ -91,7 +91,7 @@ async function saveTrack(event: any) {
     return;
   }
   let choice = true;
-  if (track.value.usages > 0) {
+  if (track.value.usages.length > 0) {
     let resolveFn: (result: boolean) => void;
     const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
     confirm.require({
@@ -119,7 +119,7 @@ async function saveTrack(event: any) {
       }),
     );
     dirty.value = false;
-    tracksStore.updateTrack(updated);
+    await tracksStore.loadTracks();
   } catch (e) {
     // TODO error handling
     console.error(e);
@@ -148,7 +148,7 @@ async function deleteTrack(event: Event) {
   }
   try {
     await tracksApi.deleteTrack(track.value.id);
-    tracksStore.deleteTrack(track.value.id);
+    await tracksStore.loadTracks();
   } catch (e) {
     console.error(e);
   }
@@ -161,7 +161,7 @@ useLeaveConfirmation(dirty);
   <div v-if="track" class="w-full p-2 flex flex-col h-full gap-2">
     <div class="flex gap-2">
       <Button
-        v-if="selectedTrackId !== 'new'"
+        v-if="selectedTrack?.id !== 'new'"
         icon="pi pi-save"
         :disabled="!dirty"
         @click="saveTrack"
@@ -182,13 +182,13 @@ useLeaveConfirmation(dirty);
         </template>
       </ConfirmPopup>
       <Button
-        v-if="selectedTrackId !== 'new'"
+        v-if="selectedTrack?.id !== 'new'"
         icon="pi pi-trash"
         @click="deleteTrack"
         v-tooltip="{ value: t('shared.delete'), showDelay: 500 }"
         :aria-label="t('shared.delete')"
       ></Button>
-      <MoveTrackOverlay v-if="selectedTrackId !== 'new'"></MoveTrackOverlay>
+      <MoveTrackOverlay v-if="selectedTrack?.id !== 'new'"></MoveTrackOverlay>
     </div>
     <div class="flex gap-2">
       <InputGroup>
@@ -205,7 +205,7 @@ useLeaveConfirmation(dirty);
         <InputGroupAddon>
           <label for="usagesInput">{{ t("tracks.usages") }}</label>
         </InputGroupAddon>
-        <InputText id="usagesInput" disabled :value="`${track!.usages}`"></InputText>
+        <InputText id="usagesInput" disabled :value="`${track!.usages.length}`"></InputText>
       </InputGroup>
     </div>
     <div class="flex gap-2 items-center">
@@ -232,8 +232,10 @@ useLeaveConfirmation(dirty);
     </div>
     <div class="shrink grow">
       <TrackEditor
+        v-if="selectedTrack"
         class="h-full w-full"
-        :gpx-data="gpxData"
+        :waypoints="selectedTrack.waypoints"
+        :polyline-meta="selectedTrack"
         :edit-direction="trackEditDirection"
         @change-track="trackChanged"
       ></TrackEditor>

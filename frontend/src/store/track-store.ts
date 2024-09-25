@@ -1,54 +1,26 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useTracksApi } from "../api/tracks";
-import { tracks } from "../../wailsjs/go/models";
+import {trackEditor, tracks} from "../../wailsjs/go/models";
 import Track = tracks.Track;
+import TrackTreeNode = tracks.TrackTreeNode;
+import TrackDto = trackEditor.TrackDto;
 
 export const useTrackStore = defineStore("tacks", () => {
   const trackApi = useTracksApi();
-  const availableTracks = ref<Track[]>([]);
-  const selectedTrackId = ref<string | undefined>(undefined);
+  const trackTree = ref<TrackTreeNode>(new TrackTreeNode({ name: "", tracks: [], nodes: [] }));
+  const selectedTrack = ref<TrackDto | undefined>(undefined);
+
+  const selectedTrackId = computed(() => selectedTrack.value?.id);
 
   async function loadTracks() {
-    availableTracks.value = await trackApi.getTracks();
-  }
-
-  const selectedTrack = computed(() => {
-    if (!selectedTrackId.value) {
-      return undefined;
-    }
-    if (selectedTrackId.value === "new") {
-      return { name: "", usages: 0, length: 0, hierarchy: [], id: 'new' };
-    }
-
-    return availableTracks.value.find((t) => t.id === selectedTrackId.value);
-  });
-
-  function addTrack(track: Track) {
-    availableTracks.value.push(track);
-  }
-
-  function updateTrack(track: Track) {
-    const existing = availableTracks.value.find((t) => t.id === track.id);
-    if (!existing) {
-      return;
-    }
-    existing.name = track.name;
-    existing.length = track.length;
-    existing.usages = track.usages;
-  }
-
-  function deleteTrack(id: string) {
-    availableTracks.value = availableTracks.value.filter((track) => track.id !== id);
+    trackTree.value = await trackApi.getTrackTree();
   }
 
   return {
     loadTracks,
-    availableTracks,
+    trackTree,
     selectedTrackId,
     selectedTrack,
-    addTrack,
-    updateTrack,
-    deleteTrack,
   };
 });

@@ -3,13 +3,13 @@ package journal
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -33,48 +33,22 @@ var directoryRegex = regexp.MustCompile("\\d\\d[a-z]?|\\d\\d\\d\\d")
 
 type Journal struct {
 	baseDirectory string
-	tracks        map[string]*shared.Track
 	listEntries   map[string]*ListEntry
+	loadService   *filebased.Service
 }
 
-func New(baseDirectory string) (*Journal, error) {
+func New(baseDirectory string, loadService *filebased.Service) (*Journal, error) {
 	result := &Journal{
 		baseDirectory: filepath.Join(baseDirectory, "journal"),
-		tracks:        make(map[string]*shared.Track),
 		listEntries:   make(map[string]*ListEntry),
+		loadService:   loadService,
 	}
-	group := sync.WaitGroup{}
-	group.Add(1)
-	shared.RegisterHandler(
-		"tracks initialized", func(data ...any) {
-			newTracks, ok := data[0].([]shared.Track)
-			if !ok {
-				panic(fmt.Errorf("received unexpected type for event \"tracks initialized\": %v", data[0]))
-			}
-			result.tracks = make(map[string]*shared.Track)
-			for _, track := range newTracks {
-				t := track
-				result.tracks[track.Id] = &t
-			}
-			group.Done()
-		},
-	)
-	shared.RegisterHandler(
-		"track upserted", func(data ...any) {
-			newTrack, ok := data[0].(shared.Track)
-			if !ok {
-				panic(fmt.Errorf("received unexpected type for event \"track upserted\": %v", data[0]))
-			}
-			result.tracks[newTrack.Id] = &newTrack
-		},
-	)
 	shared.RegisterHandler(
 		"track deleted", func(data ...any) {
 			deletedTrack, ok := data[0].(string)
 			if !ok {
 				panic(fmt.Errorf("received unexpected type for event \"track deleted\": %v", data[0]))
 			}
-			delete(result.tracks, deletedTrack)
 			for key, entry := range result.listEntries {
 				if entry.trackId == deletedTrack {
 					result.listEntries[key].TrackName = ""
@@ -96,8 +70,6 @@ func New(baseDirectory string) (*Journal, error) {
 					),
 				)
 			}
-			delete(result.tracks, oldId)
-			result.tracks[track.Id] = &track
 			for _, listEntry := range result.listEntries {
 				entry, err := result.ReadJournalEntry(listEntry.Id)
 				if entry.LinkedTrack == oldId {
@@ -111,11 +83,6 @@ func New(baseDirectory string) (*Journal, error) {
 			}
 		},
 	)
-	group.Wait()
-	err := os.MkdirAll(result.baseDirectory, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("could not create journal directory: %v", err)
-	}
 	entries, err := result.readEntries()
 	if err == nil {
 		for _, entry := range entries {
@@ -125,6 +92,18 @@ func New(baseDirectory string) (*Journal, error) {
 		}
 	} else {
 		return nil, err
+	}
+	return result, nil
+}
+
+func (j *Journal) ReadAllEntries() ([]shared.JournalEntry, error) {
+	entries, err := j.readEntries()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]shared.JournalEntry, 0)
+	for _, entry := range entries {
+		result = append(result, shared.JournalEntry{TrackId: entry.trackId, Id: entry.Id})
 	}
 	return result, nil
 }
@@ -174,7 +153,7 @@ type Entry struct {
 }
 
 func (j *Journal) ListEntries(start *time.Time, end *time.Time) []ListEntry {
-	result := make([]ListEntry, 0, 0)
+	result := make([]ListEntry, 0)
 	for key, entry := range j.listEntries {
 		date, err := time.Parse(time.DateOnly, entry.Date)
 		if err != nil {
@@ -221,9 +200,11 @@ func (j *Journal) ReadJournalEntry(path string) (Entry, error) {
 		return Entry{}, err
 	}
 	journalEntry.Date = date
-	track, ok := j.tracks[entryDescriptor.Track]
-	if ok {
-		journalEntry.Track = track
+	track, err := j.loadService.ReadTrack(entryDescriptor.Track)
+	if err == nil {
+		journalEntry.Track = &track
+	} else {
+		log.Printf("could not load track: %v", err)
 	}
 	return journalEntry, nil
 }
@@ -236,7 +217,7 @@ func (j *Journal) readListEntry(path string) (ListEntry, error) {
 	listEntry := ListEntry{Id: entry.Id, Date: entry.Date}
 	if entry.Track != nil {
 		listEntry.TrackName = entry.Track.Name
-		listEntry.Length = entry.Track.Length * entry.Laps
+		listEntry.Length = entry.Track.Waypoints.Length() * entry.Laps
 		listEntry.trackId = entry.LinkedTrack
 	}
 	if entry.CustomLength != 0 {
@@ -276,7 +257,7 @@ func (j *Journal) CreateEntry(entry Entry) (ListEntry, error) {
 	if err != nil {
 		return ListEntry{}, fmt.Errorf("could not write file \"%s\": %v", entryFilePath, err)
 	}
-	shared.Send("journal entry changed", shared.JournalEntry{}, shared.JournalEntry{TrackId: entry.Track.Id})
+	shared.Send("journal entry changed", shared.JournalEntry{}, shared.JournalEntry{TrackId: entry.Track.Id, Id: id})
 	listEntry, err := j.readListEntry(id)
 	if err != nil {
 		return ListEntry{}, fmt.Errorf("could not read file \"%s\": %v", entryFilePath, err)
@@ -306,8 +287,8 @@ func (j *Journal) SaveEntry(entry Entry) error {
 	}
 	shared.Send(
 		"journal entry changed",
-		shared.JournalEntry{TrackId: oldEntry.trackId},
-		shared.JournalEntry{TrackId: entry.Track.Id},
+		shared.JournalEntry{TrackId: oldEntry.trackId, Id: entry.Id},
+		shared.JournalEntry{TrackId: entry.Track.Id, Id: entry.Id},
 	)
 	listEntry, err := j.readListEntry(entry.Id)
 	if err != nil {

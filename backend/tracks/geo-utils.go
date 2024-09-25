@@ -46,37 +46,3 @@ func distance(coords []Coordinates) float64 {
 	}
 	return result
 }
-
-type DistanceMarker struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Distance  float64 `json:"distance"`
-}
-
-func distanceMarkers(coords []Coordinates, steps float64) []DistanceMarker {
-	result := make([]DistanceMarker, 0)
-
-	total := 0.0
-	for index := 0; index < len(coords)-1; index++ {
-		distance := distanceBetweenTwoPoints(
-			coords[index].Latitude, coords[index].Longitude, coords[index+1].Latitude, coords[index+1].Longitude,
-		) * 1000 // convert to meters
-
-		if total+distance < steps {
-			total = total + distance
-			continue
-		}
-		remainingDistance := steps - total
-		ratio := remainingDistance / distance
-
-		lat := coords[index].Latitude + ratio*(coords[index+1].Latitude-coords[index].Latitude)
-		lon := coords[index].Longitude + ratio*(coords[index+1].Longitude-coords[index].Longitude)
-
-		result = append(
-			result, DistanceMarker{Latitude: lat, Longitude: lon, Distance: float64(len(result)+1) * steps},
-		)
-		total = distance - remainingDistance
-	}
-
-	return result
-}

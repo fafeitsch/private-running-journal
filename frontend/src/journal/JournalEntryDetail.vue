@@ -9,7 +9,7 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputGroup from "primevue/inputgroup";
-import { journal, tracks } from "../../wailsjs/go/models";
+import {journal, trackEditor, tracks} from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import LeafletMap from "./LeafletMap.vue";
 import TrackTimeResult from "./TrackTimeResult.vue";
@@ -21,6 +21,7 @@ import { useConfirm } from "primevue/useconfirm";
 import ConfirmPopup from "primevue/confirmpopup";
 import DatePicker from "primevue/datepicker";
 import Entry = journal.Entry;
+import TrackDto = trackEditor.TrackDto;
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -87,7 +88,7 @@ async function loadEntry(entryId: string | undefined) {
   }
 }
 
-const gpxData = ref<tracks.GpxData | undefined>(undefined);
+const gpxData = ref<TrackDto | undefined>(undefined);
 
 watch(
   selectedEntry,
@@ -97,7 +98,7 @@ watch(
       return;
     }
     try {
-      gpxData.value = await tracksApi.getGpxData(selectedEntry.value.track.id);
+      gpxData.value = await tracksApi.getTrack(selectedEntry.value.track.id);
     } catch (e) {
       console.error(e);
       loadError.value = true;
@@ -299,8 +300,8 @@ useLeaveConfirmation(dirty);
           @update:model-value="() => (dirty = true)"
         ></InputText>
       </InputGroup>
-      <div class="shrink grow">
-        <LeafletMap class="h-full w-full" :gpx-data="gpxData"></LeafletMap>
+      <div v-if="gpxData" class="shrink grow">
+        <LeafletMap class="h-full w-full" :waypoints="gpxData?.waypoints || []" :polyline-meta="gpxData"></LeafletMap>
       </div>
     </div>
   </div>

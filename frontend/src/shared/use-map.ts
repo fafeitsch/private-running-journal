@@ -1,13 +1,14 @@
 import * as L from "leaflet";
 import { MaybeRefOrGetter, ref, Ref, toValue, watch } from "vue";
-import { tracks } from "../../wailsjs/go/models";
+import { trackEditor, tracks } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 // @ts-expect-error
 // noinspection ES6UnusedImports needed to make editable work
 import * as E from "leaflet-editable/src/Leaflet.Editable";
 import { useSettingsStore } from "../store/settings-store";
-import GpxData = tracks.GpxData;
 import Coordinates = tracks.Coordinates;
+import PolylineMeta = trackEditor.PolylineMeta;
+import CoordinateDto = trackEditor.CoordinateDto;
 
 const use = E;
 
@@ -15,7 +16,8 @@ export const useMap = () => {
   let map: L.Map | undefined = undefined;
   const settingsStore = useSettingsStore();
 
-  let gpxData = ref<GpxData>();
+  let polylineMeta = ref<PolylineMeta>(new PolylineMeta({ length: 0, waypoints: [] }));
+  let waypoints = ref<CoordinateDto[]>([]);
 
   function initMap(id: MaybeRefOrGetter<string>, mapContainer: Ref) {
     const mapSettings = settingsStore.settings.mapSettings;
@@ -37,30 +39,37 @@ export const useMap = () => {
       className: "distance-marker",
       iconAnchor: [18, 18],
     });
-    return L.marker(L.latLng(dm.latitude, dm.longitude), { title: dm.distance.toString(), icon });
+    return L.marker(L.latLng(dm.latitude, dm.longitude), {
+      title: (dm.distance / 1000).toFixed(0),
+      icon,
+    });
   }
 
   let trackLayer: L.Polyline | undefined = undefined;
   let distanceMarkerLayer: L.Layer | undefined = undefined;
 
-  watch(gpxData, (newValue) => {
+  watch(waypoints, (newValue) => {
     if (!map) {
       return;
     }
     trackLayer?.removeFrom(map);
-    distanceMarkerLayer?.removeFrom(map);
-    if (!newValue) {
-      return;
-    }
     trackLayer = L.polyline(
-      newValue.waypoints.map((wp) => L.latLng(wp.latitude, wp.longitude)),
+      newValue.map((wp) => L.latLng(wp.latitude, wp.longitude)),
       { color: "red" },
     ).addTo(map);
     enableEditing();
-    if (newValue.waypoints.length) {
-      map.setView(
-        L.latLng(gpxData.value!.waypoints[0].latitude, gpxData.value!.waypoints[0].longitude),
-      );
+    if (newValue.length) {
+      map.setView(L.latLng(newValue[0].latitude, newValue[0].longitude));
+    }
+  });
+
+  watch(polylineMeta, (newValue) => {
+    if (!map) {
+      return;
+    }
+    distanceMarkerLayer?.removeFrom(map);
+    if (!newValue) {
+      return;
     }
     distanceMarkerLayer = L.layerGroup(
       newValue.distanceMarkers.map((dm) => createDistanceMarker(dm)),
@@ -72,8 +81,8 @@ export const useMap = () => {
     void 0;
 
   function createTrackLayerIfNecessary() {
-    if(!map) {
-      throw new Error('map is not initialized yet')
+    if (!map) {
+      throw new Error("map is not initialized yet");
     }
     if (!trackLayer) {
       trackLayer = L.polyline([], { color: "red" }).addTo(map);
@@ -131,7 +140,7 @@ export const useMap = () => {
   }
 
   function changeEditDirection(value: "backward" | "drag" | "forward") {
-    createTrackLayerIfNecessary()
+    createTrackLayerIfNecessary();
     //@ts-expect-error
     trackLayer.editor.disable();
     //@ts-expect-error
@@ -150,5 +159,11 @@ export const useMap = () => {
     }
   }
 
-  return { initMap, gpxData, enableEditing, changeEditDirection };
+  return {
+    initMap,
+    waypoints,
+    polylineMeta,
+    enableEditing,
+    changeEditDirection,
+  };
 };

@@ -2,7 +2,8 @@ build/bin
 node_modules
 frontend/dist
 /frontend/wailsjs/go
-/.idea
+**/.idea
 /frontend/components.d.ts
 /appdata/tiles/
 /frontend/src/about/vendor.LICENSE.txt
+**/.projection

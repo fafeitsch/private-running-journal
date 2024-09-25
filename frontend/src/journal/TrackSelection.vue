@@ -21,7 +21,7 @@ const availableTracks = ref<TreeNode[]>([]);
 
 onMounted(async () => {
   try {
-    const tracks = await tracksApi.getTracks();
+    const tracks = await tracksApi.getTrackTree()
     availableTracks.value = tracksToTreeNodes(tracks);
   } catch (e) {
     // todo error handling

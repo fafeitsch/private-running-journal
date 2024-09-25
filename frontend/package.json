@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@primevue/themes": "^4.0.7",
     "@types/leaflet-editable": "^1.2.6",
     "leaflet": "^1.9.4",
     "leaflet-editable": "^1.2.0",

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { getCurrentInstance, onMounted, ref, toRefs, watch } from "vue";
 import * as L from "leaflet";
-import { tracks } from "../../wailsjs/go/models";
+import { trackEditor } from "../../wailsjs/go/models";
 import { useMap } from "../shared/use-map";
-import GpxData = tracks.GpxData;
+import CoordinateDto = trackEditor.CoordinateDto;
+import PolylineMeta = trackEditor.PolylineMeta;
 
 const mapId = ref(`map${getCurrentInstance()?.uid}`);
 let map: L.Map;
@@ -12,15 +13,20 @@ const mapApi = useMap();
 
 onMounted(() => {
   mapApi.initMap(mapId, mapContainer);
+  mapApi.waypoints.value = waypoints.value;
+  mapApi.polylineMeta.value = polylineMeta.value;
 });
 
-const props = defineProps<{ gpxData: GpxData | undefined }>();
-const { gpxData } = toRefs(props);
+const props = withDefaults(
+  defineProps<{ waypoints: CoordinateDto[]; polylineMeta: PolylineMeta }>(),
+  { waypoints: () => [], polylineMeta: () => new PolylineMeta({ length: 0, distanceMarkers: [] }) },
+);
+const { waypoints, polylineMeta } = toRefs(props);
 
-watch(gpxData, (value) => (mapApi.gpxData.value = value));
+watch(waypoints, (value) => (mapApi.waypoints.value = value));
+watch(polylineMeta, (value) => (mapApi.polylineMeta.value = value));
 </script>
 
 <template>
   <div ref="mapContainer" :id="mapId" style="z-index: 0"></div>
 </template>
-

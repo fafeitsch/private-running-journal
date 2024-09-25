@@ -40,7 +40,7 @@ func main() {
 			},
 			StartHidden: true,
 			Bind: []interface{}{
-				app,
+				app, app.TrackEditor(),
 			},
 		},
 	)

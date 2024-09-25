@@ -7,14 +7,13 @@ import { useRouter } from "vue-router";
 import { TreeSelectionKeys } from "primevue/tree";
 import { useI18n } from "vue-i18n";
 import { tracksToTreeNodes } from "../shared/track-utils";
-import CreateTrackOverlay from "./CreateTrackOverlay.vue";
 import Button from "primevue/button";
 
 const trackStore = useTrackStore();
-const { availableTracks, selectedTrackId } = storeToRefs(trackStore);
+const { trackTree, selectedTrackId } = storeToRefs(trackStore);
 const { t } = useI18n();
 
-const selectableTracks = computed(() => tracksToTreeNodes(availableTracks.value, true));
+const selectableTracks = computed(() => tracksToTreeNodes(trackTree.value, true));
 
 const selection = ref<TreeSelectionKeys>({});
 
@@ -61,7 +60,7 @@ function selectNode(node: TreeNode) {
 <template>
   <div class="flex h-full flex-col overflow-hidden gap-2">
     <header class="flex justify-between items-center">
-      <span class="text-2xl">{{ $t("tracks.title") }}</span>
+      <span class="text-2xl">{{ t("tracks.title") }}</span>
       <Button
         icon="pi pi-plus"
         @click="router.push('/tracks/new')"
