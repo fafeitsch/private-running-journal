@@ -85,10 +85,11 @@ onMounted(() => {
           :key="tab.link"
           :value="index"
           :data-testid="'nav-' + tab.testId"
+          class="!font-normal"
           @click="router.push(tab.link)"
         >
           <router-link :to="tab.link" v-slot="{ href, navigate }" custom
-            ><a :href="href" @click="navigate" class="flex gap-1 items-center"
+            ><a :href="href" @click="navigate" class="flex gap-2 items-center"
               ><i :class="tab.icon"></i>{{ tab.label }}</a
             >
           </router-link>

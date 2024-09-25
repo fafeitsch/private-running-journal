@@ -78,16 +78,16 @@ const entries = computed(() => {
         <Button severity="danger" rounded text icon="pi pi-replay" @click="load"></Button>
       </div>
     </Message>
-    <ul v-else class="list-none p-0 grow shrink overflow-auto">
+    <ul v-else class="list-none p-0 grow shrink overflow-y-auto overflow-x-hidden">
       <li
         v-for="entry of entries"
         :key="entry.id"
-        class="list-none p-0 m-0 flex"
+        class="list-none p-0 m-0 flex overflow-hidden"
         v-tooltip="{ value: entry.trackName, showDelay: 500 }"
         data-testid="journal-entry-item"
       >
         <RouterLink
-          class="grow shrink flex items-center gap-1 cursor-pointer p-ripple transition-colors hover:bg-surface-100 dark:hover:bg-surface-700 duration-150 text-surface-700 dark:text-surface-100 py-4 px-1"
+          class="grow shrink flex items-center gap-1 cursor-pointer overflow-hidden p-ripple transition-colors hover:bg-surface-100 dark:hover:bg-surface-700 duration-150 text-surface-700 dark:text-surface-100 py-4 px-1"
           :to="{ path: '/journal/' + entry.link }"
           active-class="bg-surface-200 dark:bg-surface-600"
           ><span class="font-medium">{{ d(entry.date, "default") }}</span>
