@@ -18,7 +18,7 @@ import { tracks } from "../../wailsjs/go/models";
 import CreateTrack = tracks.CreateTrack;
 import Coordinates = tracks.Coordinates;
 
-const { locale, t } = useI18n();
+const {  t } = useI18n();
 
 const props = defineProps<{ name: string; waypoints: Coordinates[] }>();
 
@@ -29,8 +29,7 @@ const error = ref<boolean>(false);
 
 const tracksApi = useTracksApi();
 const tracksStore = useTrackStore();
-const store = useJournalStore();
-const { availableTracks, selectedTrack } = storeToRefs(tracksStore);
+const { trackTree } = storeToRefs(tracksStore);
 const folders = computed(() => {
   const filterFolders = (folder: TreeNode) => !!folder.children?.length;
   const recursiveMap: (folder: TreeNode) => TreeNode = (folder: TreeNode) => ({
@@ -38,7 +37,7 @@ const folders = computed(() => {
     selectable: true,
     children: folder.children!.filter(filterFolders).map(recursiveMap),
   });
-  const tracks = tracksToTreeNodes(availableTracks.value).filter(filterFolders).map(recursiveMap);
+  const tracks = tracksToTreeNodes(trackTree.value).filter(filterFolders).map(recursiveMap);
   tracks.push({
     selectable: true,
     label: t("tracks.createFolder"),
@@ -49,13 +48,6 @@ const folders = computed(() => {
 });
 const folderSelection = ref<{}>({});
 const selectedFolder = computed(() => Object.keys(folderSelection.value)[0]);
-
-watch(selectedTrack, (value) => {
-  if (!value) {
-    return;
-  }
-  folderSelection.value = { ["/" + value.hierarchy.join("/")]: true };
-});
 
 watch(selectedFolder, (value) => {
   if (selectedFolder.value === "//new-folder") {
@@ -86,7 +78,7 @@ async function createEntry() {
       }),
     );
     emit("trackCreated");
-    tracksStore.addTrack(track);
+    await tracksStore.loadTracks()
     router.push("/tracks/" + encodeURIComponent(track.id));
     overlayPanel.value.hide();
   } catch (e) {

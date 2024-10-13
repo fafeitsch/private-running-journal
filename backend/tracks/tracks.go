@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-gpx"
@@ -25,36 +26,27 @@ type Track struct {
 }
 
 type Tracks struct {
-	cache    map[string]*Track
-	basePath string
+	cache              map[string]*Track
+	basePath           string
+	Projectors         []projection.Projector
+	trackListProjector *trackListProjector
+	trackTreeProjector *trackTreeProjector
 }
 
 func New(baseDir string) (*Tracks, error) {
 	var trackCache = make(map[string]*Track)
 	result := Tracks{cache: trackCache, basePath: filepath.Join(baseDir, "tracks")}
+	result.trackListProjector = &trackListProjector{Tracks: &result}
+	result.trackTreeProjector = &trackTreeProjector{Tracks: &result}
+	result.Projectors = []projection.Projector{result.trackTreeProjector, result.trackListProjector}
 	err := os.MkdirAll(result.basePath, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("could not create tracks directory: %v", err)
 	}
 
-	err = filepath.WalkDir(
-		result.basePath, func(path string, info os.DirEntry, err error) error {
-			if err != nil {
-				log.Printf("skipping directory \"%s\" because an error occurred: %v", path, err)
-				return filepath.SkipDir
-			}
-			if info.IsDir() || info.Name() != "info.json" {
-				return nil
-			}
-			parent := strings.Replace(path, "/"+info.Name(), "", 1)
-			relativePath := strings.Replace(parent, result.basePath+"/", "", 1)
-			track, err := result.readTrack(parent, relativePath)
-			if err != nil {
-				log.Printf("skipping track \"%s\" because an error occurred: %v", path, err)
-				return filepath.SkipDir
-			}
-			result.cache[track.Id] = &track
-			return nil
+	err = result.walkTracksDirectory(
+		func(track Track) {
+			trackCache[track.Id] = &track
 		},
 	)
 	if err != nil {
@@ -136,12 +128,12 @@ func (t *Tracks) readTrack(path string, relativePath string) (Track, error) {
 	}, nil
 }
 
-func (t *Tracks) Tracks() []Track {
-	result := make([]Track, 0)
-	for _, track := range t.cache {
-		result = append(result, *track)
-	}
-	return result
+func (t *Tracks) Tracks() ([]TrackListEntry, error) {
+	return t.trackListProjector.loadTrackList()
+}
+
+func (t *Tracks) TrackTree() (TrackTreeNode, error) {
+	return t.trackTreeProjector.loadTrackTree()
 }
 
 type SaveTrack struct {
@@ -184,6 +176,10 @@ func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
 		},
 	)
 	return &existingTrack, err
+}
+
+func (t *Tracks) GetTrack(id string) (Track, error) {
+	return t.readTrack(path.Join(t.basePath, id), path.Join(id))
 }
 
 func writeGpxFile(track SaveTrack, trackDirectory string) error {
@@ -366,4 +362,27 @@ func ComputePolylineProps(coordinates []Coordinates) PolylineProps {
 	distanceMarkers := distanceMarkers(coordinates, 1000)
 	distance := int(1000 * distance(coordinates))
 	return PolylineProps{Length: distance, DistanceMarkers: distanceMarkers}
+}
+
+func (t *Tracks) walkTracksDirectory(consumer func(track Track)) error {
+	return filepath.WalkDir(
+		t.basePath, func(path string, info os.DirEntry, err error) error {
+			if err != nil {
+				log.Printf("skipping directory \"%s\" because an error occurred: %v", path, err)
+				return filepath.SkipDir
+			}
+			if info.IsDir() || info.Name() != "info.json" {
+				return nil
+			}
+			parent := strings.Replace(path, "/"+info.Name(), "", 1)
+			relativePath := strings.Replace(parent, t.basePath+"/", "", 1)
+			track, err := t.readTrack(parent, relativePath)
+			if err != nil {
+				log.Printf("skipping track \"%s\" because an error occurred: %v", path, err)
+				return filepath.SkipDir
+			}
+			consumer(track)
+			return nil
+		},
+	)
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/backup"
-	"github.com/fafeitsch/private-running-journal/backend/cache"
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
 	"github.com/fafeitsch/private-running-journal/backend/journal"
+	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/settings"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"github.com/fafeitsch/private-running-journal/backend/tracks"
@@ -25,7 +25,7 @@ type App struct {
 	journal         *journal.Journal
 	settings        *settings.Settings
 	backup          *backup.Backup
-	cache           *cache.Cache
+	cache           *projection.Projection
 }
 
 func NewApp() *App {
@@ -33,7 +33,6 @@ func NewApp() *App {
 	a.setupConfigDirectory()
 	var err error
 	a.settings, err = settings.New(a.configDirectory)
-	a.cache = cache.New(a.configDirectory)
 	if err != nil {
 		log.Fatalf("could not read settings: %v", err)
 	}
@@ -79,6 +78,7 @@ func (a *App) Startup(ctx context.Context) {
 		group.Done()
 	}()
 	group.Wait()
+	a.cache = projection.New(a.configDirectory, a.tracks.Projectors...)
 	if !a.cache.Initialized() {
 		entries, err := a.journal.ReadAllEntries()
 		if err != nil {
@@ -156,8 +156,16 @@ func (a *App) DeleteJournalEntry(id string) error {
 	return a.journal.DeleteEntry(id)
 }
 
-func (a *App) GetTracks() []tracks.Track {
+func (a *App) GetTracks() ([]tracks.TrackListEntry, error) {
 	return a.tracks.Tracks()
+}
+
+func (a *App) GetTrackTree() (tracks.TrackTreeNode, error) {
+	return a.tracks.TrackTree()
+}
+
+func (a *App) GetTrack(id string) (tracks.Track, error) {
+	return a.tracks.GetTrack(id)
 }
 
 func (a *App) GetGpxData(id string) (tracks.GpxData, error) {

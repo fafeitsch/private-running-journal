@@ -21,11 +21,12 @@ import Coordinates = tracks.Coordinates;
 
 const route = useRoute();
 const tracksStore = useTrackStore();
-const { selectedTrackId, selectedTrack } = storeToRefs(tracksStore);
+const { selectedTrack } = storeToRefs(tracksStore);
 const { t, n } = useI18n();
 const dirty = ref(false);
 
 const track = ref<Omit<tracks.Track, "convertValues"> | undefined>(undefined);
+const tracksApi = useTracksApi();
 
 watch(selectedTrack, (value) => {
   dirty.value = false;
@@ -38,14 +39,17 @@ watch(selectedTrack, (value) => {
 
 watch(
   () => route.params.trackId as string,
-  (trackId) => {
-    selectedTrackId.value = trackId;
+  async (trackId) => {
+    if(trackId !== "new") {
+      selectedTrack.value = await tracksApi.getTrack(trackId)
+    }else {
+      selectedTrack.value = {id: "new", length: 0, name: "", usages: 0, hierarchy: []}
+    }
   },
   { immediate: true },
 );
 
 const gpxData = ref<GpxData>(new GpxData({waypoints: [], distanceMarkers: []}));
-const tracksApi = useTracksApi();
 const editedWaypoints = ref<Coordinates[]>([]);
 const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
 
@@ -54,7 +58,7 @@ const length = ref(0);
 watch(
   selectedTrack,
   async () => {
-    if (!selectedTrack.value || selectedTrackId.value === "new") {
+    if (!selectedTrack.value || selectedTrack.value.id === "new") {
       gpxData.value = new GpxData({ waypoints: [], distanceMarkers: [] });
       editedWaypoints.value = [];
       trackEditDirection.value = 'forward'
@@ -119,7 +123,7 @@ async function saveTrack(event: any) {
       }),
     );
     dirty.value = false;
-    tracksStore.updateTrack(updated);
+    await tracksStore.loadTracks()
   } catch (e) {
     // TODO error handling
     console.error(e);
@@ -148,7 +152,7 @@ async function deleteTrack(event: Event) {
   }
   try {
     await tracksApi.deleteTrack(track.value.id);
-    tracksStore.deleteTrack(track.value.id);
+    await tracksStore.loadTracks()
   } catch (e) {
     console.error(e);
   }
@@ -161,7 +165,7 @@ useLeaveConfirmation(dirty);
   <div v-if="track" class="w-full p-2 flex flex-col h-full gap-2">
     <div class="flex gap-2">
       <Button
-        v-if="selectedTrackId !== 'new'"
+        v-if="selectedTrack?.id !== 'new'"
         icon="pi pi-save"
         :disabled="!dirty"
         @click="saveTrack"
@@ -182,13 +186,13 @@ useLeaveConfirmation(dirty);
         </template>
       </ConfirmPopup>
       <Button
-        v-if="selectedTrackId !== 'new'"
+        v-if="selectedTrack?.id !== 'new'"
         icon="pi pi-trash"
         @click="deleteTrack"
         v-tooltip="{ value: t('shared.delete'), showDelay: 500 }"
         :aria-label="t('shared.delete')"
       ></Button>
-      <MoveTrackOverlay v-if="selectedTrackId !== 'new'"></MoveTrackOverlay>
+      <MoveTrackOverlay v-if="selectedTrack?.id !== 'new'"></MoveTrackOverlay>
     </div>
     <div class="flex gap-2">
       <InputGroup>
