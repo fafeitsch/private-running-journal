@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/backup"
+	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
 	"github.com/fafeitsch/private-running-journal/backend/journal"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
@@ -62,33 +63,34 @@ func (a *App) Startup(ctx context.Context) {
 	shared.Context = ctx
 	var err error
 	group := sync.WaitGroup{}
-	group.Add(2)
+	group.Add(1)
+	service := filebased.NewService(a.configDirectory)
 	go func() {
-		a.tracks, err = tracks.New(a.configDirectory)
+		a.tracks, err = tracks.New(a.configDirectory, service)
 		if err != nil {
 			log.Fatalf("could not initialize track directory: %v", err)
 		}
 		group.Done()
 	}()
-	go func() {
-		a.journal, err = journal.New(a.configDirectory)
-		if err != nil {
-			log.Fatalf("could not initialize journal: %v", err)
-		}
-		group.Done()
-	}()
 	group.Wait()
-	a.cache = projection.New(a.configDirectory, a.tracks.Projectors...)
+	a.journal, err = journal.New(a.configDirectory, service)
+	if err != nil {
+		log.Fatalf("could not initialize journal: %v", err)
+	}
+	trackUsagesProjector := projection.TrackUsagesProjector{Journal: a.journal}
+	projectors := make([]projection.Projector, 0)
+	projectors = append(projectors, &trackUsagesProjector)
+	for i := range a.tracks.Projectors {
+		projectors = append(projectors, a.tracks.Projectors[i])
+	}
+	a.cache = projection.New(a.configDirectory, projectors...)
 	if !a.cache.Initialized() {
-		entries, err := a.journal.ReadAllEntries()
+		err = a.cache.Build()
 		if err != nil {
-			log.Fatalf("could not read entries: %v", err)
-		}
-		err = a.cache.Build(a.tracks.GetTracks(), entries)
-		if err != nil {
-			log.Fatalf("could not initialize cache: %v", err)
+			log.Fatalf("could not initialize projections: %v", err)
 		}
 	}
+	a.tracks.TrackUsagesProjector = &trackUsagesProjector
 	tileServer := httpapi.NewTileServer(
 		a.configDirectory, a.settings.MapSettings().TileServer, a.settings.MapSettings().CacheTiles,
 	)
