@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"github.com/twpayne/go-geom"
@@ -26,76 +27,20 @@ type Track struct {
 }
 
 type Tracks struct {
-	cache              map[string]*Track
-	basePath           string
-	Projectors         []projection.Projector
-	trackListProjector *trackListProjector
-	trackTreeProjector *trackTreeProjector
+	basePath             string
+	loadService          *filebased.Service
+	Projectors           []projection.Projector
+	trackListProjector   *trackListProjector
+	trackTreeProjector   *trackTreeProjector
+	TrackUsagesProjector *projection.TrackUsagesProjector
 }
 
-func New(baseDir string) (*Tracks, error) {
-	var trackCache = make(map[string]*Track)
-	result := Tracks{cache: trackCache, basePath: filepath.Join(baseDir, "tracks")}
+func New(baseDir string, loadService *filebased.Service) *Tracks {
+	result := Tracks{basePath: filepath.Join(baseDir, "tracks"), loadService: loadService}
 	result.trackListProjector = &trackListProjector{Tracks: &result}
 	result.trackTreeProjector = &trackTreeProjector{Tracks: &result}
 	result.Projectors = []projection.Projector{result.trackTreeProjector, result.trackListProjector}
-	err := os.MkdirAll(result.basePath, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("could not create tracks directory: %v", err)
-	}
-
-	err = result.walkTracksDirectory(
-		func(track Track) {
-			trackCache[track.Id] = &track
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not read tracks: %v", err)
-	}
-	shared.RegisterHandler(
-		"journal entry loaded", func(data ...any) {
-			entry := data[0].(shared.JournalEntry)
-			if track, ok := trackCache[entry.TrackId]; ok {
-				track.Usages = track.Usages + 1
-			}
-		},
-	)
-	shared.RegisterHandler(
-		"journal entry changed", func(data ...any) {
-			old := data[0].(shared.JournalEntry)
-			nevv := data[1].(shared.JournalEntry)
-			if oldTrack, ok := trackCache[old.TrackId]; ok {
-				oldTrack.Usages = oldTrack.Usages - 1
-			}
-			if newTrack, ok := trackCache[nevv.TrackId]; ok {
-				newTrack.Usages = newTrack.Usages + 1
-			}
-		},
-	)
-	sendInitEvent(trackCache)
-	return &result, nil
-}
-
-func sendInitEvent(trackCache map[string]*Track) {
-	list := make([]shared.Track, 0)
-	for _, track := range trackCache {
-		list = append(
-			list, shared.Track{
-				Id:     track.Id,
-				Length: track.Length,
-				Name:   track.Name,
-			},
-		)
-	}
-	shared.Send("tracks initialized", list)
-}
-
-func (t *Tracks) GetTracks() []shared.Track {
-	result := make([]shared.Track, 0)
-	for _, track := range t.cache {
-		result = append(result, shared.Track{Id: track.Id, Length: track.Length, Name: track.Name})
-	}
-	return result
+	return &result
 }
 
 func (t *Tracks) readTrack(path string, relativePath string) (Track, error) {
@@ -148,8 +93,8 @@ func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
 	if err != nil || !stat.IsDir() {
 		return nil, fmt.Errorf("derived track directory \"%s\" does not seems to exist: %v", trackDirectory, err)
 	}
-	existing, ok := t.cache[track.Id]
-	if !ok {
+	existing, err := t.readTrack(path.Join(t.basePath, track.Id), track.Id)
+	if err != nil {
 		return nil, fmt.Errorf("the track with id \"%s\" does not seem to exist yet", track.Id)
 	}
 	existing.Name = track.Name
@@ -179,7 +124,13 @@ func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
 }
 
 func (t *Tracks) GetTrack(id string) (Track, error) {
-	return t.readTrack(path.Join(t.basePath, id), path.Join(id))
+	result, err := t.readTrack(path.Join(t.basePath, id), id)
+	if err != nil {
+		return Track{}, err
+	}
+	usages, err := t.TrackUsagesProjector.GetUsages(id)
+	result.Usages = len(usages)
+	return result, nil
 }
 
 func writeGpxFile(track SaveTrack, trackDirectory string) error {
@@ -226,7 +177,6 @@ func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
 	if err != nil {
 		return nil, err
 	}
-	t.cache[newTrack.Id] = &newTrack
 	shared.Send(
 		"track upserted", shared.Track{
 			Id:     newTrack.Id,
@@ -238,25 +188,20 @@ func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
 }
 
 func (t *Tracks) DeleteTrack(id string) error {
-	track, ok := t.cache[id]
-	if !ok {
-		return nil
-	}
-	err := os.RemoveAll(filepath.Join(t.basePath, track.Id))
-	delete(t.cache, id)
+	err := os.RemoveAll(filepath.Join(t.basePath, id))
 	t.deleteEmptyDirectories(id)
 	shared.Send("track deleted", id)
 	return err
 }
 
 func (t *Tracks) MoveTrack(id string, newPath string) (*Track, error) {
-	_, ok := t.cache[id]
-	if !ok {
+	_, err := t.readTrack(path.Join(t.basePath, id), id)
+	if err != nil {
 		return nil, fmt.Errorf("could not find track with id %s", id)
 	}
 	lastSegment := id[strings.LastIndex(id, string(filepath.Separator))+1:]
 	newDirPath := filepath.Join(t.basePath, newPath)
-	err := os.MkdirAll(newDirPath, os.ModePerm)
+	err = os.MkdirAll(newDirPath, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("could not create directories: %v", err)
 	}
@@ -265,8 +210,6 @@ func (t *Tracks) MoveTrack(id string, newPath string) (*Track, error) {
 		return nil, fmt.Errorf("could not move track: %v", err)
 	}
 	movedTrack, err := t.readTrack(filepath.Join(newDirPath, lastSegment), filepath.Join(newPath, lastSegment))
-	delete(t.cache, id)
-	t.cache[movedTrack.Id] = &movedTrack
 	t.deleteEmptyDirectories(id)
 	shared.Send(
 		"track moved", id, shared.Track{

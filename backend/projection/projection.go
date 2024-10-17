@@ -3,7 +3,6 @@ package projection
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"os"
 	"path/filepath"
 )
@@ -44,7 +43,7 @@ func (p *Projection) Initialized() bool {
 	return err == nil
 }
 
-func (p *Projection) Build(tracks []shared.Track, entries []shared.JournalEntry) error {
+func (p *Projection) Build() error {
 	err := os.RemoveAll(p.directory)
 	if err != nil {
 		return err
@@ -54,10 +53,6 @@ func (p *Projection) Build(tracks []shared.Track, entries []shared.JournalEntry)
 		return err
 	}
 
-	err = p.buildUsages(entries)
-	if err != nil {
-		return fmt.Errorf("could not build usages map: %v", err)
-	}
 	for _, projector := range p.projectors {
 		message, err := projector.BuildProjection()
 		name := projector.ProjectionName()
