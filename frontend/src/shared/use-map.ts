@@ -37,7 +37,7 @@ export const useMap = () => {
       className: "distance-marker",
       iconAnchor: [18, 18],
     });
-    return L.marker(L.latLng(dm.latitude, dm.longitude), { title: dm.distance.toString(), icon });
+    return L.marker(L.latLng(dm.latitude, dm.longitude), { title: (dm.distance/1000).toFixed(0), icon });
   }
 
   let trackLayer: L.Polyline | undefined = undefined;

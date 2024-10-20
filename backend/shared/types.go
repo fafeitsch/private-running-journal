@@ -66,7 +66,7 @@ func (w Waypoints) DistanceMarkers() []DistanceMarker {
 			result,
 			DistanceMarker{
 				Coordinates: Coordinates{Latitude: lat, Longitude: lon},
-				Distance:    float64(len(result)+1) * steps,
+				Distance:    (len(result) + 1) * int(steps),
 			},
 		)
 		total = distance - remainingDistance
@@ -77,7 +77,7 @@ func (w Waypoints) DistanceMarkers() []DistanceMarker {
 
 type DistanceMarker struct {
 	Coordinates
-	Distance float64 `json:"distance"`
+	Distance int `json:"distance"`
 }
 
 type Track struct {

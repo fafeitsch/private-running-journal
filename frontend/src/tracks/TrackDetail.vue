@@ -6,7 +6,7 @@ import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
-import { tracks } from "../../wailsjs/go/models";
+import { trackEditor, tracks } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import TrackEditor from "./TrackEditor.vue";
 import Button from "primevue/button";
@@ -15,9 +15,10 @@ import { useConfirm } from "primevue/useconfirm";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import MoveTrackOverlay from "./MoveTrackOverlay.vue";
 import CreateTrackOverlay from "./CreateTrackOverlay.vue";
-import GpxData = tracks.GpxData;
 import SaveTrack = tracks.SaveTrack;
 import Coordinates = tracks.Coordinates;
+import TrackDto = trackEditor.TrackDto;
+import CoordinateDto = trackEditor.CoordinateDto;
 
 const route = useRoute();
 const tracksStore = useTrackStore();
@@ -25,7 +26,7 @@ const { selectedTrack } = storeToRefs(tracksStore);
 const { t, n } = useI18n();
 const dirty = ref(false);
 
-const track = ref<Omit<tracks.Track, "convertValues"> | undefined>(undefined);
+const track = ref<Omit<TrackDto, "convertValues"> | undefined>(undefined);
 const tracksApi = useTracksApi();
 
 watch(selectedTrack, (value) => {
@@ -37,44 +38,39 @@ watch(selectedTrack, (value) => {
   track.value = { ...value };
 });
 
+const gpxData = ref<{
+  waypoints: CoordinateDto[];
+  distanceMarkers: (CoordinateDto & { distance: number })[];
+}>({ waypoints: [], distanceMarkers: [] });
+const editedWaypoints = ref<Coordinates[]>([]);
+const length = ref(0);
+const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
+
 watch(
   () => route.params.trackId as string,
   async (trackId) => {
-    if(trackId !== "new") {
-      selectedTrack.value = await tracksApi.getTrack(trackId)
-    }else {
-      selectedTrack.value = {id: "new", length: 0, name: "", usages: 0, hierarchy: []}
+    if (trackId !== "new") {
+      selectedTrack.value = await tracksApi.getTrack(trackId);
+      gpxData.value = {
+        waypoints: selectedTrack.value.waypoints,
+        distanceMarkers: selectedTrack.value.distanceMarkers,
+      };
+    } else {
+      selectedTrack.value = new TrackDto({
+        id: "new",
+        length: 0,
+        name: "",
+        usages: [],
+        parents: [],
+        waypoints: [],
+        distanceMarkers: [],
+      });
     }
+    editedWaypoints.value = selectedTrack.value.waypoints;
+    length.value = selectedTrack.value.length;
+    trackEditDirection.value = "drag";
   },
   { immediate: true },
-);
-
-const gpxData = ref<GpxData>(new GpxData({waypoints: [], distanceMarkers: []}));
-const editedWaypoints = ref<Coordinates[]>([]);
-const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
-
-const length = ref(0);
-
-watch(
-  selectedTrack,
-  async () => {
-    if (!selectedTrack.value || selectedTrack.value.id === "new") {
-      gpxData.value = new GpxData({ waypoints: [], distanceMarkers: [] });
-      editedWaypoints.value = [];
-      trackEditDirection.value = 'forward'
-      length.value = 0;
-      return;
-    }
-    try {
-      gpxData.value = await tracksApi.getGpxData(selectedTrack.value.id);
-      editedWaypoints.value = gpxData.value.waypoints;
-      length.value = selectedTrack.value.length;
-      trackEditDirection.value = 'drag'
-    } catch (e) {
-      console.error(e);
-    }
-  },
-  { deep: true, immediate: true },
 );
 
 const formattedLength = computed(() =>
@@ -95,7 +91,7 @@ async function saveTrack(event: any) {
     return;
   }
   let choice = true;
-  if (track.value.usages > 0) {
+  if (track.value.usages.length > 0) {
     let resolveFn: (result: boolean) => void;
     const result = new Promise<boolean>((resolve) => (resolveFn = resolve));
     confirm.require({
@@ -123,7 +119,7 @@ async function saveTrack(event: any) {
       }),
     );
     dirty.value = false;
-    await tracksStore.loadTracks()
+    await tracksStore.loadTracks();
   } catch (e) {
     // TODO error handling
     console.error(e);
@@ -152,7 +148,7 @@ async function deleteTrack(event: Event) {
   }
   try {
     await tracksApi.deleteTrack(track.value.id);
-    await tracksStore.loadTracks()
+    await tracksStore.loadTracks();
   } catch (e) {
     console.error(e);
   }
@@ -209,7 +205,7 @@ useLeaveConfirmation(dirty);
         <InputGroupAddon>
           <label for="usagesInput">{{ t("tracks.usages") }}</label>
         </InputGroupAddon>
-        <InputText id="usagesInput" disabled :value="`${track!.usages}`"></InputText>
+        <InputText id="usagesInput" disabled :value="`${track!.usages.length}`"></InputText>
       </InputGroup>
     </div>
     <div class="flex gap-2 items-center">

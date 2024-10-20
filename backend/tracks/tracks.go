@@ -284,18 +284,6 @@ type Coordinates struct {
 	Longitude float64 `json:"longitude"`
 }
 
-type GpxData struct {
-	Waypoints       []Coordinates    `json:"waypoints"`
-	DistanceMarkers []DistanceMarker `json:"distanceMarkers"`
-}
-
-func (t *Tracks) GetGpxData(id string) (GpxData, error) {
-	gpxPath := filepath.Join(filepath.Join(t.basePath, id), "track.gpx")
-	coordinates, _, err := readGpx(gpxPath)
-	distanceMarkers := distanceMarkers(coordinates, 1000)
-	return GpxData{Waypoints: coordinates, DistanceMarkers: distanceMarkers}, err
-}
-
 type PolylineProps struct {
 	Length          int              `json:"length"`
 	DistanceMarkers []DistanceMarker `json:"distanceMarkers"`

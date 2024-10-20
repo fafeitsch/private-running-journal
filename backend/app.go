@@ -11,6 +11,7 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/settings"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"github.com/fafeitsch/private-running-journal/backend/tracks"
+	"github.com/fafeitsch/private-running-journal/backend/tracks/trackEditor"
 	"log"
 	"net/http"
 	"os"
@@ -22,6 +23,7 @@ type App struct {
 	ctx             context.Context
 	configDirectory string
 	tracks          *tracks.Tracks
+	trackEditor     *trackEditor.TrackEditor
 	journal         *journal.Journal
 	settings        *settings.Settings
 	backup          *backup.Backup
@@ -46,6 +48,29 @@ func NewApp() *App {
 			log.Fatalf("could not pull: %v", err)
 		}
 	}
+
+	service := filebased.NewService(a.configDirectory)
+	a.tracks = tracks.New(a.configDirectory, service)
+	a.journal, err = journal.New(a.configDirectory, service)
+	if err != nil {
+		log.Fatalf("could not initialize journal: %v", err)
+	}
+	trackUsagesProjector := projection.TrackUsagesProjector{Journal: a.journal}
+	a.trackEditor = trackEditor.New(service, &trackUsagesProjector)
+	projectors := make([]projection.Projector, 0)
+	projectors = append(projectors, &trackUsagesProjector)
+	for i := range a.tracks.Projectors {
+		projectors = append(projectors, a.tracks.Projectors[i])
+	}
+	a.cache = projection.New(a.configDirectory, projectors...)
+	if !a.cache.Initialized() {
+		err = a.cache.Build()
+		if err != nil {
+			log.Fatalf("could not initialize projections: %v", err)
+		}
+	}
+	a.tracks.TrackUsagesProjector = &trackUsagesProjector
+
 	return a
 }
 
@@ -61,26 +86,6 @@ func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	shared.Context = ctx
 	var err error
-	service := filebased.NewService(a.configDirectory)
-	a.tracks = tracks.New(a.configDirectory, service)
-	a.journal, err = journal.New(a.configDirectory, service)
-	if err != nil {
-		log.Fatalf("could not initialize journal: %v", err)
-	}
-	trackUsagesProjector := projection.TrackUsagesProjector{Journal: a.journal}
-	projectors := make([]projection.Projector, 0)
-	projectors = append(projectors, &trackUsagesProjector)
-	for i := range a.tracks.Projectors {
-		projectors = append(projectors, a.tracks.Projectors[i])
-	}
-	a.cache = projection.New(a.configDirectory, projectors...)
-	if !a.cache.Initialized() {
-		err = a.cache.Build()
-		if err != nil {
-			log.Fatalf("could not initialize projections: %v", err)
-		}
-	}
-	a.tracks.TrackUsagesProjector = &trackUsagesProjector
 	tileServer := httpapi.NewTileServer(
 		a.configDirectory, a.settings.MapSettings().TileServer, a.settings.MapSettings().CacheTiles,
 	)
@@ -156,12 +161,12 @@ func (a *App) GetTrackTree() (tracks.TrackTreeNode, error) {
 	return a.tracks.TrackTree()
 }
 
-func (a *App) GetTrack(id string) (tracks.Track, error) {
-	return a.tracks.GetTrack(id)
+func (a *App) TrackEditor() *trackEditor.TrackEditor {
+	return a.trackEditor
 }
 
-func (a *App) GetGpxData(id string) (tracks.GpxData, error) {
-	return a.tracks.GetGpxData(id)
+func (a *App) GetTrack(id string) (tracks.Track, error) {
+	return a.tracks.GetTrack(id)
 }
 
 func (a *App) ComputePolylineProps(coords []tracks.Coordinates) tracks.PolylineProps {
