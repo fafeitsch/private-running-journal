@@ -284,17 +284,6 @@ type Coordinates struct {
 	Longitude float64 `json:"longitude"`
 }
 
-type PolylineProps struct {
-	Length          int              `json:"length"`
-	DistanceMarkers []DistanceMarker `json:"distanceMarkers"`
-}
-
-func ComputePolylineProps(coordinates []Coordinates) PolylineProps {
-	distanceMarkers := distanceMarkers(coordinates, 1000)
-	distance := int(1000 * distance(coordinates))
-	return PolylineProps{Length: distance, DistanceMarkers: distanceMarkers}
-}
-
 func (t *Tracks) walkTracksDirectory(consumer func(track Track)) error {
 	return filepath.WalkDir(
 		t.basePath, func(path string, info os.DirEntry, err error) error {

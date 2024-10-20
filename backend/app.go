@@ -169,10 +169,6 @@ func (a *App) GetTrack(id string) (tracks.Track, error) {
 	return a.tracks.GetTrack(id)
 }
 
-func (a *App) ComputePolylineProps(coords []tracks.Coordinates) tracks.PolylineProps {
-	return tracks.ComputePolylineProps(coords)
-}
-
 func (a *App) CreateNewTrack(track tracks.CreateTrack) (*tracks.Track, error) {
 	return a.tracks.CreateTrack(track)
 }

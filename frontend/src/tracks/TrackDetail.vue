@@ -232,8 +232,10 @@ useLeaveConfirmation(dirty);
     </div>
     <div class="shrink grow">
       <TrackEditor
+        v-if="selectedTrack"
         class="h-full w-full"
-        :gpx-data="gpxData"
+        :waypoints="selectedTrack.waypoints"
+        :polyline-meta="selectedTrack"
         :edit-direction="trackEditDirection"
         @change-track="trackChanged"
       ></TrackEditor>

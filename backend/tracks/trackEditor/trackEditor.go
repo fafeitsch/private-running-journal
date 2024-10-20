@@ -3,6 +3,7 @@ package trackEditor
 import (
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
+	"github.com/fafeitsch/private-running-journal/backend/shared"
 )
 
 type CoordinateDto struct {
@@ -16,13 +17,17 @@ type DistanceMarker struct {
 }
 
 type TrackDto struct {
-	Id              string           `json:"id"`
-	Name            string           `json:"name"`
+	PolylineMeta
+	Id        string          `json:"id"`
+	Name      string          `json:"name"`
+	Waypoints []CoordinateDto `json:"waypoints"`
+	Parents   []string        `json:"parents"`
+	Usages    []string        `json:"usages"`
+}
+
+type PolylineMeta struct {
 	Length          int              `json:"length"`
-	Waypoints       []CoordinateDto  `json:"waypoints"`
 	DistanceMarkers []DistanceMarker `json:"distanceMarkers"`
-	Parents         []string         `json:"parents"`
-	Usages          []string         `json:"usages"`
 }
 
 type TrackEditor struct {
@@ -43,8 +48,27 @@ func (t *TrackEditor) GetTrack(id string) (TrackDto, error) {
 	for _, waypoint := range file.Waypoints {
 		waypoints = append(waypoints, CoordinateDto{Latitude: waypoint.Latitude, Longitude: waypoint.Longitude})
 	}
+	distanceMarkers := mapDistanceMarkerToDto(file.Waypoints)
+	usages, err := t.trackUsages.GetUsages(id)
+	if err != nil {
+		return TrackDto{}, err
+	}
+	return TrackDto{
+		Id:        file.Name,
+		Name:      file.Name,
+		Waypoints: waypoints,
+		PolylineMeta: PolylineMeta{
+			Length:          file.Waypoints.Length(),
+			DistanceMarkers: distanceMarkers,
+		},
+		Parents: file.Parents,
+		Usages:  usages,
+	}, nil
+}
+
+func mapDistanceMarkerToDto(coordinates shared.Waypoints) []DistanceMarker {
 	distanceMarkers := make([]DistanceMarker, 0)
-	for _, dm := range file.DistanceMarkers() {
+	for _, dm := range coordinates.DistanceMarkers() {
 		distanceMarkers = append(
 			distanceMarkers, DistanceMarker{
 				CoordinateDto: CoordinateDto{
@@ -54,17 +78,16 @@ func (t *TrackEditor) GetTrack(id string) (TrackDto, error) {
 			},
 		)
 	}
-	usages, err := t.trackUsages.GetUsages(id)
-	if err != nil {
-		return TrackDto{}, err
+	return distanceMarkers
+}
+
+func (t *TrackEditor) GetPolylineMeta(dtos []CoordinateDto) PolylineMeta {
+	coordinates := make(shared.Waypoints, 0)
+	for _, dto := range dtos {
+		coordinates = append(coordinates, shared.Coordinates{Longitude: dto.Longitude, Latitude: dto.Latitude})
 	}
-	return TrackDto{
-		Id:              file.Name,
-		Name:            file.Name,
-		Length:          file.Waypoints.Length(),
-		Waypoints:       waypoints,
-		DistanceMarkers: distanceMarkers,
-		Parents:         file.Parents,
-		Usages:          usages,
-	}, nil
+	return PolylineMeta{
+		DistanceMarkers: mapDistanceMarkerToDto(coordinates),
+		Length:          coordinates.Length(),
+	}
 }
