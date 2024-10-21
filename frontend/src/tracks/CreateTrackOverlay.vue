@@ -4,7 +4,6 @@ import Message from "primevue/message";
 import Button from "primevue/button";
 import { computed, ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useJournalStore } from "../store/journal-store";
 import { useRouter } from "vue-router";
 import { useTracksApi } from "../api/tracks";
 import InputGroup from "primevue/inputgroup";
@@ -14,13 +13,13 @@ import TreeSelect from "primevue/treeselect";
 import { storeToRefs } from "pinia";
 import { TreeNode } from "primevue/treenode";
 import { tracksToTreeNodes } from "../shared/track-utils";
-import { tracks } from "../../wailsjs/go/models";
-import CreateTrack = tracks.CreateTrack;
-import Coordinates = tracks.Coordinates;
+import { trackEditor } from "../../wailsjs/go/models";
+import CoordinateDto = trackEditor.CoordinateDto;
+import SaveTrackDto = trackEditor.SaveTrackDto;
 
-const {  t } = useI18n();
+const { t } = useI18n();
 
-const props = defineProps<{ name: string; waypoints: Coordinates[] }>();
+const props = defineProps<{ name: string; waypoints: CoordinateDto[] }>();
 
 const { name, waypoints } = toRefs(props);
 
@@ -70,16 +69,18 @@ async function createEntry() {
   error.value = false;
 
   try {
-    const track = await tracksApi.createTrack(
-      new CreateTrack({
+    let id = crypto.randomUUID();
+    await tracksApi.saveTrack(
+      new SaveTrackDto({
+        id,
         name: name.value,
-        parent: folderName.value.startsWith("/") ? folderName.value.substring(1) : folderName.value,
+        parents: folderName.value.split("/").filter(f => !!f),
         waypoints: waypoints.value,
       }),
     );
     emit("trackCreated");
-    await tracksStore.loadTracks()
-    router.push("/tracks/" + encodeURIComponent(track.id));
+    await tracksStore.loadTracks();
+    router.push("/tracks/" + encodeURIComponent(id));
     overlayPanel.value.hide();
   } catch (e) {
     error.value = true;

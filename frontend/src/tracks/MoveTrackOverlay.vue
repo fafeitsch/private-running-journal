@@ -14,7 +14,7 @@ import { storeToRefs } from "pinia";
 import { TreeNode } from "primevue/treenode";
 import { tracksToTreeNodes } from "../shared/track-utils";
 
-const { locale, t } = useI18n();
+const {  t } = useI18n();
 
 const overlayPanel = ref();
 const error = ref<boolean>(false);
@@ -51,8 +51,6 @@ watch(selectedFolder, (value) => {
 const folderName = ref("");
 const forbiddenFolderName = computed(() => folderName.value.includes(".."));
 
-const router = useRouter();
-
 async function moveTrack() {
   if (folderName.value === undefined || !selectedTrack.value) {
     return;
@@ -60,10 +58,9 @@ async function moveTrack() {
   error.value = false;
 
   try {
-    let newPath = folderName.value.startsWith("/") ? folderName.value.substring(1) : folderName.value
-    const track = await tracksApi.moveTrack(selectedTrack.value.id,newPath);
+    let newPath = folderName.value.split("/").filter(s => !!s)
+    const track = await tracksApi.saveTrack({...selectedTrack.value, parents: newPath});
     await tracksStore.loadTracks()
-    router.push("/tracks/" + encodeURIComponent(track.id));
     overlayPanel.value.hide();
   } catch (e) {
     error.value = true;

@@ -1,14 +1,14 @@
 import * as L from "leaflet";
 import { MaybeRefOrGetter, ref, Ref, toValue, watch } from "vue";
-import { trackEditor, tracks } from "../../wailsjs/go/models";
+import { trackEditor } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 // @ts-expect-error
 // noinspection ES6UnusedImports needed to make editable work
 import * as E from "leaflet-editable/src/Leaflet.Editable";
 import { useSettingsStore } from "../store/settings-store";
-import Coordinates = tracks.Coordinates;
 import PolylineMeta = trackEditor.PolylineMeta;
 import CoordinateDto = trackEditor.CoordinateDto;
+import DistanceMarker = trackEditor.DistanceMarker;
 
 const use = E;
 
@@ -33,7 +33,7 @@ export const useMap = () => {
     new ResizeObserver(() => map?.invalidateSize()).observe(mapContainer.value);
   }
 
-  function createDistanceMarker(dm: tracks.DistanceMarker) {
+  function createDistanceMarker(dm: DistanceMarker) {
     const icon = L.divIcon({
       html: `<span data-testid="distance-marker">${(dm.distance / 1000).toFixed(0)}</span>`,
       className: "distance-marker",
@@ -77,7 +77,7 @@ export const useMap = () => {
   });
 
   let editEnabled = false;
-  let editTrackHandler: (props: { length: number; waypoints: Coordinates[] }) => void = () =>
+  let editTrackHandler: (props: { length: number; waypoints: CoordinateDto[] }) => void = () =>
     void 0;
 
   function createTrackLayerIfNecessary() {
@@ -91,7 +91,7 @@ export const useMap = () => {
 
   function enableEditing(
     value: boolean = editEnabled,
-    handler: (props: { length: number; waypoints: Coordinates[] }) => void = editTrackHandler,
+    handler: (props: { length: number; waypoints: CoordinateDto[] }) => void = editTrackHandler,
   ) {
     editTrackHandler = handler;
     editEnabled = value;
@@ -127,7 +127,7 @@ export const useMap = () => {
       latitude: latLng.lat,
       longitude: latLng.lng,
     }));
-    const props = await tracksApi.ComputePolylineProps(coordinates);
+    const props = await tracksApi.getPolylineMeta(coordinates);
     distanceMarkerLayer?.removeFrom(map);
 
     distanceMarkerLayer = L.layerGroup(

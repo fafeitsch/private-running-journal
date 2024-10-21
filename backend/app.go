@@ -10,7 +10,6 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/settings"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
-	"github.com/fafeitsch/private-running-journal/backend/tracks"
 	"github.com/fafeitsch/private-running-journal/backend/tracks/trackEditor"
 	"log"
 	"net/http"
@@ -22,12 +21,12 @@ import (
 type App struct {
 	ctx             context.Context
 	configDirectory string
-	tracks          *tracks.Tracks
 	trackEditor     *trackEditor.TrackEditor
 	journal         *journal.Journal
 	settings        *settings.Settings
 	backup          *backup.Backup
 	cache           *projection.Projection
+	trackTree       *projection.TrackTree
 }
 
 func NewApp() *App {
@@ -50,26 +49,23 @@ func NewApp() *App {
 	}
 
 	service := filebased.NewService(a.configDirectory)
-	a.tracks = tracks.New(a.configDirectory, service)
 	a.journal, err = journal.New(a.configDirectory, service)
 	if err != nil {
 		log.Fatalf("could not initialize journal: %v", err)
 	}
-	trackUsagesProjector := projection.TrackUsagesProjector{Journal: a.journal}
-	a.trackEditor = trackEditor.New(service, &trackUsagesProjector)
+	trackUsagesProjector := &projection.TrackUsages{}
+	trackIdMapProjector := &projection.TrackLookup{}
+	a.trackTree = &projection.TrackTree{}
+	a.trackEditor = trackEditor.New(service, trackUsagesProjector, trackIdMapProjector)
 	projectors := make([]projection.Projector, 0)
-	projectors = append(projectors, &trackUsagesProjector)
-	for i := range a.tracks.Projectors {
-		projectors = append(projectors, a.tracks.Projectors[i])
+	projectors = append(projectors, trackUsagesProjector)
+	projectors = append(projectors, trackIdMapProjector)
+	projectors = append(projectors, a.trackTree)
+	a.cache = projection.New(a.configDirectory, a.journal, service, projectors...)
+	err = a.cache.Build()
+	if err != nil {
+		log.Fatalf("could not initialize projections: %v", err)
 	}
-	a.cache = projection.New(a.configDirectory, projectors...)
-	if !a.cache.Initialized() {
-		err = a.cache.Build()
-		if err != nil {
-			log.Fatalf("could not initialize projections: %v", err)
-		}
-	}
-	a.tracks.TrackUsagesProjector = &trackUsagesProjector
 
 	return a
 }
@@ -101,7 +97,10 @@ func (a *App) Startup(ctx context.Context) {
 
 func (a *App) setupConfigDirectory() {
 	var homeDir, homeDirErr = os.UserHomeDir()
-	if len(os.Args) > 1 {
+	log.Printf("program args: %v", os.Args)
+	if os.Args[0] == "/tmp/wailsbindings" {
+		a.configDirectory = "/tmp"
+	} else if len(os.Args) > 1 {
 		a.configDirectory = os.Args[1]
 	} else if homeDirErr == nil {
 		a.configDirectory = filepath.Join(homeDir, ".private-running-journal")
@@ -153,36 +152,12 @@ func (a *App) DeleteJournalEntry(id string) error {
 	return a.journal.DeleteEntry(id)
 }
 
-func (a *App) GetTracks() ([]tracks.TrackListEntry, error) {
-	return a.tracks.Tracks()
-}
-
-func (a *App) GetTrackTree() (tracks.TrackTreeNode, error) {
-	return a.tracks.TrackTree()
+func (a *App) GetTrackTree() projection.TrackTreeNode {
+	return a.trackTree.Get()
 }
 
 func (a *App) TrackEditor() *trackEditor.TrackEditor {
 	return a.trackEditor
-}
-
-func (a *App) GetTrack(id string) (tracks.Track, error) {
-	return a.tracks.GetTrack(id)
-}
-
-func (a *App) CreateNewTrack(track tracks.CreateTrack) (*tracks.Track, error) {
-	return a.tracks.CreateTrack(track)
-}
-
-func (a *App) DeleteTrack(id string) error {
-	return a.tracks.DeleteTrack(id)
-}
-
-func (a *App) MoveTrack(id string, newPath string) (*tracks.Track, error) {
-	return a.tracks.MoveTrack(id, newPath)
-}
-
-func (a *App) SaveTrack(track tracks.SaveTrack) (*tracks.Track, error) {
-	return a.tracks.SaveTrack(track)
 }
 
 func (a *App) GetSettings() settings.AppSettings {

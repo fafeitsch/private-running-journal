@@ -1,9 +1,11 @@
 package trackEditor
 
 import (
+	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
+	"path/filepath"
 )
 
 type CoordinateDto struct {
@@ -32,15 +34,23 @@ type PolylineMeta struct {
 
 type TrackEditor struct {
 	service     *filebased.Service
-	trackUsages *projection.TrackUsagesProjector
+	trackUsages *projection.TrackUsages
+	trackLookup *projection.TrackLookup
 }
 
-func New(service *filebased.Service, trackUsages *projection.TrackUsagesProjector) *TrackEditor {
-	return &TrackEditor{service: service, trackUsages: trackUsages}
+func New(
+	service *filebased.Service, trackUsages *projection.TrackUsages, trackIdMap *projection.TrackLookup,
+) *TrackEditor {
+	return &TrackEditor{service: service, trackUsages: trackUsages, trackLookup: trackIdMap}
 }
 
 func (t *TrackEditor) GetTrack(id string) (TrackDto, error) {
-	file, err := t.service.ReadTrack(id)
+	parents, ok := t.trackLookup.Get()[id]
+	if !ok {
+		return TrackDto{}, fmt.Errorf("could not find track with id \"%s\"", id)
+	}
+	path := filepath.Join(parents...)
+	file, err := t.service.ReadTrack(path)
 	if err != nil {
 		return TrackDto{}, err
 	}
@@ -54,7 +64,7 @@ func (t *TrackEditor) GetTrack(id string) (TrackDto, error) {
 		return TrackDto{}, err
 	}
 	return TrackDto{
-		Id:        file.Name,
+		Id:        file.Id,
 		Name:      file.Name,
 		Waypoints: waypoints,
 		PolylineMeta: PolylineMeta{
@@ -90,4 +100,48 @@ func (t *TrackEditor) GetPolylineMeta(dtos []CoordinateDto) PolylineMeta {
 		DistanceMarkers: mapDistanceMarkerToDto(coordinates),
 		Length:          coordinates.Length(),
 	}
+}
+
+type SaveTrackDto struct {
+	Id        string          `json:"id"`
+	Name      string          `json:"name"`
+	Waypoints []CoordinateDto `json:"waypoints"`
+	Parents   []string        `json:"parents"`
+}
+
+func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
+	oldPath, ok := t.trackLookup.Get()[track.Id]
+	if !ok {
+		return fmt.Errorf("could not find track with id \"%s\"", track.Id)
+	}
+	err := t.service.DeleteTrackDirectory(oldPath)
+	if err != nil {
+		return fmt.Errorf("could not delete old track file: %v", err)
+	}
+	wp := make(shared.Waypoints, 0)
+	for _, waypoint := range track.Waypoints {
+		wp = append(wp, shared.Coordinates{Longitude: waypoint.Longitude, Latitude: waypoint.Latitude})
+	}
+	saveTrack := shared.SaveTrack{
+		Id:        track.Id,
+		Name:      track.Name,
+		Waypoints: wp,
+		Parents:   track.Parents,
+	}
+	err = t.service.SaveTrack(saveTrack)
+	shared.SendEvent(shared.TrackUpsertedEvent{SaveTrack: &saveTrack})
+	return err
+}
+
+func (t *TrackEditor) DeleteTrack(id string) error {
+	path, ok := t.trackLookup.Get()[id]
+	if !ok {
+		return fmt.Errorf("track with id %s does not exist", id)
+	}
+	err := t.service.DeleteTrackDirectory(path)
+	if err != nil {
+		return fmt.Errorf("could not delete track directory: %v", err)
+	}
+	shared.SendEvent(shared.TrackDeletedEvent{Id: id})
+	return err
 }

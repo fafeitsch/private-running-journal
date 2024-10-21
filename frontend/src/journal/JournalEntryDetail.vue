@@ -9,7 +9,7 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputGroup from "primevue/inputgroup";
-import {journal, trackEditor, tracks} from "../../wailsjs/go/models";
+import { journal, trackEditor } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import LeafletMap from "./LeafletMap.vue";
 import TrackTimeResult from "./TrackTimeResult.vue";
@@ -120,17 +120,17 @@ async function saveEntry() {
   editError.value = undefined;
   try {
     const length = customLengthEnabled.value
-        ? value.customLength!
-        : value.track!.length * value.laps;
+      ? value.customLength!
+      : value.track!.length * value.laps;
     if (value.id === "new") {
       const year = `${selectedDate.value.getFullYear()}`.padStart(4, "0");
       const month = `${selectedDate.value.getMonth() + 1}`.padStart(2, "0");
       const day = `${selectedDate.value.getDate()}`.padStart(2, "0");
       value.date = `${year}-${month}-${day}`;
       const result = await journalApi.createJournalEntry(value);
-      dirty.value = false
-      journalStore.addEntryToList(result)
-      router.replace('/journal/' + encodeURIComponent(result.id));
+      dirty.value = false;
+      journalStore.addEntryToList(result);
+      router.replace("/journal/" + encodeURIComponent(result.id));
       return;
     }
     await journalApi.saveEntry(value);
@@ -224,10 +224,7 @@ useLeaveConfirmation(dirty);
           ></Button></div
       ></Message>
     </div>
-    <div
-      v-else-if="selectedEntry"
-      class="flex flex-col gap-2 w-full p-2 grow shrink"
-    >
+    <div v-else-if="selectedEntry" class="flex flex-col gap-2 w-full p-2 grow shrink">
       <div class="flex gap-2">
         <Button
           icon="pi pi-save"
@@ -301,7 +298,11 @@ useLeaveConfirmation(dirty);
         ></InputText>
       </InputGroup>
       <div v-if="gpxData" class="shrink grow">
-        <LeafletMap class="h-full w-full" :waypoints="gpxData?.waypoints || []" :polyline-meta="gpxData"></LeafletMap>
+        <LeafletMap
+          class="h-full w-full"
+          :waypoints="gpxData?.waypoints || []"
+          :polyline-meta="gpxData"
+        ></LeafletMap>
       </div>
     </div>
   </div>

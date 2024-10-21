@@ -6,7 +6,7 @@ import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
-import { trackEditor, tracks } from "../../wailsjs/go/models";
+import { trackEditor } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import TrackEditor from "./TrackEditor.vue";
 import Button from "primevue/button";
@@ -15,10 +15,9 @@ import { useConfirm } from "primevue/useconfirm";
 import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import MoveTrackOverlay from "./MoveTrackOverlay.vue";
 import CreateTrackOverlay from "./CreateTrackOverlay.vue";
-import SaveTrack = tracks.SaveTrack;
-import Coordinates = tracks.Coordinates;
 import TrackDto = trackEditor.TrackDto;
 import CoordinateDto = trackEditor.CoordinateDto;
+import SaveTrackDto = trackEditor.SaveTrackDto;
 
 const route = useRoute();
 const tracksStore = useTrackStore();
@@ -42,7 +41,7 @@ const gpxData = ref<{
   waypoints: CoordinateDto[];
   distanceMarkers: (CoordinateDto & { distance: number })[];
 }>({ waypoints: [], distanceMarkers: [] });
-const editedWaypoints = ref<Coordinates[]>([]);
+const editedWaypoints = ref<CoordinateDto[]>([]);
 const length = ref(0);
 const trackEditDirection = ref<"forward" | "drag" | "backward">("drag");
 
@@ -77,7 +76,7 @@ const formattedLength = computed(() =>
   n(length.value / 1000, { maximumFractionDigits: 1, minimumFractionDigits: 1 }),
 );
 
-function trackChanged(props: { length: number; waypoints: Coordinates[] }) {
+function trackChanged(props: { length: number; waypoints: CoordinateDto[] }) {
   length.value = props.length;
   editedWaypoints.value = props.waypoints;
   dirty.value = true;
@@ -110,11 +109,11 @@ async function saveTrack(event: any) {
     return;
   }
   try {
-    const updated = await tracksApi.saveTrack(
-      new SaveTrack({
+    await tracksApi.saveTrack(
+      new SaveTrackDto({
         id: track.value.id,
         name: track.value.name,
-        parents: [],
+        parents: track.value.parents,
         waypoints: editedWaypoints.value,
       }),
     );
@@ -138,7 +137,7 @@ async function deleteTrack(event: Event) {
     header: t("shared.confirm.header"),
     accept: () => resolveFn(true),
     reject: () => resolveFn(false),
-    message: t("tracks.deleteConfirmation", { count: track.value.usages }),
+    message: t("tracks.deleteConfirmation", { count: track.value.usages.length }),
     rejectLabel: t("shared.cancel"),
     acceptLabel: t("shared.delete"),
   });

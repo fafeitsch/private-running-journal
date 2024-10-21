@@ -25,8 +25,8 @@ func Init(baseDirectory string, enabled bool, push bool) *Backup {
 			go result.doBackup("delete track")
 		},
 	)
-	shared.RegisterHandler(
-		"track upserted", func(data ...any) {
+	shared.Listen(
+		shared.TrackUpsertedEvent{}, func(event shared.TrackUpsertedEvent) {
 			go result.doBackup("upsert track")
 		},
 	)

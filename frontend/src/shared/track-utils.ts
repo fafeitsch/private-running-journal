@@ -1,6 +1,6 @@
 import { TreeNode } from "primevue/treenode";
-import { tracks } from "../../wailsjs/go/models";
-import TrackTreeNode = tracks.TrackTreeNode;
+import {projection} from '../../wailsjs/go/models';
+import TrackTreeNode = projection.TrackTreeNode;
 
 export function tracksToTreeNodes(root: TrackTreeNode, allSelectable = false, hierarchy = "/"): TreeNode[] {
   const roots: TreeNode[] = [];

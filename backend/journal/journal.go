@@ -37,7 +37,9 @@ type Journal struct {
 	loadService   *filebased.Service
 }
 
-func New(baseDirectory string, loadService *filebased.Service) (*Journal, error) {
+func New(baseDirectory string, loadService *filebased.Service) (
+	*Journal, error,
+) {
 	result := &Journal{
 		baseDirectory: filepath.Join(baseDirectory, "journal"),
 		listEntries:   make(map[string]*ListEntry),
@@ -218,8 +220,8 @@ func (j *Journal) readListEntry(path string) (ListEntry, error) {
 	if entry.Track != nil {
 		listEntry.TrackName = entry.Track.Name
 		listEntry.Length = entry.Track.Waypoints.Length() * entry.Laps
-		listEntry.trackId = entry.LinkedTrack
 	}
+	listEntry.trackId = entry.LinkedTrack
 	if entry.CustomLength != 0 {
 		listEntry.Length = entry.CustomLength
 	}

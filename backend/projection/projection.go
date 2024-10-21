@@ -3,37 +3,43 @@ package projection
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fafeitsch/private-running-journal/backend/filebased"
+	"github.com/fafeitsch/private-running-journal/backend/journal"
+	"github.com/fafeitsch/private-running-journal/backend/shared"
+	"log"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type Projection struct {
 	directory   string
 	trackUsages map[string]int
 	projectors  []Projector
+	fileService *filebased.Service
+	journal     *journal.Journal
 }
 
 type Projector interface {
-	BuildProjection() (json.RawMessage, error)
+	Init(message json.RawMessage, write func())
+	AddTrack(track shared.Track)
+	AddJournalEntry(entry shared.JournalEntry)
+	GetData() any
 	ProjectionName() string
-	Bootstrap(retriever Retriever, rebuilder Rebuilder)
 }
 
 type Retriever func() (json.RawMessage, error)
 
 type Rebuilder func(message json.RawMessage) error
 
-func New(configDirectory string, projectors ...Projector) *Projection {
-	result := &Projection{directory: filepath.Join(configDirectory, ".projection"), projectors: projectors}
-	for _, projector := range projectors {
-		name := projector.ProjectionName()
-		projector.Bootstrap(
-			func() (json.RawMessage, error) {
-				return result.readFile(name)
-			}, func(message json.RawMessage) error {
-				return result.writeProjection(message, name)
-			},
-		)
+func New(
+	configDirectory string, j *journal.Journal, fileService *filebased.Service, projectors ...Projector,
+) *Projection {
+	result := &Projection{
+		directory:   filepath.Join(configDirectory, ".projection"),
+		projectors:  projectors,
+		fileService: fileService,
+		journal:     j,
 	}
 	return result
 }
@@ -53,18 +59,66 @@ func (p *Projection) Build() error {
 		return err
 	}
 
-	for _, projector := range p.projectors {
-		message, err := projector.BuildProjection()
-		name := projector.ProjectionName()
+	projectionsToRebuild := make([]Projector, 0)
+	for i := range p.projectors {
+		message, err := p.readFile(p.projectors[i].ProjectionName())
 		if err != nil {
-			return fmt.Errorf("could not build projection %s: %v", name, err)
+			projectionsToRebuild = append(projectionsToRebuild, p.projectors[i])
+			message = nil
 		}
-		err = p.writeProjection(message, name)
-		if err != nil {
-			return fmt.Errorf("could not build projection %s: %v", name, err)
+		p.projectors[i].Init(
+			message, func() {
+				p.writePayload(p.projectors[i].GetData(), p.projectors[i].ProjectionName())
+			},
+		)
+	}
+	group := sync.WaitGroup{}
+	group.Add(2)
+	var tracksError error
+	go func() {
+		tracksError = p.fileService.ReadAllTracks(
+			func(track shared.Track) {
+				for i := range projectionsToRebuild {
+					p.projectors[i].AddTrack(track)
+				}
+			},
+		)
+		group.Done()
+	}()
+	var journalError error
+	go func() {
+		var entries []shared.JournalEntry
+		entries, journalError = p.journal.ReadAllEntries()
+		for i := range projectionsToRebuild {
+			for j := range entries {
+				p.projectors[i].AddJournalEntry(entries[j])
+			}
+		}
+		group.Done()
+	}()
+	group.Wait()
+	if journalError != nil || tracksError != nil {
+		if journalError != nil {
+			return fmt.Errorf("could not read journal entries: %v", journalError)
+		}
+		if tracksError != nil {
+			return fmt.Errorf("could not read track entries: %v", tracksError)
 		}
 	}
+	for i := range p.projectors {
+		payload := p.projectors[i].GetData()
+		p.writePayload(payload, p.projectors[i].ProjectionName())
+	}
 	return nil
+}
+
+func (p *Projection) writePayload(payload any, name string) {
+	message, _ := json.Marshal(payload)
+	err := p.writeProjection(message, name)
+	if err != nil {
+		log.Printf("%v", fmt.Errorf("could not write projection %s: %v", name, err))
+		//TODO delete file in order to reattempt writing the next time
+	}
 }
 
 func (p *Projection) writeProjection(message json.RawMessage, name string) error {
