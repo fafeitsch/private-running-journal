@@ -33,8 +33,9 @@ func (t *trackTreeProjector) ProjectionName() string {
 func (t *trackTreeProjector) Bootstrap(retriever projection.Retriever, rebuilder projection.Rebuilder) {
 	t.retriever = retriever
 	t.rebuilder = rebuilder
-	shared.RegisterHandler(
-		"track upserted", func(data ...any) {
+	shared.Listen(
+		shared.TrackUpsertedEvent{},
+		func(event shared.TrackUpsertedEvent) {
 			message, err := t.BuildProjection()
 			if err != nil {
 				log.Printf("could not update trackTree projection after upserting: %v", err)

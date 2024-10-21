@@ -1,10 +1,12 @@
 package filebased
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
+	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-gpx"
 	"os"
 	"path/filepath"
@@ -14,6 +16,7 @@ import (
 var tracksDirectory = "tracks"
 
 type trackDescriptor struct {
+	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -36,11 +39,15 @@ func (s *Service) ReadTrack(path string) (shared.Track, error) {
 	}
 
 	hierarchy := strings.Split(path, string(os.PathSeparator))
+	id := baseDescriptor.Id
+	if id == "" {
+		id = path
+	}
 	return shared.Track{
 		Waypoints: waypoints,
-		Id:        path,
+		Id:        id,
 		Name:      baseDescriptor.Name,
-		Parents:   hierarchy[:len(hierarchy)-1],
+		Parents:   hierarchy,
 	}, nil
 }
 
@@ -63,4 +70,38 @@ func readGpx(path string) (shared.Waypoints, error) {
 		}
 	}
 	return coordinates, nil
+}
+
+func (s *Service) SaveTrack(track shared.SaveTrack) error {
+	path := filepath.Join(track.Parents...)
+	trackDirectory := filepath.Join(s.path, "tracks", path)
+	err := os.MkdirAll(trackDirectory, 0755)
+	if err != nil {
+		return fmt.Errorf("could not create track directory %s: %v", trackDirectory, err)
+	}
+	infoFile := filepath.Join(trackDirectory, "info.json")
+	infoPayload, _ := json.Marshal(trackDescriptor{Name: track.Name, Id: track.Id})
+	err = os.WriteFile(infoFile, infoPayload, 0666)
+	if err != nil {
+		return fmt.Errorf("could not save base information: %v", err)
+	}
+	err = writeGpxFile(track.Waypoints, trackDirectory)
+	if err != nil {
+		return fmt.Errorf("could not save gpx file: %v", err)
+	}
+	return nil
+}
+
+func writeGpxFile(waypoints shared.Waypoints, trackDirectory string) error {
+	coords := make([]geom.Coord, 0)
+	for _, coordinate := range waypoints {
+		coords = append(coords, []float64{coordinate.Longitude, coordinate.Latitude})
+	}
+	linestring, _ := geom.NewLineString(geom.XY).SetCoords(coords)
+	segment := gpx.NewTrkSegType(linestring)
+	trackSegment := &gpx.TrkType{TrkSeg: []*gpx.TrkSegType{segment}}
+	gpxPayload := gpx.GPX{Trk: []*gpx.TrkType{trackSegment}}
+	writer := bytes.Buffer{}
+	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
+	return os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
 }

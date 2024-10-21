@@ -90,5 +90,9 @@ func (t *TrackUsagesProjector) GetUsages(trackId string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal usages: %v", err)
 	}
-	return result[trackId], nil
+	usages, ok := result[trackId]
+	if !ok {
+		usages = make([]string, 0)
+	}
+	return usages, nil
 }

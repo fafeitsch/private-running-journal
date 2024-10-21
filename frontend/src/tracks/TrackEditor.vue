@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import {getCurrentInstance, onMounted, ref, toRefs, watch, watchEffect} from "vue";
-import { trackEditor, tracks } from "../../wailsjs/go/models";
+import { getCurrentInstance, onMounted, ref, toRefs, watch } from "vue";
+import { trackEditor } from "../../wailsjs/go/models";
 import { useMap } from "../shared/use-map";
-import Coordinates = tracks.Coordinates;
 import CoordinateDto = trackEditor.CoordinateDto;
 import PolylineMeta = trackEditor.PolylineMeta;
 
@@ -26,18 +25,17 @@ onMounted(() => {
   setTimeout(() => mapApi.changeEditDirection(editDirection.value));
 });
 
-
 watch(polylineMeta, (value) => (mapApi.polylineMeta.value = value));
 watch(waypoints, (value) => (mapApi.waypoints.value = value));
 
-async function handleTrackEditEvent(props: { length: number; waypoints: Coordinates[] }) {
+async function handleTrackEditEvent(props: { length: number; waypoints: CoordinateDto[] }) {
   emit("change-track", props);
 }
 
 watch(editDirection, (value) => mapApi.changeEditDirection(value));
 
 const emit = defineEmits<{
-  (e: "change-track", props: { length: number; waypoints: Coordinates[] }): void;
+  (e: "change-track", props: { length: number; waypoints: CoordinateDto[] }): void;
 }>();
 </script>
 

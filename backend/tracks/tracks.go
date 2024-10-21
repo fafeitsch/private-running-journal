@@ -1,14 +1,12 @@
 package tracks
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
-	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-gpx"
 	"io"
 	"log"
@@ -30,16 +28,16 @@ type Tracks struct {
 	basePath             string
 	loadService          *filebased.Service
 	Projectors           []projection.Projector
-	trackListProjector   *trackListProjector
+	TrackIdMapProjector  *TrackIdMapProjection
 	trackTreeProjector   *trackTreeProjector
 	TrackUsagesProjector *projection.TrackUsagesProjector
 }
 
 func New(baseDir string, loadService *filebased.Service) *Tracks {
 	result := Tracks{basePath: filepath.Join(baseDir, "tracks"), loadService: loadService}
-	result.trackListProjector = &trackListProjector{Tracks: &result}
+	result.TrackIdMapProjector = &TrackIdMapProjection{Tracks: &result}
 	result.trackTreeProjector = &trackTreeProjector{Tracks: &result}
-	result.Projectors = []projection.Projector{result.trackTreeProjector, result.trackListProjector}
+	result.Projectors = []projection.Projector{result.trackTreeProjector, result.TrackIdMapProjector}
 	return &result
 }
 
@@ -69,12 +67,8 @@ func (t *Tracks) readTrack(path string, relativePath string) (Track, error) {
 		Id:        relativePath,
 		Length:    length,
 		Name:      baseDescriptor.Name,
-		Hierarchy: hierarchy[:len(hierarchy)-1],
+		Hierarchy: hierarchy,
 	}, nil
-}
-
-func (t *Tracks) Tracks() ([]TrackListEntry, error) {
-	return t.trackListProjector.loadTrackList()
 }
 
 func (t *Tracks) TrackTree() (TrackTreeNode, error) {
@@ -87,42 +81,6 @@ type SaveTrack struct {
 	Waypoints []Coordinates `json:"waypoints,omitempty"`
 }
 
-func (t *Tracks) SaveTrack(track SaveTrack) (*Track, error) {
-	trackDirectory := path.Join(t.basePath, track.Id)
-	stat, err := os.Stat(trackDirectory)
-	if err != nil || !stat.IsDir() {
-		return nil, fmt.Errorf("derived track directory \"%s\" does not seems to exist: %v", trackDirectory, err)
-	}
-	existing, err := t.readTrack(path.Join(t.basePath, track.Id), track.Id)
-	if err != nil {
-		return nil, fmt.Errorf("the track with id \"%s\" does not seem to exist yet", track.Id)
-	}
-	existing.Name = track.Name
-	existing.Length = int(1000 * distance(track.Waypoints))
-	infoFile := path.Join(trackDirectory, "info.json")
-	infoPayload, _ := json.Marshal(trackDescriptor{Name: existing.Name})
-	err = os.WriteFile(infoFile, infoPayload, 0666)
-	if err != nil {
-		return nil, fmt.Errorf("could not save base information: %v", err)
-	}
-	err = writeGpxFile(track, trackDirectory)
-	if err != nil {
-		return nil, fmt.Errorf("could not save gpx file: %v", err)
-	}
-	existingTrack, err := t.readTrack(trackDirectory, track.Id)
-	if err != nil {
-		return nil, fmt.Errorf("could not read track: %v", err)
-	}
-	shared.Send(
-		"track upserted", shared.Track{
-			Id:     existingTrack.Id,
-			Length: existingTrack.Length,
-			Name:   existingTrack.Name,
-		},
-	)
-	return &existingTrack, err
-}
-
 func (t *Tracks) GetTrack(id string) (Track, error) {
 	result, err := t.readTrack(path.Join(t.basePath, id), id)
 	if err != nil {
@@ -133,58 +91,9 @@ func (t *Tracks) GetTrack(id string) (Track, error) {
 	return result, nil
 }
 
-func writeGpxFile(track SaveTrack, trackDirectory string) error {
-	coords := make([]geom.Coord, 0)
-	for _, coordinate := range track.Waypoints {
-		coords = append(coords, []float64{coordinate.Longitude, coordinate.Latitude})
-	}
-	linestring, _ := geom.NewLineString(geom.XY).SetCoords(coords)
-	segment := gpx.NewTrkSegType(linestring)
-	trackSegment := &gpx.TrkType{TrkSeg: []*gpx.TrkSegType{segment}}
-	gpxPayload := gpx.GPX{Trk: []*gpx.TrkType{trackSegment}}
-	writer := bytes.Buffer{}
-	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
-	return os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
-}
-
 type CreateTrack struct {
 	*SaveTrack
 	Parent string `json:"parent"`
-}
-
-func (t *Tracks) CreateTrack(track CreateTrack) (*Track, error) {
-	parentId := track.Parent
-	trackPath, err := shared.FindFreeFileName(filepath.Join(t.basePath, parentId, strings.ToLower(track.Name)))
-	if err != nil {
-		return nil, err
-	}
-	err = os.MkdirAll(trackPath, os.ModePerm)
-	if err != nil {
-		return nil, err
-	}
-	entryFilePath := filepath.Join(trackPath, "info.json")
-	payload, _ := json.Marshal(trackDescriptor{Name: track.Name})
-	err = os.WriteFile(entryFilePath, payload, 0644)
-	if err != nil {
-		return nil, err
-	}
-	err = writeGpxFile(*track.SaveTrack, trackPath)
-	if err != nil {
-		return nil, err
-	}
-	id := strings.Replace(trackPath, t.basePath+"/", "", 1)
-	newTrack, err := t.readTrack(trackPath, id)
-	if err != nil {
-		return nil, err
-	}
-	shared.Send(
-		"track upserted", shared.Track{
-			Id:     newTrack.Id,
-			Length: newTrack.Length,
-			Name:   newTrack.Name,
-		},
-	)
-	return &newTrack, nil
 }
 
 func (t *Tracks) DeleteTrack(id string) error {

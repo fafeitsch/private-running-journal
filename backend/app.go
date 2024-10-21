@@ -56,7 +56,7 @@ func NewApp() *App {
 		log.Fatalf("could not initialize journal: %v", err)
 	}
 	trackUsagesProjector := projection.TrackUsagesProjector{Journal: a.journal}
-	a.trackEditor = trackEditor.New(service, &trackUsagesProjector)
+	a.trackEditor = trackEditor.New(service, &trackUsagesProjector, a.tracks.TrackIdMapProjector)
 	projectors := make([]projection.Projector, 0)
 	projectors = append(projectors, &trackUsagesProjector)
 	for i := range a.tracks.Projectors {
@@ -153,10 +153,6 @@ func (a *App) DeleteJournalEntry(id string) error {
 	return a.journal.DeleteEntry(id)
 }
 
-func (a *App) GetTracks() ([]tracks.TrackListEntry, error) {
-	return a.tracks.Tracks()
-}
-
 func (a *App) GetTrackTree() (tracks.TrackTreeNode, error) {
 	return a.tracks.TrackTree()
 }
@@ -169,20 +165,12 @@ func (a *App) GetTrack(id string) (tracks.Track, error) {
 	return a.tracks.GetTrack(id)
 }
 
-func (a *App) CreateNewTrack(track tracks.CreateTrack) (*tracks.Track, error) {
-	return a.tracks.CreateTrack(track)
-}
-
 func (a *App) DeleteTrack(id string) error {
 	return a.tracks.DeleteTrack(id)
 }
 
 func (a *App) MoveTrack(id string, newPath string) (*tracks.Track, error) {
 	return a.tracks.MoveTrack(id, newPath)
-}
-
-func (a *App) SaveTrack(track tracks.SaveTrack) (*tracks.Track, error) {
-	return a.tracks.SaveTrack(track)
 }
 
 func (a *App) GetSettings() settings.AppSettings {

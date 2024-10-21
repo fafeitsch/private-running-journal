@@ -4,6 +4,8 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
+	"github.com/fafeitsch/private-running-journal/backend/tracks"
+	"path/filepath"
 )
 
 type CoordinateDto struct {
@@ -33,14 +35,22 @@ type PolylineMeta struct {
 type TrackEditor struct {
 	service     *filebased.Service
 	trackUsages *projection.TrackUsagesProjector
+	trackIdMap  *tracks.TrackIdMapProjection
 }
 
-func New(service *filebased.Service, trackUsages *projection.TrackUsagesProjector) *TrackEditor {
-	return &TrackEditor{service: service, trackUsages: trackUsages}
+func New(
+	service *filebased.Service, trackUsages *projection.TrackUsagesProjector, trackIdMap *tracks.TrackIdMapProjection,
+) *TrackEditor {
+	return &TrackEditor{service: service, trackUsages: trackUsages, trackIdMap: trackIdMap}
 }
 
 func (t *TrackEditor) GetTrack(id string) (TrackDto, error) {
-	file, err := t.service.ReadTrack(id)
+	parents, err := t.trackIdMap.GetTrackLocation(id)
+	if err != nil {
+		return TrackDto{}, err
+	}
+	path := filepath.Join(parents...)
+	file, err := t.service.ReadTrack(path)
 	if err != nil {
 		return TrackDto{}, err
 	}
@@ -54,7 +64,7 @@ func (t *TrackEditor) GetTrack(id string) (TrackDto, error) {
 		return TrackDto{}, err
 	}
 	return TrackDto{
-		Id:        file.Name,
+		Id:        file.Id,
 		Name:      file.Name,
 		Waypoints: waypoints,
 		PolylineMeta: PolylineMeta{
@@ -90,4 +100,27 @@ func (t *TrackEditor) GetPolylineMeta(dtos []CoordinateDto) PolylineMeta {
 		DistanceMarkers: mapDistanceMarkerToDto(coordinates),
 		Length:          coordinates.Length(),
 	}
+}
+
+type SaveTrackDto struct {
+	Id        string          `json:"id"`
+	Name      string          `json:"name"`
+	Waypoints []CoordinateDto `json:"waypoints"`
+	Parents   []string        `json:"parents"`
+}
+
+func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
+	wp := make(shared.Waypoints, 0)
+	for _, waypoint := range track.Waypoints {
+		wp = append(wp, shared.Coordinates{Longitude: waypoint.Longitude, Latitude: waypoint.Latitude})
+	}
+	saveTrack := shared.SaveTrack{
+		Id:        track.Id,
+		Name:      track.Name,
+		Waypoints: wp,
+		Parents:   track.Parents,
+	}
+	err := t.service.SaveTrack(saveTrack)
+	shared.SendEvent(shared.TrackUpsertedEvent{SaveTrack: &saveTrack})
+	return err
 }

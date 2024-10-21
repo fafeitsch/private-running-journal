@@ -1,16 +1,13 @@
 import {trackEditor, tracks} from "../../wailsjs/go/models";
 import {
-  ComputePolylineProps as computePolylineProps,
-  CreateNewTrack,
   DeleteTrack,
   GetTrackTree,
   MoveTrack,
-  SaveTrack,
 } from "../../wailsjs/go/backend/App";
-import {GetTrack} from '../../wailsjs/go/trackEditor/TrackEditor';
-import PolylineProps = tracks.PolylineProps;
-import CreateTrack = tracks.CreateTrack;
+import {GetTrack, SaveTrack, GetPolylineMeta} from '../../wailsjs/go/trackEditor/TrackEditor';
 import TrackDto = trackEditor.TrackDto;
+import PolylineMeta = trackEditor.PolylineMeta;
+import CoordinateDto = trackEditor.CoordinateDto;
 
 export function useTracksApi() {
   async function getTrackTree(): Promise<tracks.TrackTreeNode> {
@@ -19,14 +16,11 @@ export function useTracksApi() {
   async function getTrack(id: string): Promise<TrackDto>  {
     return await GetTrack(id)
   }
-  function ComputePolylineProps(coordinates: tracks.Coordinates[]): Promise<PolylineProps> {
-    return computePolylineProps(coordinates);
+  async function getPolylineMeta(coordinates: CoordinateDto[]): Promise<PolylineMeta> {
+    return GetPolylineMeta(coordinates);
   }
-  function saveTrack(track: tracks.SaveTrack): Promise<tracks.Track> {
+  function saveTrack(track: trackEditor.SaveTrackDto): Promise<void> {
     return SaveTrack(track);
-  }
-  function createTrack(track: CreateTrack): Promise<tracks.Track> {
-    return CreateNewTrack(track);
   }
   function deleteTrack(trackId: string): Promise<void> {
     return DeleteTrack(trackId);
@@ -34,5 +28,5 @@ export function useTracksApi() {
   function moveTrack(trackId: string, newPath: string): Promise<tracks.Track> {
     return MoveTrack(trackId, newPath);
   }
-  return { getTrackTree,getTrack, ComputePolylineProps, saveTrack, createTrack, deleteTrack, moveTrack };
+  return { getTrackTree,getTrack,getPolylineMeta, saveTrack,  deleteTrack, moveTrack };
 }

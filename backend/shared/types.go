@@ -63,8 +63,7 @@ func (w Waypoints) DistanceMarkers() []DistanceMarker {
 		lon := w[index].Longitude + ratio*(w[index+1].Longitude-w[index].Longitude)
 
 		result = append(
-			result,
-			DistanceMarker{
+			result, DistanceMarker{
 				Coordinates: Coordinates{Latitude: lat, Longitude: lon},
 				Distance:    (len(result) + 1) * int(steps),
 			},
@@ -81,11 +80,19 @@ type DistanceMarker struct {
 }
 
 type Track struct {
-	Waypoints
-	Id      string   `json:"id"`
-	Length  int      `json:"length"`
-	Name    string   `json:"name"`
-	Parents []string `json:"parents"`
+	Waypoints Waypoints
+	Id        string   `json:"id"`
+	Length    int      `json:"length"`
+	Name      string   `json:"name"`
+	Parents   []string `json:"parents"`
+}
+
+type SaveTrack struct {
+	Waypoints Waypoints
+	Id        string
+	Length    int
+	Name      string
+	Parents   []string
 }
 
 type JournalEntry struct {
