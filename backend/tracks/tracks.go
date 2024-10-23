@@ -64,7 +64,7 @@ func (t *Tracks) readTrack(path string, relativePath string) (Track, error) {
 
 	hierarchy := strings.Split(relativePath, string(os.PathSeparator))
 	return Track{
-		Id:        relativePath,
+		Id:        baseDescriptor.Id,
 		Length:    length,
 		Name:      baseDescriptor.Name,
 		Hierarchy: hierarchy,
@@ -103,33 +103,6 @@ func (t *Tracks) DeleteTrack(id string) error {
 	return err
 }
 
-func (t *Tracks) MoveTrack(id string, newPath string) (*Track, error) {
-	_, err := t.readTrack(path.Join(t.basePath, id), id)
-	if err != nil {
-		return nil, fmt.Errorf("could not find track with id %s", id)
-	}
-	lastSegment := id[strings.LastIndex(id, string(filepath.Separator))+1:]
-	newDirPath := filepath.Join(t.basePath, newPath)
-	err = os.MkdirAll(newDirPath, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("could not create directories: %v", err)
-	}
-	err = os.Rename(filepath.Join(t.basePath, id), filepath.Join(newDirPath, lastSegment))
-	if err != nil {
-		return nil, fmt.Errorf("could not move track: %v", err)
-	}
-	movedTrack, err := t.readTrack(filepath.Join(newDirPath, lastSegment), filepath.Join(newPath, lastSegment))
-	t.deleteEmptyDirectories(id)
-	shared.Send(
-		"track moved", id, shared.Track{
-			Id:     movedTrack.Id,
-			Length: movedTrack.Length,
-			Name:   movedTrack.Name,
-		},
-	)
-	return &movedTrack, err
-}
-
 func (t *Tracks) deleteEmptyDirectories(id string) {
 	parts := strings.Split(id, string(filepath.Separator))
 	if len(parts) == 0 {
@@ -163,6 +136,7 @@ func (t *Tracks) deleteEmptyDirectories(id string) {
 
 type trackDescriptor struct {
 	Name string `json:"name"`
+	Id   string `json:"id"`
 }
 
 func readGpx(path string) ([]Coordinates, int, error) {

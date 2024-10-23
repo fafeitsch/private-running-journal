@@ -54,7 +54,7 @@ func (t *trackTreeProjector) BuildProjection() (json.RawMessage, error) {
 		func(track Track) {
 			hierarchy := track.Hierarchy
 			node := &tree
-			for len(hierarchy) > 0 {
+			for len(hierarchy) > 1 {
 				index := slices.IndexFunc(
 					node.Nodes, func(node TrackTreeNode) bool {
 						return node.Name == hierarchy[0]
@@ -79,7 +79,6 @@ func (t *trackTreeProjector) BuildProjection() (json.RawMessage, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not walk directory %s: %v", t.basePath, err)
 	}
-	log.Printf("Tree %v", tree)
 	return json.Marshal(tree)
 }
 

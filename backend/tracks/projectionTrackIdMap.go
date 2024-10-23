@@ -32,6 +32,7 @@ func (t *TrackIdMapProjection) Bootstrap(retriever projection.Retriever, rebuild
 				log.Printf("could not update trackList projection after upserting: %v", err)
 			}
 			trackMap[newTrack.Id] = newTrack.Parents
+			trackMap[newTrack.Id] = append(trackMap[newTrack.Id], newTrack.Name)
 			message, _ := json.Marshal(trackMap)
 			err = rebuilder(message)
 			if err != nil {

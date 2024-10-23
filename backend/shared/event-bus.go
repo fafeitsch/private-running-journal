@@ -36,7 +36,7 @@ func Send(name string, data ...any) {
 
 func SendEvent(data any) {
 	namedType := reflect.TypeOf(data)
-	if _, ok := handlers[namedType.Name()]; !ok {
+	if _, ok := handlers[namedType.String()]; !ok {
 		return
 	}
 	for _, handler := range handlers[namedType.String()] {

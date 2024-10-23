@@ -47,7 +47,7 @@ func (s *Service) ReadTrack(path string) (shared.Track, error) {
 		Waypoints: waypoints,
 		Id:        id,
 		Name:      baseDescriptor.Name,
-		Parents:   hierarchy,
+		Parents:   hierarchy[:len(hierarchy)-1],
 	}, nil
 }
 
@@ -74,8 +74,13 @@ func readGpx(path string) (shared.Waypoints, error) {
 
 func (s *Service) SaveTrack(track shared.SaveTrack) error {
 	path := filepath.Join(track.Parents...)
+	path = filepath.Join(path, track.Name)
+	path, err := shared.FindFreeFileName(path)
+	if err != nil {
+		return err
+	}
 	trackDirectory := filepath.Join(s.path, "tracks", path)
-	err := os.MkdirAll(trackDirectory, 0755)
+	err = os.MkdirAll(trackDirectory, 0755)
 	if err != nil {
 		return fmt.Errorf("could not create track directory %s: %v", trackDirectory, err)
 	}
@@ -104,4 +109,10 @@ func writeGpxFile(waypoints shared.Waypoints, trackDirectory string) error {
 	writer := bytes.Buffer{}
 	_ = gpxPayload.WriteIndent(bufio.NewWriter(&writer), "  ", "  ")
 	return os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
+}
+
+func (s *Service) Delete(path []string) error {
+	err := os.RemoveAll(filepath.Join(s.path, "tracks", filepath.Join(path...)))
+	s.deleteEmptyDirectories(filepath.Join("tracks", filepath.Join(path...)))
+	return err
 }

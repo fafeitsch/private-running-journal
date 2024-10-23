@@ -37,7 +37,9 @@ type Journal struct {
 	loadService   *filebased.Service
 }
 
-func New(baseDirectory string, loadService *filebased.Service) (*Journal, error) {
+func New(baseDirectory string, loadService *filebased.Service) (
+	*Journal, error,
+) {
 	result := &Journal{
 		baseDirectory: filepath.Join(baseDirectory, "journal"),
 		listEntries:   make(map[string]*ListEntry),
