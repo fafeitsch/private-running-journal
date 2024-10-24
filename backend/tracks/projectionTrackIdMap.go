@@ -40,6 +40,23 @@ func (t *TrackIdMapProjection) Bootstrap(retriever projection.Retriever, rebuild
 			}
 		},
 	)
+	shared.Listen(shared.TrackDeletedEvent{}, func(event shared.TrackDeletedEvent) {
+		current, err := t.retriever()
+		if err != nil {
+			log.Printf("could not update trackList projection after deletion: %v", err)
+		}
+		var trackMap map[string][]string
+		err = json.Unmarshal(current, &trackMap)
+		if err != nil {
+			log.Printf("could not update trackList projection after deletion: %v", err)
+		}
+		delete(trackMap, event.Id)
+		message, _ := json.Marshal(trackMap)
+		err = rebuilder(message)
+		if err != nil {
+			log.Printf("could not update trackList projection after deletion: %v", err)
+		}
+	})
 }
 
 func (t *TrackIdMapProjection) BuildProjection() (json.RawMessage, error) {

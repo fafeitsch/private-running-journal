@@ -111,7 +111,7 @@ func writeGpxFile(waypoints shared.Waypoints, trackDirectory string) error {
 	return os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
 }
 
-func (s *Service) Delete(path []string) error {
+func (s *Service) DeleteTrackDirectory(path []string) error {
 	err := os.RemoveAll(filepath.Join(s.path, "tracks", filepath.Join(path...)))
 	s.deleteEmptyDirectories(filepath.Join("tracks", filepath.Join(path...)))
 	return err

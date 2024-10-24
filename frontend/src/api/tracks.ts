@@ -1,6 +1,6 @@
 import { trackEditor, tracks } from "../../wailsjs/go/models";
-import { DeleteTrack, GetTrackTree } from "../../wailsjs/go/backend/App";
-import { GetPolylineMeta, GetTrack, SaveTrack } from "../../wailsjs/go/trackEditor/TrackEditor";
+import { GetTrackTree } from "../../wailsjs/go/backend/App";
+import { DeleteTrack, GetPolylineMeta, GetTrack, SaveTrack } from "../../wailsjs/go/trackEditor/TrackEditor";
 import TrackDto = trackEditor.TrackDto;
 import PolylineMeta = trackEditor.PolylineMeta;
 import CoordinateDto = trackEditor.CoordinateDto;

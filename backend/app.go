@@ -161,14 +161,6 @@ func (a *App) TrackEditor() *trackEditor.TrackEditor {
 	return a.trackEditor
 }
 
-func (a *App) GetTrack(id string) (tracks.Track, error) {
-	return a.tracks.GetTrack(id)
-}
-
-func (a *App) DeleteTrack(id string) error {
-	return a.tracks.DeleteTrack(id)
-}
-
 func (a *App) GetSettings() settings.AppSettings {
 	return a.settings.AppSettings()
 }

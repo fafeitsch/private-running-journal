@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
-	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"github.com/twpayne/go-gpx"
-	"io"
 	"log"
 	"os"
 	"path"
@@ -96,44 +94,6 @@ type CreateTrack struct {
 	Parent string `json:"parent"`
 }
 
-func (t *Tracks) DeleteTrack(id string) error {
-	err := os.RemoveAll(filepath.Join(t.basePath, id))
-	t.deleteEmptyDirectories(id)
-	shared.Send("track deleted", id)
-	return err
-}
-
-func (t *Tracks) deleteEmptyDirectories(id string) {
-	parts := strings.Split(id, string(filepath.Separator))
-	if len(parts) == 0 {
-		return
-	}
-	counter := 1
-	directory := filepath.Join(parts[:len(parts)-counter]...)
-	file, err := os.Open(filepath.Join(t.basePath, directory))
-	if err != nil {
-		log.Printf("could not check whether directory is empty: %v", err)
-		return
-	}
-	_, err = file.Readdirnames(1)
-	_ = file.Close()
-	for err == io.EOF && counter < len(parts) {
-		_ = file.Close()
-		log.Printf("deleting %v", directory)
-		_ = os.RemoveAll(filepath.Join(t.basePath, directory))
-		counter = counter + 1
-		directory = filepath.Join(parts[:len(parts)-counter]...)
-		file, err = os.Open(filepath.Join(t.basePath, directory))
-		if err != nil {
-			log.Printf("could not check whether directory is empty: %v", err)
-			return
-		}
-		_, err = file.Readdirnames(1)
-		log.Printf("%s %v", directory, err)
-	}
-	_ = file.Close()
-}
-
 type trackDescriptor struct {
 	Name string `json:"name"`
 	Id   string `json:"id"`
@@ -180,6 +140,9 @@ func (t *Tracks) walkTracksDirectory(consumer func(track Track)) error {
 			parent := strings.Replace(path, "/"+info.Name(), "", 1)
 			relativePath := strings.Replace(parent, t.basePath+"/", "", 1)
 			track, err := t.readTrack(parent, relativePath)
+			if track.Id == "" {
+				track.Id = relativePath
+			}
 			if err != nil {
 				log.Printf("skipping track \"%s\" because an error occurred: %v", path, err)
 				return filepath.SkipDir

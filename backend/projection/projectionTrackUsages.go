@@ -30,11 +30,9 @@ func (t *TrackUsagesProjector) Bootstrap(retriever Retriever, rebuilder Rebuilde
 			if err != nil {
 				return
 			}
-			log.Printf("old usages", result)
 			if old.TrackId == nevv.TrackId {
 				return
 			}
-			log.Printf("new track unqueal old track")
 			oldUsages, ok := result[old.TrackId]
 			if ok {
 				updatedOldUsages := make([]string, 0)
@@ -57,6 +55,20 @@ func (t *TrackUsagesProjector) Bootstrap(retriever Retriever, rebuilder Rebuilde
 			_ = rebuilder(payload)
 		},
 	)
+	shared.Listen(shared.TrackDeletedEvent{}, func(event shared.TrackDeletedEvent) {
+		message, err := t.retriever()
+		if err != nil {
+			return
+		}
+		var result map[string][]string
+		err = json.Unmarshal(message, &result)
+		if err != nil {
+			return
+		}
+		delete(result, event.Id)
+		payload, _ := json.Marshal(result)
+		_ = rebuilder(payload)
+	})
 }
 
 func (t *TrackUsagesProjector) BuildProjection() (json.RawMessage, error) {

@@ -12,6 +12,10 @@ type TrackUpsertedEvent struct {
 	*SaveTrack
 }
 
+type TrackDeletedEvent struct {
+	Id string
+}
+
 var handlers = make(map[string][]Handler)
 
 var Context context.Context

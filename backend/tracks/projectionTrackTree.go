@@ -46,6 +46,16 @@ func (t *trackTreeProjector) Bootstrap(retriever projection.Retriever, rebuilder
 			}
 		},
 	)
+	shared.Listen(shared.TrackDeletedEvent{}, func(event shared.TrackDeletedEvent) {
+		message, err := t.BuildProjection()
+		if err != nil {
+			log.Printf("could not update trackTree projection after deleting: %v", err)
+		}
+		err = rebuilder(message)
+		if err != nil {
+			log.Printf("could not update trackTree projection after deleting: %v", err)
+		}
+	})
 }
 
 func (t *trackTreeProjector) BuildProjection() (json.RawMessage, error) {

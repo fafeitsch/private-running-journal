@@ -137,7 +137,7 @@ async function deleteTrack(event: Event) {
     header: t("shared.confirm.header"),
     accept: () => resolveFn(true),
     reject: () => resolveFn(false),
-    message: t("tracks.deleteConfirmation", { count: track.value.usages }),
+    message: t("tracks.deleteConfirmation", { count: track.value.usages.length }),
     rejectLabel: t("shared.cancel"),
     acceptLabel: t("shared.delete"),
   });

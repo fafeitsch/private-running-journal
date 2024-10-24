@@ -2,7 +2,6 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useTracksApi } from "../api/tracks";
 import {trackEditor, tracks} from "../../wailsjs/go/models";
-import Track = tracks.Track;
 import TrackTreeNode = tracks.TrackTreeNode;
 import TrackDto = trackEditor.TrackDto;
 

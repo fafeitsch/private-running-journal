@@ -116,7 +116,7 @@ func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
 		return fmt.Errorf("could not read old track location: %v", err)
 	}
 	if oldPath != nil {
-		err = t.service.Delete(oldPath)
+		err = t.service.DeleteTrackDirectory(oldPath)
 		if err != nil {
 			return fmt.Errorf("could not delete old track file: %v", err)
 		}
@@ -133,5 +133,21 @@ func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
 	}
 	err = t.service.SaveTrack(saveTrack)
 	shared.SendEvent(shared.TrackUpsertedEvent{SaveTrack: &saveTrack})
+	return err
+}
+
+func (t *TrackEditor) DeleteTrack(id string) error {
+	path, err := t.trackIdMap.GetTrackLocation(id)
+	if err != nil {
+		return fmt.Errorf("could not read track location: %v", err)
+	}
+	if path == nil {
+		return fmt.Errorf("track with id %s does not exist", id)
+	}
+	err = t.service.DeleteTrackDirectory(path)
+	if err != nil {
+		return fmt.Errorf("could not delete track directory: %v", err)
+	}
+	shared.SendEvent(shared.TrackDeletedEvent{Id: id})
 	return err
 }
