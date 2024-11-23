@@ -2,6 +2,7 @@ package shared
 
 import (
 	"math"
+	"time"
 )
 
 type Waypoints []Coordinates
@@ -96,6 +97,10 @@ type SaveTrack struct {
 }
 
 type JournalEntry struct {
-	TrackId string `json:"trackId"`
-	Id      string `json:"id"`
+	TrackId      string    `json:"trackId"`
+	Id           string    `json:"id"`
+	Date         time.Time `json:"date"`
+	Comment      string    `json:"comment"`
+	CustomLength int       `json:"customLength"`
+	Laps         int       `json:"laps"`
 }

@@ -3,6 +3,8 @@ package backend
 import (
 	"context"
 	"fmt"
+	"github.com/fafeitsch/private-running-journal/backend/application/journalList"
+	"github.com/fafeitsch/private-running-journal/backend/application/trackEditor"
 	"github.com/fafeitsch/private-running-journal/backend/backup"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
@@ -10,7 +12,6 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/settings"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
-	"github.com/fafeitsch/private-running-journal/backend/tracks/trackEditor"
 	"log"
 	"net/http"
 	"os"
@@ -22,6 +23,7 @@ type App struct {
 	ctx             context.Context
 	configDirectory string
 	trackEditor     *trackEditor.TrackEditor
+	journalList     *journalList.JournalList
 	journal         *journal.Journal
 	settings        *settings.Settings
 	backup          *backup.Backup
@@ -57,6 +59,7 @@ func NewApp() *App {
 	trackIdMapProjector := &projection.TrackLookup{}
 	a.trackTree = &projection.TrackTree{}
 	a.trackEditor = trackEditor.New(service, trackUsagesProjector, trackIdMapProjector)
+	a.journalList = journalList.New(service)
 	projectors := make([]projection.Projector, 0)
 	projectors = append(projectors, trackUsagesProjector)
 	projectors = append(projectors, trackIdMapProjector)
@@ -116,24 +119,20 @@ func (a *App) setupConfigDirectory() {
 	log.Printf("setting app's home dir to %s", a.configDirectory)
 }
 
-func (a *App) GetJournalListEntries(start *string, end *string) ([]journal.ListEntry, error) {
-	var startDate *time.Time
-	if start != nil {
-		date, err := time.Parse(time.RFC3339, *start)
-		if err != nil {
-			return []journal.ListEntry{}, fmt.Errorf("could not parse start date: %v", err)
-		}
-		startDate = &date
+func (a *App) GetJournalListEntries(start string, end string) ([]journalList.ListEntryDto, error) {
+	var startDate time.Time
+	date, err := time.Parse(time.RFC3339, start)
+	if err != nil {
+		return []journalList.ListEntryDto{}, fmt.Errorf("could not parse start date: %v", err)
 	}
-	var endDate *time.Time
-	if end != nil {
-		date, err := time.Parse(time.RFC3339, *end)
-		if err != nil {
-			return []journal.ListEntry{}, fmt.Errorf("could not parse end date: %v", err)
-		}
-		endDate = &date
+	startDate = date
+	var endDate time.Time
+	date, err = time.Parse(time.RFC3339, end)
+	if err != nil {
+		return []journalList.ListEntryDto{}, fmt.Errorf("could not parse end date: %v", err)
 	}
-	return a.journal.ListEntries(startDate, endDate), nil
+	endDate = date
+	return a.journalList.ReadListEntries(startDate, endDate)
 }
 
 func (a *App) GetJournalEntry(id string) (journal.Entry, error) {

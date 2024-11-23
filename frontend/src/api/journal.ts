@@ -1,4 +1,4 @@
-import { journal } from "../../wailsjs/go/models";
+import {journal, journalList} from "../../wailsjs/go/models";
 import {
   CreateJournalEntry, DeleteJournalEntry,
   GetJournalEntry,
@@ -7,7 +7,7 @@ import {
 } from "../../wailsjs/go/backend/App";
 
 export function useJournalApi() {
-  async function getJournalEntries(start: string, end: string): Promise<journal.ListEntry[]> {
+  async function getJournalEntries(start: string, end: string): Promise<journalList.ListEntryDto[]> {
     return GetJournalListEntries(start, end);
   }
   async function getJournalEntry(id: string): Promise<journal.Entry> {

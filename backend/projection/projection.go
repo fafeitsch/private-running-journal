@@ -14,7 +14,6 @@ import (
 
 type Projection struct {
 	directory   string
-	trackUsages map[string]int
 	projectors  []Projector
 	fileService *filebased.Service
 	journal     *journal.Journal
@@ -125,10 +124,6 @@ func (p *Projection) writeProjection(message json.RawMessage, name string) error
 	return os.WriteFile(
 		filepath.Join(p.directory, name+".json"), message, 0644,
 	)
-}
-
-func (p *Projection) TrackUsages(trackId string) int {
-	return p.trackUsages[trackId]
 }
 
 func (p *Projection) readFile(name string) (json.RawMessage, error) {

@@ -1,12 +1,12 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { journal } from "../../wailsjs/go/models";
+import {journal, journalList} from "../../wailsjs/go/models";
 import { useJournalApi } from "../api/journal";
 import { useRouter } from "vue-router";
 
 export const useJournalStore = defineStore("journal", () => {
   const journalApi = useJournalApi();
-  const listEntries = ref<journal.ListEntry[]>([]);
+  const listEntries = ref<journalList.ListEntryDto[]>([]);
   const selectedEntryId = ref<string | undefined>(undefined);
   const selectedMonth = ref<Date>(getCurrentMonth());
   const router = useRouter();
@@ -16,16 +16,15 @@ export const useJournalStore = defineStore("journal", () => {
     listEntries.value = await journalApi.getListEntries(start, end);
   }
 
-  function addEntryToList(entry: journal.ListEntry) {
+  function addEntryToList(entry: journalList.ListEntryDto) {
     const date = new Date(Date.parse(entry.date));
-    const month = new Date(date.getFullYear(), date.getMonth(), 1);
     selectedMonth.value = new Date(date.getFullYear(), date.getMonth(), 1);
     listEntries.value.push(entry);
   }
 
-  function updateEntry(updatedEntry: journal.ListEntry) {
+  function updateEntry(updatedEntry: Pick<journalList.ListEntryDto, 'length' | 'trackName' | 'id'>) {
     listEntries.value = listEntries.value.map((entry) =>
-      updatedEntry.id === entry.id ? updatedEntry : entry,
+      updatedEntry.id === entry.id ? {...entry, ...updatedEntry} : entry,
     );
   }
 

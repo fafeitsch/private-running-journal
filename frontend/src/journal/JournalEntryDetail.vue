@@ -129,7 +129,13 @@ async function saveEntry() {
       value.date = `${year}-${month}-${day}`;
       const result = await journalApi.createJournalEntry(value);
       dirty.value = false;
-      journalStore.addEntryToList(result);
+      journalStore.addEntryToList({
+        date: value.date,
+        trackName: result.trackName,
+        length: result.length,
+        trackError: false,
+        id: result.id,
+      });
       router.replace("/journal/" + encodeURIComponent(result.id));
       return;
     }

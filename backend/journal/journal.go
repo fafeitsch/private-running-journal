@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 )
 
 type ListEntry struct {
@@ -152,31 +151,6 @@ type Entry struct {
 	CustomLength int           `json:"customLength,omitempty"`
 	//needed in FE if the Track file is missing to give a reference what track should be there
 	LinkedTrack string `json:"linkedTrack"`
-}
-
-func (j *Journal) ListEntries(start *time.Time, end *time.Time) []ListEntry {
-	result := make([]ListEntry, 0)
-	for key, entry := range j.listEntries {
-		date, err := time.Parse(time.DateOnly, entry.Date)
-		if err != nil {
-			panic(
-				fmt.Sprintf(
-					"date \"%s\" of entry \"%s\" does not have required format \"%s\"",
-					entry.Date,
-					entry.Id,
-					time.DateOnly,
-				),
-			)
-		}
-		if start != nil && start.After(date) {
-			continue
-		}
-		if end != nil && end.Before(date) {
-			continue
-		}
-		result = append(result, *j.listEntries[key])
-	}
-	return result
 }
 
 func (j *Journal) ReadJournalEntry(path string) (Entry, error) {
