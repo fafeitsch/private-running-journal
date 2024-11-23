@@ -111,12 +111,11 @@ type SaveTrackDto struct {
 
 func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
 	oldPath, ok := t.trackLookup.Get()[track.Id]
-	if !ok {
-		return fmt.Errorf("could not find track with id \"%s\"", track.Id)
-	}
-	err := t.service.DeleteTrackDirectory(oldPath)
-	if err != nil {
-		return fmt.Errorf("could not delete old track file: %v", err)
+	if ok {
+		err := t.service.DeleteTrackDirectory(oldPath)
+		if err != nil {
+			return fmt.Errorf("could not delete old track file: %v", err)
+		}
 	}
 	wp := make(shared.Waypoints, 0)
 	for _, waypoint := range track.Waypoints {
@@ -128,7 +127,7 @@ func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
 		Waypoints: wp,
 		Parents:   track.Parents,
 	}
-	err = t.service.SaveTrack(saveTrack)
+	err := t.service.SaveTrack(saveTrack)
 	shared.SendEvent(shared.TrackUpsertedEvent{SaveTrack: &saveTrack})
 	return err
 }

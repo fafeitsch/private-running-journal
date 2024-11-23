@@ -89,22 +89,9 @@ func New(baseDirectory string, loadService *filebased.Service) (
 		for _, entry := range entries {
 			listEntry := entry
 			result.listEntries[entry.Id] = &listEntry
-			shared.Send("journal entry loaded", shared.JournalEntry{TrackId: entry.trackId})
 		}
 	} else {
 		return nil, err
-	}
-	return result, nil
-}
-
-func (j *Journal) ReadAllEntries() ([]shared.JournalEntry, error) {
-	entries, err := j.readEntries()
-	if err != nil {
-		return nil, err
-	}
-	result := make([]shared.JournalEntry, 0)
-	for _, entry := range entries {
-		result = append(result, shared.JournalEntry{TrackId: entry.trackId, Id: entry.Id})
 	}
 	return result, nil
 }
@@ -200,46 +187,6 @@ func (j *Journal) readListEntry(path string) (ListEntry, error) {
 		listEntry.Length = entry.CustomLength
 	}
 	return listEntry, nil
-}
-
-var dateRegex = regexp.MustCompile("(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)")
-
-func (j *Journal) CreateEntry(entry Entry) (ListEntry, error) {
-	regexResult := dateRegex.FindStringSubmatch(entry.Date)
-	if regexResult == nil {
-		return ListEntry{}, fmt.Errorf("the date \"%s\" is not a valid date of the format yyyy-mm-dd", entry.Date)
-	}
-	id := filepath.Join(regexResult[1], regexResult[2], regexResult[3])
-	path, err := shared.FindFreeFileName(filepath.Join(j.baseDirectory, id))
-	id = strings.Replace(path, j.baseDirectory+"/", "", 1)
-	if err != nil {
-		return ListEntry{}, err
-	}
-	err = os.MkdirAll(path, os.ModePerm)
-	if err != nil {
-		return ListEntry{}, fmt.Errorf("could not create directory %s: %v", id, err)
-	}
-	entryFilePath := filepath.Join(j.baseDirectory, id, "entry.json")
-	payload, _ := json.Marshal(
-		entryFile{
-			Track:        entry.Track.Id,
-			Laps:         entry.Laps,
-			Time:         entry.Time,
-			Comment:      entry.Comment,
-			CustomLength: entry.CustomLength,
-		},
-	)
-	err = os.WriteFile(entryFilePath, payload, 0644)
-	if err != nil {
-		return ListEntry{}, fmt.Errorf("could not write file \"%s\": %v", entryFilePath, err)
-	}
-	shared.Send("journal entry changed", shared.JournalEntry{}, shared.JournalEntry{TrackId: entry.Track.Id, Id: id})
-	listEntry, err := j.readListEntry(id)
-	if err != nil {
-		return ListEntry{}, fmt.Errorf("could not read file \"%s\": %v", entryFilePath, err)
-	}
-	j.listEntries[id] = &listEntry
-	return *j.listEntries[id], nil
 }
 
 func (j *Journal) SaveEntry(entry Entry) error {

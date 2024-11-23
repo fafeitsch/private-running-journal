@@ -103,7 +103,6 @@ func readGpx(path string) (shared.Waypoints, error) {
 
 func (s *Service) SaveTrack(track shared.SaveTrack) error {
 	path := filepath.Join(track.Parents...)
-	path = filepath.Join(path, track.Name)
 	path, err := shared.FindFreeFileName(path)
 	if err != nil {
 		return err

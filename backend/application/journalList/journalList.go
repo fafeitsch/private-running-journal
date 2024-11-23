@@ -3,18 +3,22 @@ package journalList
 import (
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
+	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"log"
+	"path/filepath"
 	"time"
 )
 
 type JournalList struct {
 	fileService *filebased.Service
+	trackLookup *projection.TrackLookup
 }
 
-func New(service *filebased.Service) *JournalList {
+func New(service *filebased.Service, trackLookup *projection.TrackLookup) *JournalList {
 	return &JournalList{
 		fileService: service,
+		trackLookup: trackLookup,
 	}
 }
 
@@ -37,7 +41,8 @@ func (j *JournalList) ReadListEntries(start time.Time, end time.Time) ([]ListEnt
 		track, ok := trackCache[file.TrackId]
 		entry := ListEntryDto{Id: file.Id, Date: file.Date.Format(time.DateOnly)}
 		if !ok {
-			track, err = j.fileService.ReadTrack(file.TrackId)
+			path := j.trackLookup.Get()[file.TrackId]
+			track, err = j.fileService.ReadTrack(filepath.Join(path...))
 			if err != nil {
 				entry.TrackName = file.TrackId
 				entry.TrackError = true

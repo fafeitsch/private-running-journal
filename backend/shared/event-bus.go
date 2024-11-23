@@ -16,6 +16,11 @@ type TrackDeletedEvent struct {
 	Id string
 }
 
+type JournalEntryUpsertedEvent struct {
+	*JournalEntry
+	OldTrackId string
+}
+
 var handlers = make(map[string][]Handler)
 
 var Context context.Context

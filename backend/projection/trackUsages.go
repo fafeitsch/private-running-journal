@@ -25,28 +25,28 @@ func (t *TrackUsages) Init(message json.RawMessage, writer func()) {
 	} else {
 		t.content = make(map[string][]string)
 	}
-	shared.RegisterHandler(
-		"journal entry changed", func(data ...any) {
+	shared.Listen(
+		shared.JournalEntryUpsertedEvent{}, func(event shared.JournalEntryUpsertedEvent) {
 			t.Lock()
 			defer t.Unlock()
-			old := data[0].(shared.JournalEntry)
-			nevv := data[1].(shared.JournalEntry)
-			if old.TrackId == nevv.TrackId {
+			old := event.OldTrackId
+			nevv := event.TrackId
+			if old == nevv {
 				return
 			}
-			if _, ok := t.content[old.TrackId]; ok {
+			if _, ok := t.content[old]; ok {
 				filtered := false
-				t.content[old.TrackId] = slices.DeleteFunc(
-					t.content[old.TrackId], func(s string) bool {
-						result := s == nevv.Id && !filtered
-						filtered = s == nevv.Id
+				t.content[old] = slices.DeleteFunc(
+					t.content[old], func(s string) bool {
+						result := s == event.Id && !filtered
+						filtered = s == event.Id
 						return result
 					},
 				)
 			}
 
-			if _, ok := t.content[nevv.TrackId]; ok {
-				t.content[nevv.TrackId] = append(t.content[nevv.TrackId], nevv.Id)
+			if _, ok := t.content[nevv]; ok {
+				t.content[nevv] = append(t.content[nevv], event.Id)
 			}
 			writer()
 		},

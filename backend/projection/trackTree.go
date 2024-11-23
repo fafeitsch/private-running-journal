@@ -2,6 +2,7 @@ package projection
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"log"
@@ -15,8 +16,9 @@ type TrackTreeNode struct {
 }
 
 type TrackTreeEntry struct {
-	Name string `json:"name"`
-	Id   string `json:"id"`
+	Name   string `json:"name"`
+	Id     string `json:"id"`
+	Length int    `json:"length"`
 }
 
 type TrackTree struct {
@@ -72,7 +74,7 @@ func (t *TrackTree) AddTrack(track shared.Track) {
 		}
 		hierarchy = hierarchy[1:]
 	}
-	node.Tracks = append(node.Tracks, TrackTreeEntry{track.Name, track.Id})
+	node.Tracks = append(node.Tracks, TrackTreeEntry{Name: track.Name, Id: track.Id, Length: track.Waypoints.Length()})
 }
 
 func (t *TrackTree) AddJournalEntry(entry shared.JournalEntry) {}
@@ -98,15 +100,23 @@ func (t *TrackTree) handleDeleteEvent(root *TrackTreeNode, id string) {
 
 func (t *TrackTree) handleUpsertEvent(track shared.TrackUpsertedEvent) {
 	t.handleDeleteEvent(t.tree, track.Id)
-	queue := track.Parents[1:]
+	queue := track.Parents[:len(track.Parents)-1]
 	node := t.tree
+outer:
 	for len(queue) > 0 {
-		head := track.Parents[0]
-		for _, node := range node.Nodes {
-			if node.Name == head {
+		head := queue[0]
+		for _, n := range node.Nodes {
+			if n.Name == head {
 				queue = queue[1:]
+				node = n
+				continue outer
 			}
 		}
+		node.Nodes = append(
+			node.Nodes,
+			&TrackTreeNode{Name: head, Tracks: make([]TrackTreeEntry, 0), Nodes: make([]*TrackTreeNode, 0)},
+		)
 	}
-	node.Tracks = append(node.Tracks, TrackTreeEntry{Name: track.Name, Id: track.Id})
+	fmt.Printf("parents: %v, node: %v", track.Parents, node.Name)
+	node.Tracks = append(node.Tracks, TrackTreeEntry{Name: track.Name, Id: track.Id, Length: track.Waypoints.Length()})
 }

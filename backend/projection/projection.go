@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
-	"github.com/fafeitsch/private-running-journal/backend/journal"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"log"
 	"os"
@@ -16,7 +15,6 @@ type Projection struct {
 	directory   string
 	projectors  []Projector
 	fileService *filebased.Service
-	journal     *journal.Journal
 }
 
 type Projector interface {
@@ -32,13 +30,12 @@ type Retriever func() (json.RawMessage, error)
 type Rebuilder func(message json.RawMessage) error
 
 func New(
-	configDirectory string, j *journal.Journal, fileService *filebased.Service, projectors ...Projector,
+	configDirectory string, fileService *filebased.Service, projectors ...Projector,
 ) *Projection {
 	result := &Projection{
 		directory:   filepath.Join(configDirectory, ".projection"),
 		projectors:  projectors,
 		fileService: fileService,
-		journal:     j,
 	}
 	return result
 }
@@ -87,7 +84,7 @@ func (p *Projection) Build() error {
 	var journalError error
 	go func() {
 		var entries []shared.JournalEntry
-		entries, journalError = p.journal.ReadAllEntries()
+		entries, journalError = p.fileService.ReadAllJournalEntries()
 		for i := range projectionsToRebuild {
 			for j := range entries {
 				p.projectors[i].AddJournalEntry(entries[j])

@@ -74,7 +74,7 @@ async function createEntry() {
       new SaveTrackDto({
         id,
         name: name.value,
-        parents: folderName.value.split("/").filter(f => !!f),
+        parents: [...folderName.value.split("/").filter(f => !!f), name.value],
         waypoints: waypoints.value,
       }),
     );

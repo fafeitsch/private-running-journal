@@ -9,7 +9,7 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputGroup from "primevue/inputgroup";
-import { journal, trackEditor } from "../../wailsjs/go/models";
+import {journal, journalEditor, trackEditor} from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import LeafletMap from "./LeafletMap.vue";
 import TrackTimeResult from "./TrackTimeResult.vue";
@@ -22,6 +22,7 @@ import ConfirmPopup from "primevue/confirmpopup";
 import DatePicker from "primevue/datepicker";
 import Entry = journal.Entry;
 import TrackDto = trackEditor.TrackDto;
+import SaveEntryDto = journalEditor.SaveEntryDto;
 
 const { t, d, locale } = useI18n();
 const route = useRoute();
@@ -127,19 +128,19 @@ async function saveEntry() {
       const month = `${selectedDate.value.getMonth() + 1}`.padStart(2, "0");
       const day = `${selectedDate.value.getDate()}`.padStart(2, "0");
       value.date = `${year}-${month}-${day}`;
-      const result = await journalApi.createJournalEntry(value);
+      const result = await journalApi.saveEntry(new SaveEntryDto({...value, trackId: value.track!.id, id: ""}));
       dirty.value = false;
       journalStore.addEntryToList({
         date: value.date,
-        trackName: result.trackName,
-        length: result.length,
+        trackName: value.track!.name,
+        length,
         trackError: false,
         id: result.id,
       });
       router.replace("/journal/" + encodeURIComponent(result.id));
       return;
     }
-    await journalApi.saveEntry(value);
+    await journalApi.saveEntry(new SaveEntryDto({...value, trackId: value.track!.id}));
     journalStore.updateEntry({
       ...value,
       trackName: value.track!.name,
@@ -206,6 +207,7 @@ function calculateLength() {
   } else {
     length = selectedEntry.value.track?.length || undefined;
   }
+  console.log(selectedEntry.value)
   journalEntryLength.value = (length || 0) / 1000;
 }
 

@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"fmt"
+	"github.com/fafeitsch/private-running-journal/backend/application/journalEditor"
 	"github.com/fafeitsch/private-running-journal/backend/application/journalList"
 	"github.com/fafeitsch/private-running-journal/backend/application/trackEditor"
 	"github.com/fafeitsch/private-running-journal/backend/backup"
@@ -23,6 +24,7 @@ type App struct {
 	ctx             context.Context
 	configDirectory string
 	trackEditor     *trackEditor.TrackEditor
+	journalEditor   *journalEditor.JournalEditor
 	journalList     *journalList.JournalList
 	journal         *journal.Journal
 	settings        *settings.Settings
@@ -58,13 +60,14 @@ func NewApp() *App {
 	trackUsagesProjector := &projection.TrackUsages{}
 	trackIdMapProjector := &projection.TrackLookup{}
 	a.trackTree = &projection.TrackTree{}
+	a.journalEditor = journalEditor.New(service, trackIdMapProjector)
 	a.trackEditor = trackEditor.New(service, trackUsagesProjector, trackIdMapProjector)
-	a.journalList = journalList.New(service)
+	a.journalList = journalList.New(service, trackIdMapProjector)
 	projectors := make([]projection.Projector, 0)
 	projectors = append(projectors, trackUsagesProjector)
 	projectors = append(projectors, trackIdMapProjector)
 	projectors = append(projectors, a.trackTree)
-	a.cache = projection.New(a.configDirectory, a.journal, service, projectors...)
+	a.cache = projection.New(a.configDirectory, service, projectors...)
 	err = a.cache.Build()
 	if err != nil {
 		log.Fatalf("could not initialize projections: %v", err)
@@ -139,14 +142,6 @@ func (a *App) GetJournalEntry(id string) (journal.Entry, error) {
 	return a.journal.ReadJournalEntry(id)
 }
 
-func (a *App) SaveJournalEntry(entry journal.Entry) error {
-	return a.journal.SaveEntry(entry)
-}
-
-func (a *App) CreateJournalEntry(entry journal.Entry) (journal.ListEntry, error) {
-	return a.journal.CreateEntry(entry)
-}
-
 func (a *App) DeleteJournalEntry(id string) error {
 	return a.journal.DeleteEntry(id)
 }
@@ -157,6 +152,10 @@ func (a *App) GetTrackTree() projection.TrackTreeNode {
 
 func (a *App) TrackEditor() *trackEditor.TrackEditor {
 	return a.trackEditor
+}
+
+func (a *App) JournalEditor() *journalEditor.JournalEditor {
+	return a.journalEditor
 }
 
 func (a *App) GetSettings() settings.AppSettings {
