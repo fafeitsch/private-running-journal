@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
-	"log"
 	"slices"
 )
 
@@ -53,9 +52,7 @@ func (t *TrackTree) Init(message json.RawMessage, writer func()) {
 func (t *TrackTree) AddTrack(track shared.Track) {
 	hierarchy := track.Parents
 	node := t.tree
-	log.Printf("add track: %v", track.Parents)
-	for len(hierarchy) > 1 {
-		log.Printf("hierarchy: %v (%d) vfor track %s", hierarchy, len(hierarchy), track.Name)
+	for len(hierarchy) > 0 {
 		index := slices.IndexFunc(
 			node.Nodes, func(node *TrackTreeNode) bool {
 				return node.Name == hierarchy[0]

@@ -3,14 +3,12 @@ package journalEditor
 import (
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
-	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"time"
 )
 
 type JournalEditor struct {
 	fileService *filebased.Service
-	trackLookup *projection.TrackLookup
 }
 
 type SaveEntryDto struct {
@@ -23,8 +21,8 @@ type SaveEntryDto struct {
 	CustomLength int    `json:"customLength"`
 }
 
-func New(service *filebased.Service, trackLookup *projection.TrackLookup) *JournalEditor {
-	return &JournalEditor{fileService: service, trackLookup: trackLookup}
+func New(service *filebased.Service) *JournalEditor {
+	return &JournalEditor{fileService: service}
 }
 
 type SaveJournalEntryResultDto struct {

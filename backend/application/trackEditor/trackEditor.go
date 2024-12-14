@@ -5,7 +5,6 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
-	"path/filepath"
 )
 
 type CoordinateDto struct {
@@ -35,22 +34,16 @@ type PolylineMeta struct {
 type TrackEditor struct {
 	service     *filebased.Service
 	trackUsages *projection.TrackUsages
-	trackLookup *projection.TrackLookup
 }
 
 func New(
-	service *filebased.Service, trackUsages *projection.TrackUsages, trackIdMap *projection.TrackLookup,
+	service *filebased.Service, trackUsages *projection.TrackUsages,
 ) *TrackEditor {
-	return &TrackEditor{service: service, trackUsages: trackUsages, trackLookup: trackIdMap}
+	return &TrackEditor{service: service, trackUsages: trackUsages}
 }
 
 func (t *TrackEditor) GetTrack(id string) (TrackDto, error) {
-	parents, ok := t.trackLookup.Get()[id]
-	if !ok {
-		return TrackDto{}, fmt.Errorf("could not find track with id \"%s\"", id)
-	}
-	path := filepath.Join(parents...)
-	file, err := t.service.ReadTrack(path)
+	file, err := t.service.ReadTrack(id)
 	if err != nil {
 		return TrackDto{}, err
 	}
@@ -110,13 +103,6 @@ type SaveTrackDto struct {
 }
 
 func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
-	oldPath, ok := t.trackLookup.Get()[track.Id]
-	if ok {
-		err := t.service.DeleteTrackDirectory(oldPath)
-		if err != nil {
-			return fmt.Errorf("could not delete old track file: %v", err)
-		}
-	}
 	wp := make(shared.Waypoints, 0)
 	for _, waypoint := range track.Waypoints {
 		wp = append(wp, shared.Coordinates{Longitude: waypoint.Longitude, Latitude: waypoint.Latitude})
@@ -133,11 +119,7 @@ func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
 }
 
 func (t *TrackEditor) DeleteTrack(id string) error {
-	path, ok := t.trackLookup.Get()[id]
-	if !ok {
-		return fmt.Errorf("track with id %s does not exist", id)
-	}
-	err := t.service.DeleteTrackDirectory(path)
+	err := t.service.DeleteTrackDirectory(id)
 	if err != nil {
 		return fmt.Errorf("could not delete track directory: %v", err)
 	}

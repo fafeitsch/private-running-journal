@@ -10,15 +10,14 @@ import (
 	"github.com/twpayne/go-gpx"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
 )
 
 var tracksDirectory = "tracks"
 
 type trackDescriptor struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id      string   `json:"id"`
+	Name    string   `json:"name"`
+	Parents []string `json:"parents"`
 }
 
 func (s *Service) ReadAllTracks(consumer func(track shared.Track)) error {
@@ -30,14 +29,10 @@ func (s *Service) ReadAllTracks(consumer func(track shared.Track)) error {
 				skipped[path] = err
 				return filepath.SkipDir
 			}
-			if info.IsDir() || info.Name() != "info.json" {
+			if !info.IsDir() || info.Name() == tracksDirectory {
 				return nil
 			}
-			parent := strings.Replace(path, string(filepath.Separator)+info.Name(), "", 1)
-			relativePath := strings.Replace(
-				parent, filepath.Join(s.path, tracksDirectory), "", 1,
-			)
-			track, err := s.ReadTrack(relativePath)
+			track, err := s.ReadTrack(info.Name())
 			if err != nil {
 				skipped[path] = err
 				return filepath.SkipDir
@@ -48,8 +43,8 @@ func (s *Service) ReadAllTracks(consumer func(track shared.Track)) error {
 	)
 }
 
-func (s *Service) ReadTrack(path string) (shared.Track, error) {
-	descriptorPath := filepath.Join(s.path, tracksDirectory, path, "info.json")
+func (s *Service) ReadTrack(id string) (shared.Track, error) {
+	descriptorPath := filepath.Join(s.path, tracksDirectory, id, "info.json")
 	var baseDescriptor trackDescriptor
 	fileContent, err := os.Open(descriptorPath)
 	if err != nil {
@@ -60,23 +55,17 @@ func (s *Service) ReadTrack(path string) (shared.Track, error) {
 		return shared.Track{}, err
 	}
 
-	gpxPath := filepath.Join(s.path, "tracks", path, "track.gpx")
+	gpxPath := filepath.Join(s.path, "tracks", id, "track.gpx")
 	waypoints, err := readGpx(gpxPath)
 	if err != nil {
 		return shared.Track{}, err
 	}
 
-	hierarchy := slices.DeleteFunc(
-		strings.Split(path, string(os.PathSeparator)), func(s string) bool {
-			return s == ""
-		},
-	)
-	id := baseDescriptor.Id
 	return shared.Track{
 		Waypoints: waypoints,
 		Id:        id,
 		Name:      baseDescriptor.Name,
-		Parents:   hierarchy,
+		Parents:   baseDescriptor.Parents,
 	}, nil
 }
 
@@ -102,13 +91,8 @@ func readGpx(path string) (shared.Waypoints, error) {
 }
 
 func (s *Service) SaveTrack(track shared.SaveTrack) error {
-	path := filepath.Join(track.Parents...)
-	path, err := shared.FindFreeFileName(path)
-	if err != nil {
-		return err
-	}
-	trackDirectory := filepath.Join(s.path, "tracks", path)
-	err = os.MkdirAll(trackDirectory, 0755)
+	trackDirectory := filepath.Join(s.path, "tracks", track.Id)
+	err := os.MkdirAll(trackDirectory, 0755)
 	if err != nil {
 		return fmt.Errorf("could not create track directory %s: %v", trackDirectory, err)
 	}
@@ -139,8 +123,7 @@ func writeGpxFile(waypoints shared.Waypoints, trackDirectory string) error {
 	return os.WriteFile(filepath.Join(trackDirectory, "track.gpx"), writer.Bytes(), 0644)
 }
 
-func (s *Service) DeleteTrackDirectory(path []string) error {
-	err := os.RemoveAll(filepath.Join(s.path, "tracks", filepath.Join(path...)))
-	s.deleteEmptyDirectories(filepath.Join("tracks", filepath.Join(path...)))
+func (s *Service) DeleteTrackDirectory(id string) error {
+	err := os.RemoveAll(filepath.Join(s.path, "tracks", id))
 	return err
 }
