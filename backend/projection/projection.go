@@ -33,7 +33,7 @@ func New(
 	configDirectory string, fileService *filebased.Service, projectors ...Projector,
 ) *Projection {
 	result := &Projection{
-		directory:   filepath.Join(configDirectory, ".projection"),
+		directory:   configDirectory,
 		projectors:  projectors,
 		fileService: fileService,
 	}

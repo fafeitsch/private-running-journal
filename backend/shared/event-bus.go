@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"reflect"
+	"time"
 )
 
 type Handler func(data ...any)
@@ -19,6 +20,11 @@ type TrackDeletedEvent struct {
 type JournalEntryUpsertedEvent struct {
 	*JournalEntry
 	OldTrackId string
+	OldDate    *time.Time
+}
+
+type JournalEntryDeletedEvent struct {
+	*JournalEntry
 }
 
 var handlers = make(map[string][]Handler)

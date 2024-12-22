@@ -219,7 +219,7 @@ useLeaveConfirmation(dirty);
     <div v-if="loading" class="flex w-full grow justify-center items-center">
       <ProgressSpinner></ProgressSpinner>
     </div>
-    <div v-else-if="loadError" class="px-2" data-testid="journal-entry-load-error">
+    <div v-else-if="loadError" class="p-2" data-testid="journal-entry-load-error">
       <Message severity="error" :closable="false"
         ><div class="flex items-center">
           <span>{{ t("journal.loadEntryError") }}</span>

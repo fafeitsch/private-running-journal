@@ -58,14 +58,16 @@ func NewApp() *App {
 		log.Fatalf("could not initialize journal: %v", err)
 	}
 	trackUsagesProjector := &projection.TrackUsages{}
+	sortedJournalProjector := &projection.SortedJournalEntries{Directory: a.configDirectory}
 	a.trackTree = &projection.TrackTree{}
 	a.journalEditor = journalEditor.New(service)
 	a.trackEditor = trackEditor.New(service, trackUsagesProjector)
-	a.journalList = journalList.New(service)
+	a.journalList = journalList.New(service, sortedJournalProjector)
 	projectors := make([]projection.Projector, 0)
 	projectors = append(projectors, trackUsagesProjector)
 	projectors = append(projectors, a.trackTree)
-	a.cache = projection.New(a.configDirectory, service, projectors...)
+	projectors = append(projectors, sortedJournalProjector)
+	a.cache = projection.New(filepath.Join(a.configDirectory, ".projection"), service, projectors...)
 	err = a.cache.Build()
 	if err != nil {
 		log.Fatalf("could not initialize projections: %v", err)

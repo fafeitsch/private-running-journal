@@ -3,18 +3,21 @@ package journalList
 import (
 	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
+	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"log"
 	"time"
 )
 
 type JournalList struct {
-	fileService *filebased.Service
+	fileService            *filebased.Service
+	sortedJournalProjector *projection.SortedJournalEntries
 }
 
-func New(service *filebased.Service) *JournalList {
+func New(service *filebased.Service, sortedJournalProjector *projection.SortedJournalEntries) *JournalList {
 	return &JournalList{
-		fileService: service,
+		fileService:            service,
+		sortedJournalProjector: sortedJournalProjector,
 	}
 }
 
@@ -28,12 +31,17 @@ type ListEntryDto struct {
 
 func (j *JournalList) ReadListEntries(start time.Time, end time.Time) ([]ListEntryDto, error) {
 	result := make([]ListEntryDto, 0)
-	files, err := j.fileService.ReadJournalEntriesBetween(start, end)
+	ids, err := j.sortedJournalProjector.FindJournalEntryIdsBetween(start, end)
 	if err != nil {
 		return nil, fmt.Errorf("error reading journal entries: %v", err)
 	}
 	trackCache := make(map[string]shared.Track)
-	for _, file := range files {
+	for _, journalId := range ids {
+		file, err := j.fileService.ReadJournalEntry(journalId)
+		if err != nil {
+			log.Printf("could not read journal entry with id \"%s\": %v", journalId, err)
+			continue
+		}
 		track, ok := trackCache[file.TrackId]
 		entry := ListEntryDto{Id: file.Id, Date: file.Date.Format(time.DateOnly)}
 		if !ok {
