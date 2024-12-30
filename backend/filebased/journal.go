@@ -17,7 +17,7 @@ type entryFile struct {
 	Time         string `json:"time"`
 	Comment      string `json:"comment"`
 	Laps         int    `json:"laps"`
-	CustomLength int    `json:"customLength,omitempty"`
+	CustomLength *int   `json:"customLength,omitempty"`
 }
 
 func (s *Service) ReadAllJournalEntries() ([]shared.JournalEntry, error) {
@@ -62,31 +62,41 @@ func (s *Service) ReadJournalEntry(id string) (shared.JournalEntry, error) {
 	if err != nil {
 		return shared.JournalEntry{}, fmt.Errorf("could not parse date: %v", err)
 	}
+	var customLength *int
+	if listEntry.CustomLength != nil {
+		customLength = listEntry.CustomLength
+	}
 	return shared.JournalEntry{
 		TrackId:      listEntry.Track,
 		Id:           id,
 		Date:         date,
 		Comment:      listEntry.Comment,
-		CustomLength: listEntry.CustomLength,
+		CustomLength: customLength,
 		Laps:         listEntry.Laps,
 		Time:         listEntry.Time,
 	}, nil
 }
 
-func (s *Service) SaveJournalEntry(entry shared.JournalEntry) (string, error) {
+func (s *Service) SaveJournalEntry(entry shared.JournalEntry) error {
 	path := filepath.Join(s.path, journalDirectory, entry.Id[0:2], entry.Id)
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
-		return "", fmt.Errorf("could not create directory: %v", err)
+		return fmt.Errorf("could not create directory: %v", err)
 	}
 	payload, _ := json.Marshal(
 		entryFile{
+			Id:           entry.Id,
 			Track:        entry.TrackId,
 			Laps:         entry.Laps,
+			Date:         entry.Date.Format(time.DateOnly),
 			Time:         entry.Time,
 			Comment:      entry.Comment,
 			CustomLength: entry.CustomLength,
 		},
 	)
-	return path, os.WriteFile(filepath.Join(path, "entry.json"), payload, 0644)
+	return os.WriteFile(filepath.Join(path, "entry.json"), payload, 0644)
+}
+
+func (s *Service) DeleteJournalEntry(id string) error {
+	return os.RemoveAll(filepath.Join(s.path, journalDirectory, id[0:2], id))
 }

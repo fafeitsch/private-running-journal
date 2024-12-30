@@ -57,7 +57,7 @@ func (s *SortedJournalEntries) GetData() any {
 
 func (s *SortedJournalEntries) handleDeleteEvent(date time.Time, id string) {
 	split := strings.Split(date.Format(time.DateOnly), "-")
-	path := filepath.Join(s.Directory, sortedJournalEntriesDirectory, split[0], split[2], split[3], id)
+	path := filepath.Join(s.Directory, sortedJournalEntriesDirectory, split[0], split[1], split[2], id)
 	err := os.Remove(path)
 	if err != nil {
 		log.Printf("error removing file %s: %s", path, err)
@@ -65,6 +65,7 @@ func (s *SortedJournalEntries) handleDeleteEvent(date time.Time, id string) {
 }
 
 func (s *SortedJournalEntries) handleUpsertEvent(event shared.JournalEntryUpsertedEvent) {
+	fmt.Printf("handle upsert event")
 	if event.OldDate != nil {
 		s.handleDeleteEvent(event.Date, event.Id)
 	}
@@ -117,7 +118,7 @@ func (s *SortedJournalEntries) FindJournalEntryIdsBetween(start time.Time, end t
 				// below the days-level: this must be the id
 				result = append(result, filepath.Base(path))
 			}
-			return filepath.SkipDir
+			return nil
 		},
 	)
 	return result, err

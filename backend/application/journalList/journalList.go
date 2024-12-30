@@ -53,8 +53,8 @@ func (j *JournalList) ReadListEntries(start time.Time, end time.Time) ([]ListEnt
 			}
 		}
 		entry.Length = track.Waypoints.Length() * file.Laps
-		if file.CustomLength > 0 {
-			entry.Length = file.CustomLength
+		if file.CustomLength != nil {
+			entry.Length = *file.CustomLength
 		}
 		entry.TrackName = track.Name
 		trackCache[file.TrackId] = track

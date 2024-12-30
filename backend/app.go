@@ -9,7 +9,6 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/backup"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
-	"github.com/fafeitsch/private-running-journal/backend/journal"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/settings"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
@@ -26,7 +25,6 @@ type App struct {
 	trackEditor     *trackEditor.TrackEditor
 	journalEditor   *journalEditor.JournalEditor
 	journalList     *journalList.JournalList
-	journal         *journal.Journal
 	settings        *settings.Settings
 	backup          *backup.Backup
 	cache           *projection.Projection
@@ -53,10 +51,6 @@ func NewApp() *App {
 	}
 
 	service := filebased.NewService(a.configDirectory)
-	a.journal, err = journal.New(a.configDirectory, service)
-	if err != nil {
-		log.Fatalf("could not initialize journal: %v", err)
-	}
 	trackUsagesProjector := &projection.TrackUsages{}
 	sortedJournalProjector := &projection.SortedJournalEntries{Directory: a.configDirectory}
 	a.trackTree = &projection.TrackTree{}
@@ -136,14 +130,6 @@ func (a *App) GetJournalListEntries(start string, end string) ([]journalList.Lis
 	}
 	endDate = date
 	return a.journalList.ReadListEntries(startDate, endDate)
-}
-
-func (a *App) GetJournalEntry(id string) (journal.Entry, error) {
-	return a.journal.ReadJournalEntry(id)
-}
-
-func (a *App) DeleteJournalEntry(id string) error {
-	return a.journal.DeleteEntry(id)
 }
 
 func (a *App) GetTrackTree() projection.TrackTreeNode {

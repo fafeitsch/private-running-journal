@@ -9,7 +9,7 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputGroup from "primevue/inputgroup";
-import {journal, journalEditor, trackEditor} from "../../wailsjs/go/models";
+import { journalEditor, projection, trackEditor } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import LeafletMap from "./LeafletMap.vue";
 import TrackTimeResult from "./TrackTimeResult.vue";
@@ -20,11 +20,12 @@ import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import { useConfirm } from "primevue/useconfirm";
 import ConfirmPopup from "primevue/confirmpopup";
 import DatePicker from "primevue/datepicker";
-import Entry = journal.Entry;
 import TrackDto = trackEditor.TrackDto;
 import SaveEntryDto = journalEditor.SaveEntryDto;
+import EntryDto = journalEditor.EntryDto;
+import TrackTreeEntry = projection.TrackTreeEntry;
 
-const { t, d, locale } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const journalApi = useJournalApi();
 const router = useRouter();
@@ -35,7 +36,8 @@ const editError = ref<string | undefined>(undefined);
 const dirty = ref(false);
 const customLengthEnabled = ref(false);
 const journalEntryLength = ref<number | undefined>(undefined);
-const selectedEntry = ref<journal.Entry | undefined>(undefined);
+const selectedEntry = ref<journalEditor.EntryDto | undefined>(undefined);
+const selectedTrack = ref<TrackTreeEntry | undefined>(undefined)
 const selectedDate = ref<Date>(new Date());
 const journalStore = useJournalStore();
 const { selectedEntryId } = storeToRefs(journalStore);
@@ -56,19 +58,20 @@ watch(
 async function loadEntry(entryId: string | undefined) {
   loadError.value = false;
   if (entryId === "new") {
-    selectedEntry.value = new Entry({
+    selectedEntry.value = new EntryDto({
       id: entryId,
       date: new Date().toISOString(),
       comment: "",
       laps: 1,
       time: "",
-      track: undefined,
+      trackId: undefined
     });
     selectedDate.value = new Date();
     return;
   }
   selectedEntry.value = undefined;
   loading.value = true;
+  selectedTrack.value = undefined;
   selectedEntryId.value = entryId;
   if (!entryId) {
     await router.replace("/journal");
@@ -77,7 +80,7 @@ async function loadEntry(entryId: string | undefined) {
     return;
   }
   try {
-    selectedEntry.value = await journalApi.getListEntry(entryId);
+    selectedEntry.value = await journalApi.getJournalEntry(entryId);
     customLengthEnabled.value = !!selectedEntry.value.customLength;
     calculateLength();
     selectedDate.value = new Date(Date.parse(selectedEntry.value.date));
@@ -92,14 +95,14 @@ async function loadEntry(entryId: string | undefined) {
 const gpxData = ref<TrackDto | undefined>(undefined);
 
 watch(
-  selectedEntry,
+  selectedTrack,
   async () => {
-    if (!selectedEntry.value || !selectedEntry.value.track) {
+    if (!selectedEntry.value || !selectedTrack.value) {
       gpxData.value = undefined;
       return;
     }
     try {
-      gpxData.value = await tracksApi.getTrack(selectedEntry.value.track.id);
+      gpxData.value = await tracksApi.getTrack(selectedTrack.value.id);
     } catch (e) {
       console.error(e);
       loadError.value = true;
@@ -110,7 +113,7 @@ watch(
 
 async function saveEntry() {
   let value = selectedEntry.value;
-  if (!value) {
+  if (!value || !selectedTrack.value) {
     return;
   }
   if (customLengthEnabled.value) {
@@ -122,28 +125,31 @@ async function saveEntry() {
   try {
     const length = customLengthEnabled.value
       ? value.customLength!
-      : value.track!.length * value.laps;
+      : selectedTrack.value.length * value.laps;
     if (value.id === "new") {
       const year = `${selectedDate.value.getFullYear()}`.padStart(4, "0");
       const month = `${selectedDate.value.getMonth() + 1}`.padStart(2, "0");
       const day = `${selectedDate.value.getDate()}`.padStart(2, "0");
       value.date = `${year}-${month}-${day}`;
-      const result = await journalApi.saveEntry(new SaveEntryDto({...value, trackId: value.track!.id, id: ""}));
-      dirty.value = false;
+      console.log('ADDING BEF');
+      const result = await journalApi.saveEntry(new SaveEntryDto({...value, trackId: selectedTrack.value.id, id: crypto.randomUUID()}));
+      console.log('ADDING');
       journalStore.addEntryToList({
         date: value.date,
-        trackName: value.track!.name,
+        trackName: selectedTrack.value.name,
         length,
         trackError: false,
         id: result.id,
       });
+      dirty.value = false;
+      console.log("dirty is false");
       router.replace("/journal/" + encodeURIComponent(result.id));
       return;
     }
-    await journalApi.saveEntry(new SaveEntryDto({...value, trackId: value.track!.id}));
+    await journalApi.saveEntry(new SaveEntryDto({...value, trackId: selectedTrack.value.id}));
     journalStore.updateEntry({
       ...value,
-      trackName: value.track!.name,
+      trackName: selectedTrack.value.name,
       length,
     });
     dirty.value = false;
@@ -186,14 +192,21 @@ async function deleteEntry(event: Event) {
 }
 
 function onChangeCustomLengthEnabled() {
-  if (!customLengthEnabled.value && selectedEntry.value?.track) {
-    journalEntryLength.value = selectedEntry.value.track.length / 1000;
+  if (!customLengthEnabled.value && selectedTrack.value) {
+    journalEntryLength.value = selectedTrack.value.length / 1000;
   }
   dirty.value = true;
 }
 
 function onTrackSelectionChanged() {
+  if(!selectedEntry.value) {
+    return
+  }
   calculateLength();
+  if(selectedEntry.value.trackId === selectedTrack.value?.id || !selectedTrack.value) {
+    return
+  }
+  selectedEntry.value.trackId = selectedTrack.value?.id;
   dirty.value = true;
 }
 
@@ -205,9 +218,8 @@ function calculateLength() {
   if (customLengthEnabled.value) {
     length = selectedEntry.value.customLength;
   } else {
-    length = selectedEntry.value.track?.length || undefined;
+    length = selectedTrack.value?.length || 0;
   }
-  console.log(selectedEntry.value)
   journalEntryLength.value = (length || 0) / 1000;
 }
 
@@ -234,11 +246,12 @@ useLeaveConfirmation(dirty);
     </div>
     <div v-else-if="selectedEntry" class="flex flex-col gap-2 w-full p-2 grow shrink">
       <div class="flex gap-2">
+        {{dirty}}
         <Button
           icon="pi pi-save"
           :aria-label="t('shared.save')"
           v-tooltip="{ value: t('shared.save'), showDelay: 500 }"
-          :disabled="!dirty || !selectedEntry.track"
+          :disabled="!dirty || !selectedTrack"
           @click="saveEntry"
         ></Button>
         <Button
@@ -281,8 +294,8 @@ useLeaveConfirmation(dirty);
         ></DatePicker>
       </InputGroup>
       <TrackSelection
-        v-model="selectedEntry!.track"
-        :linked-track="selectedEntry!.linkedTrack"
+        v-model="selectedTrack"
+        :linked-track="selectedEntry.trackId"
         @update:model-value="() => onTrackSelectionChanged()"
       ></TrackSelection>
       <TrackTimeResult

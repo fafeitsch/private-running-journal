@@ -28,7 +28,6 @@ func (t *TrackUsages) Init(message json.RawMessage, writer func()) {
 	shared.Listen(
 		shared.JournalEntryUpsertedEvent{}, func(event shared.JournalEntryUpsertedEvent) {
 			t.Lock()
-			defer t.Unlock()
 			old := event.OldTrackId
 			nevv := event.TrackId
 			if old == nevv {
@@ -48,14 +47,15 @@ func (t *TrackUsages) Init(message json.RawMessage, writer func()) {
 			if _, ok := t.content[nevv]; ok {
 				t.content[nevv] = append(t.content[nevv], event.Id)
 			}
+			t.Unlock()
 			writer()
 		},
 	)
 	shared.Listen(
 		shared.TrackDeletedEvent{}, func(event shared.TrackDeletedEvent) {
 			t.Lock()
-			defer t.Unlock()
 			delete(t.content, event.Id)
+			t.Unlock()
 			writer()
 		},
 	)

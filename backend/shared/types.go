@@ -101,7 +101,7 @@ type JournalEntry struct {
 	Id           string    `json:"id"`
 	Date         time.Time `json:"date"`
 	Comment      string    `json:"comment"`
-	CustomLength int       `json:"customLength"`
+	CustomLength *int      `json:"customLength"`
 	Laps         int       `json:"laps"`
 	Time         string    `json:"time"`
 }

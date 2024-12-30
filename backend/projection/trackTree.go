@@ -2,7 +2,6 @@ package projection
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"slices"
@@ -97,7 +96,7 @@ func (t *TrackTree) handleDeleteEvent(root *TrackTreeNode, id string) {
 
 func (t *TrackTree) handleUpsertEvent(track shared.TrackUpsertedEvent) {
 	t.handleDeleteEvent(t.tree, track.Id)
-	queue := track.Parents[:len(track.Parents)-1]
+	queue := track.Parents
 	node := t.tree
 outer:
 	for len(queue) > 0 {
@@ -114,6 +113,5 @@ outer:
 			&TrackTreeNode{Name: head, Tracks: make([]TrackTreeEntry, 0), Nodes: make([]*TrackTreeNode, 0)},
 		)
 	}
-	fmt.Printf("parents: %v, node: %v", track.Parents, node.Name)
 	node.Tracks = append(node.Tracks, TrackTreeEntry{Name: track.Name, Id: track.Id, Length: track.Waypoints.Length()})
 }

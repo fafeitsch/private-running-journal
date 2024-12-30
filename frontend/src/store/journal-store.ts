@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import {journal, journalList} from "../../wailsjs/go/models";
+import { journalList} from "../../wailsjs/go/models";
 import { useJournalApi } from "../api/journal";
 import { useRouter } from "vue-router";
 

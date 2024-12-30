@@ -3,25 +3,24 @@ import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import TreeSelect from "primevue/treeselect";
 import { useI18n } from "vue-i18n";
-import { onMounted, ref, toRefs, watch } from "vue";
-import { shared } from "../../wailsjs/go/models";
+import { onMounted, ref, toRefs, watch, watchEffect } from "vue";
+import { projection } from "../../wailsjs/go/models";
 import { useTracksApi } from "../api/tracks";
 import type { TreeNode } from "primevue/treenode";
 import { tracksToTreeNodes } from "../shared/track-utils";
-import Track = shared.Track;
+import TrackTreeEntry = projection.TrackTreeEntry;
 
 const { t } = useI18n();
 const tracksApi = useTracksApi();
-const selectedTrack = defineModel<Track | undefined>();
+const selectedTrack = defineModel<TrackTreeEntry | undefined>();
 
 const props = defineProps<{ linkedTrack?: string }>();
 const { linkedTrack } = toRefs(props);
 
 const availableTracks = ref<TreeNode[]>([]);
-
 onMounted(async () => {
   try {
-    const tracks = await tracksApi.getTrackTree()
+    const tracks = await tracksApi.getTrackTree();
     availableTracks.value = tracksToTreeNodes(tracks);
   } catch (e) {
     // todo error handling
@@ -30,6 +29,23 @@ onMounted(async () => {
 });
 
 const selectedEntry = ref<Record<string, boolean>>({});
+
+watchEffect(() => {
+  const reducer = (acc: TrackTreeEntry | undefined, cur: TreeNode): TrackTreeEntry | undefined => {
+    if (acc) {
+      return acc;
+    }
+    if(cur.key === linkedTrack.value) {
+      return cur.data
+    }
+    const track = cur.children?.find((c) => c.key === linkedTrack.value);
+    if (track) {
+      return track.data;
+    }
+    return cur.children?.reduce(reducer, undefined);
+  };
+  selectedTrack.value = availableTracks.value.reduce(reducer, undefined);
+});
 
 watch(
   selectedTrack,
@@ -64,8 +80,6 @@ watch(
       v-model="selectedEntry"
       selection-mode="single"
       :options="availableTracks"
-      placeholder="Select Item"
-
       class="md:w-80 w-full"
       @node-select="(node) => (selectedTrack = node.data)"
       data-testid="track-selection"
