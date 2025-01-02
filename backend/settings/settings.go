@@ -73,18 +73,18 @@ func (s *Settings) SaveSettings(settings AppSettings) error {
 		return fmt.Errorf("could not save settings: %v", err)
 	}
 	if settings.MapSettings.TileServer != s.appSettings.MapSettings.TileServer {
-		shared.Send("tile-server-changed", settings.MapSettings.TileServer)
+		shared.SendEvent(shared.TileServerChangedEvent{NewValue: settings.MapSettings.TileServer})
 	}
 	if settings.MapSettings.CacheTiles != s.appSettings.MapSettings.CacheTiles {
-		shared.Send("tile-server-cache-Enabled-changed", settings.MapSettings.CacheTiles)
+		shared.SendEvent(shared.TileServerCacheEnabledEvent{NewValue: settings.MapSettings.CacheTiles})
 	}
 	if settings.GitSettings.Enabled != s.appSettings.GitSettings.Enabled {
-		shared.Send("git enablement changed", settings.GitSettings.Enabled)
+		shared.SendEvent(shared.GitEnablementChangedEvent{NewValue: settings.GitSettings.Enabled})
 	}
 	if settings.GitSettings.PushAfterCommit != s.appSettings.GitSettings.PushAfterCommit {
-		shared.Send("git push changed", settings.GitSettings.PushAfterCommit)
+		shared.SendEvent(shared.GitPushChangedEvent{NewValue: settings.GitSettings.PushAfterCommit})
 	}
-	shared.Send("settings changed")
+	shared.SendEvent(shared.SettingsChangedEvent{})
 	s.appSettings = settings
 	return nil
 }

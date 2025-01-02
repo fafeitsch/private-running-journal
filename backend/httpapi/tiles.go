@@ -15,13 +15,6 @@ import (
 
 var tilesDirMutex sync.Mutex
 
-type tile struct {
-	timestamp   time.Time
-	length      string
-	contentType string
-	content     []byte
-}
-
 type TileServer struct {
 	baseDir      string
 	url          string
@@ -30,21 +23,16 @@ type TileServer struct {
 
 func NewTileServer(baseDir string, url string, cacheEnabled bool) *TileServer {
 	result := TileServer{url: url, baseDir: filepath.Join(baseDir, "tiles"), cacheEnabled: cacheEnabled}
-	shared.RegisterHandler(
-		"tile-server-changed", func(url ...any) {
-			result.url = url[0].(string)
-			err := os.RemoveAll(result.baseDir)
-			fmt.Printf("removing %v", err)
-		},
-	)
-	shared.RegisterHandler(
-		"tile-server-cache-enabled-changed", func(enabled ...any) {
-			result.cacheEnabled = enabled[0].(bool)
-			if !result.cacheEnabled {
-				_ = os.RemoveAll(result.baseDir)
-			}
-		},
-	)
+	shared.Listen(shared.TileServerChangedEvent{}, func(k shared.TileServerChangedEvent) {
+		result.url = k.NewValue
+		_ = os.RemoveAll(result.baseDir)
+	})
+	shared.Listen(shared.TileServerCacheEnabledEvent{}, func(k shared.TileServerCacheEnabledEvent) {
+		result.cacheEnabled = k.NewValue
+		if !result.cacheEnabled {
+			_ = os.RemoveAll(result.baseDir)
+		}
+	})
 	return &result
 }
 

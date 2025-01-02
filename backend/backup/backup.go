@@ -15,41 +15,27 @@ type Backup struct {
 
 func Init(baseDirectory string, enabled bool, push bool) *Backup {
 	result := &Backup{baseDirectory: baseDirectory, enabled: enabled, push: push}
-	shared.RegisterHandler(
-		"track moved", func(data ...any) {
-			go result.doBackup("move track")
-		},
-	)
-	shared.RegisterHandler(
-		"track deleted", func(data ...any) {
-			go result.doBackup("delete track")
-		},
-	)
-	shared.Listen(
-		shared.TrackUpsertedEvent{}, func(event shared.TrackUpsertedEvent) {
-			go result.doBackup("upsert track")
-		},
-	)
-	shared.RegisterHandler(
-		"journal entry changed", func(data ...any) {
-			go result.doBackup("change journal entry")
-		},
-	)
-	shared.RegisterHandler(
-		"settings changed", func(data ...any) {
-			go result.doBackup("change settings")
-		},
-	)
-	shared.RegisterHandler(
-		"git enablement changed", func(data ...any) {
-			result.enabled, _ = data[0].(bool)
-		},
-	)
-	shared.RegisterHandler(
-		"git push changed", func(data ...any) {
-			result.push, _ = data[0].(bool)
-		},
-	)
+	shared.Listen(shared.TrackDeletedEvent{}, func(event shared.TrackDeletedEvent) {
+		go result.doBackup("delete track")
+	})
+	shared.Listen(shared.TrackUpsertedEvent{}, func(event shared.TrackUpsertedEvent) {
+		go result.doBackup("upsert track")
+	})
+	shared.Listen(shared.JournalEntryUpsertedEvent{}, func(event shared.JournalEntryUpsertedEvent) {
+		go result.doBackup("change journal entry")
+	})
+	shared.Listen(shared.JournalEntryDeletedEvent{}, func(event shared.JournalEntryDeletedEvent) {
+		go result.doBackup("delete journal entry")
+	})
+	shared.Listen(shared.SettingsChangedEvent{}, func(event shared.SettingsChangedEvent) {
+		go result.doBackup("change settings")
+	})
+	shared.Listen(shared.GitEnablementChangedEvent{}, func(event shared.GitEnablementChangedEvent) {
+		result.enabled = event.NewValue
+	})
+	shared.Listen(shared.GitPushChangedEvent{}, func(event shared.GitPushChangedEvent) {
+		result.push = event.NewValue
+	})
 	return result
 }
 
