@@ -78,6 +78,7 @@ func (s *Service) ReadJournalEntry(id string) (shared.JournalEntry, error) {
 }
 
 func (s *Service) SaveJournalEntry(entry shared.JournalEntry) error {
+	log.Printf("save journal entry: %v", entry)
 	path := filepath.Join(s.path, journalDirectory, entry.Id[0:2], entry.Id)
 	err := os.MkdirAll(path, 0755)
 	if err != nil {

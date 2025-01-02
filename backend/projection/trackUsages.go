@@ -30,6 +30,7 @@ func (t *TrackUsages) Init(message json.RawMessage, writer func()) {
 			old := event.OldTrackId
 			nevv := event.TrackId
 			if old == nevv {
+				t.Unlock()
 				return
 			}
 			if _, ok := t.content[old]; ok {
@@ -45,6 +46,8 @@ func (t *TrackUsages) Init(message json.RawMessage, writer func()) {
 
 			if _, ok := t.content[nevv]; ok {
 				t.content[nevv] = append(t.content[nevv], event.Id)
+			} else {
+				t.content[nevv] = []string{event.Id}
 			}
 			t.Unlock()
 			writer()

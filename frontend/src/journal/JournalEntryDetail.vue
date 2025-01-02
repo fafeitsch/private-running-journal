@@ -246,7 +246,6 @@ useLeaveConfirmation(dirty);
     </div>
     <div v-else-if="selectedEntry" class="flex flex-col gap-2 w-full p-2 grow shrink">
       <div class="flex gap-2">
-        {{dirty}}
         <Button
           icon="pi pi-save"
           :aria-label="t('shared.save')"

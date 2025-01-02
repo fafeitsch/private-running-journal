@@ -86,7 +86,6 @@ func (j *JournalEditor) SaveJournalEntry(entry SaveEntryDto) (SaveJournalEntryRe
 			OldDate:      oldDate,
 		},
 	)
-	fmt.Printf("after sending event")
 	return SaveJournalEntryResultDto{Id: entry.Id}, nil
 }
 

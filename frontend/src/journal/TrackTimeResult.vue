@@ -56,7 +56,7 @@ const lapsWarningOverlay = ref();
         :min-fraction-digits="1"
         :max-fraction-digits="1"
         :locale="locale"
-        :pt="{ pcInput: { root: { 'data-testid': 'journal-length-input', style: 'min-width:80px' } } }"
+        :pt="{ pcInputText: { root: { 'data-testid': 'journal-length-input', style: 'min-width:80px' } } }"
       ></InputNumber>
       <InputGroupAddon>km</InputGroupAddon>
     </InputGroup>
@@ -74,7 +74,7 @@ const lapsWarningOverlay = ref();
         <label for="laps">{{ t("journal.details.laps") }}</label>
       </InputGroupAddon>
       <InputNumber
-          :pt="{ pcInput: { root: { 'data-testid': 'laps-input' } } }"
+          :pt="{ pcInputText: { root: { 'data-testid': 'laps-input' } } }"
           id="laps"
           v-model="laps"
           :min="1"
