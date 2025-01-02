@@ -3,7 +3,6 @@ package projection
 import (
 	"encoding/json"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
-	"log"
 	"slices"
 	"sync"
 )
@@ -64,7 +63,9 @@ func (t *TrackUsages) Init(message json.RawMessage, writer func()) {
 func (t *TrackUsages) AddTrack(track shared.Track) {
 	t.Lock()
 	defer t.Unlock()
-	t.content[track.Id] = make([]string, 0)
+	if _, ok := t.content[track.Id]; !ok {
+		t.content[track.Id] = make([]string, 0)
+	}
 }
 
 func (t *TrackUsages) AddJournalEntry(entry shared.JournalEntry) {
@@ -74,7 +75,6 @@ func (t *TrackUsages) AddJournalEntry(entry shared.JournalEntry) {
 		t.content[entry.TrackId] = make([]string, 0)
 	}
 	t.content[entry.TrackId] = append(t.content[entry.TrackId], entry.Id)
-	log.Printf("add entry %v %v", entry, t.content)
 }
 
 func (t *TrackUsages) GetData() any {

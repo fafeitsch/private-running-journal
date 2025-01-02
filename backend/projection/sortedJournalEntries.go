@@ -113,6 +113,8 @@ func (s *SortedJournalEntries) FindJournalEntryIdsBetween(start time.Time, end t
 				date, _ := time.Parse(time.DateOnly, fmt.Sprintf("%s-%s-%s", year, month, day))
 				if date.Equal(start) || (date.After(start) && date.Before(end)) {
 					return nil
+				} else {
+					return filepath.SkipDir
 				}
 			} else if yearMatcher.MatchString(parts[partsLength-4]) && monthMatcher.MatchString(parts[partsLength-3]) && dayMatcher.MatchString(parts[partsLength-2]) {
 				// below the days-level: this must be the id
