@@ -65,7 +65,6 @@ func (s *SortedJournalEntries) handleDeleteEvent(date time.Time, id string) {
 }
 
 func (s *SortedJournalEntries) handleUpsertEvent(event shared.JournalEntryUpsertedEvent) {
-	fmt.Printf("handle upsert event")
 	if event.OldDate != nil {
 		s.handleDeleteEvent(event.Date, event.Id)
 	}

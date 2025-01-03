@@ -51,6 +51,10 @@ func NewApp() *App {
 	}
 
 	service := filebased.NewService(a.configDirectory)
+	err = service.Migrate()
+	if err != nil {
+		log.Fatalf("could not migrate: %v", err)
+	}
 	trackUsagesProjector := &projection.TrackUsages{}
 	sortedJournalProjector := &projection.SortedJournalEntries{Directory: a.configDirectory}
 	a.trackTree = &projection.TrackTree{}

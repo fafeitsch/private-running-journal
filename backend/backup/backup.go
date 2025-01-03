@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"fmt"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"log"
@@ -29,6 +30,9 @@ func Init(baseDirectory string, enabled bool, push bool) *Backup {
 	})
 	shared.Listen(shared.SettingsChangedEvent{}, func(event shared.SettingsChangedEvent) {
 		go result.doBackup("change settings")
+	})
+	shared.Listen(shared.MigrationEvent{}, func(event shared.MigrationEvent) {
+		go result.doBackup(fmt.Sprintf("migrate files from version %d to version %d", event.OldVersion, event.NewVersion))
 	})
 	shared.Listen(shared.GitEnablementChangedEvent{}, func(event shared.GitEnablementChangedEvent) {
 		result.enabled = event.NewValue

@@ -45,6 +45,11 @@ type TileServerCacheEnabledEvent struct {
 	NewValue bool
 }
 
+type MigrationEvent struct {
+	OldVersion int
+	NewVersion int
+}
+
 var handlers = make(map[string][]Handler)
 
 var Context context.Context
