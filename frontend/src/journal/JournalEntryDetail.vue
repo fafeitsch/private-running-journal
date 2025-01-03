@@ -276,11 +276,12 @@ useLeaveConfirmation(dirty);
         <InputGroupAddon>
           <label for="date">{{ t("journal.details.date") }}</label>
         </InputGroupAddon>
+
         <DatePicker
           id="date"
           v-model="selectedDate"
           show-button-bar
-          :date-format="locale === 'de' ? 'dd.mm.yy' : 'yyyy/mm/dd'"
+          :date-format="locale === 'de' ? 'dd.mm.yy' : 'yy/mm/dd'"
           data-testid="entry-date-input"
           :pt="{
             pcTodayButton: {
