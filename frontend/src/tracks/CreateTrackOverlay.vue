@@ -16,6 +16,8 @@ import { tracksToTreeNodes } from "../shared/track-utils";
 import { trackEditor } from "../../wailsjs/go/models";
 import CoordinateDto = trackEditor.CoordinateDto;
 import SaveTrackDto = trackEditor.SaveTrackDto;
+import { nanoid } from "nanoid";
+import { createUniqueId } from "../shared/id-generator";
 
 const { t } = useI18n();
 
@@ -69,7 +71,7 @@ async function createEntry() {
   error.value = false;
 
   try {
-    let id = crypto.randomUUID();
+    let id = createUniqueId()
     await tracksApi.saveTrack(
       new SaveTrackDto({
         id,

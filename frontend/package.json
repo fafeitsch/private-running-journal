@@ -9,15 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@primevue/themes": "^4.0.7",
+    "@primevue/themes": "^4.2.5",
     "@types/leaflet-editable": "^1.2.6",
     "leaflet": "^1.9.4",
     "leaflet-editable": "^1.2.0",
-    "pinia": "^2.2.2",
+    "nanoid": "^5.0.9",
+    "pinia": "^2.3.0",
     "primeicons": "^6.0.1",
-    "primevue": "^4.0.7",
-    "vue": "^3.5.6",
-    "vue-i18n": "^9.14.0",
+    "primevue": "^4.2.5",
+    "vue": "^3.5.13",
+    "vue-i18n": "^9.14.2",
     "vue-router": "^4.4.5"
   },
   "devDependencies": {

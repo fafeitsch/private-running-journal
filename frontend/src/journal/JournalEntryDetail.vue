@@ -24,6 +24,7 @@ import TrackDto = trackEditor.TrackDto;
 import SaveEntryDto = journalEditor.SaveEntryDto;
 import EntryDto = journalEditor.EntryDto;
 import TrackTreeEntry = projection.TrackTreeEntry;
+import { createUniqueId } from "../shared/id-generator";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -131,9 +132,7 @@ async function saveEntry() {
       const month = `${selectedDate.value.getMonth() + 1}`.padStart(2, "0");
       const day = `${selectedDate.value.getDate()}`.padStart(2, "0");
       value.date = `${year}-${month}-${day}`;
-      console.log('ADDING BEF');
-      const result = await journalApi.saveEntry(new SaveEntryDto({...value, trackId: selectedTrack.value.id, id: crypto.randomUUID()}));
-      console.log('ADDING');
+      const result = await journalApi.saveEntry(new SaveEntryDto({...value, trackId: selectedTrack.value.id, id: createUniqueId()}));
       journalStore.addEntryToList({
         date: value.date,
         trackName: selectedTrack.value.name,
@@ -142,7 +141,6 @@ async function saveEntry() {
         id: result.id,
       });
       dirty.value = false;
-      console.log("dirty is false");
       router.replace("/journal/" + encodeURIComponent(result.id));
       return;
     }
