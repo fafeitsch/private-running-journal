@@ -59,7 +59,7 @@ async function moveTrack() {
 
   try {
     let newPath = folderName.value.split("/").filter(s => !!s)
-    const track = await tracksApi.saveTrack({...selectedTrack.value, parents: newPath});
+    await tracksApi.saveTrack({...selectedTrack.value, parents: newPath});
     await tracksStore.loadTracks()
     overlayPanel.value.hide();
   } catch (e) {
