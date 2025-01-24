@@ -14,6 +14,7 @@ test('should create new track and create journal entry with it, and delete track
   await expect(page.getByLabel('Streckenname')).toBeVisible();
   await expect(page.getByLabel('Verwendungen')).toHaveValue('0');
   await expect(page.getByLabel('Streckenlänge')).toHaveValue('0,0');
+  await page.getByLabel('Kommentar').fill("Stolpergefahr");
   await expect(page.getByLabel('Speichern')).toBeEnabled();
 
   await page.getByRole('button', { name: 'Vorwärts' }).click();
@@ -43,6 +44,7 @@ test('should create new track and create journal entry with it, and delete track
   await expect(page.getByLabel('Speichern')).toBeDisabled();
   const track = JSON.parse(fs.readFileSync('testdata/tracks/' + id + '/info.json') as any);
   expect(track.name).toEqual('Wurzelstrecke');
+  expect(track.comment).toEqual('Stolpergefahr');
 
   await page.goto('/');
   await page.getByTestId(globalSelectors.journalTab).click();

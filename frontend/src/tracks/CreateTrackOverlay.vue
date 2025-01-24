@@ -21,9 +21,9 @@ import { createUniqueId } from "../shared/id-generator";
 
 const { t } = useI18n();
 
-const props = defineProps<{ name: string; waypoints: CoordinateDto[] }>();
+const props = defineProps<{ name: string; waypoints: CoordinateDto[], comment: string }>();
 
-const { name, waypoints } = toRefs(props);
+const { name, waypoints, comment } = toRefs(props);
 
 const overlayPanel = ref();
 const error = ref<boolean>(false);
@@ -78,6 +78,7 @@ async function createEntry() {
         name: name.value,
         parents: [...folderName.value.split("/").filter(f => !!f)],
         waypoints: waypoints.value,
+        comment: comment.value
       }),
     );
     emit("trackCreated");
