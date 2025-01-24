@@ -24,6 +24,7 @@ type TrackDto struct {
 	Waypoints []CoordinateDto `json:"waypoints"`
 	Parents   []string        `json:"parents"`
 	Usages    []string        `json:"usages"`
+	Comment   string          `json:"comment"`
 }
 
 type PolylineMeta struct {
@@ -60,6 +61,7 @@ func (t *TrackEditor) GetTrack(id string) (TrackDto, error) {
 		Id:        file.Id,
 		Name:      file.Name,
 		Waypoints: waypoints,
+		Comment:   file.Comment,
 		PolylineMeta: PolylineMeta{
 			Length:          file.Waypoints.Length(),
 			DistanceMarkers: distanceMarkers,
@@ -100,6 +102,7 @@ type SaveTrackDto struct {
 	Name      string          `json:"name"`
 	Waypoints []CoordinateDto `json:"waypoints"`
 	Parents   []string        `json:"parents"`
+	Comment   string          `json:"comment"`
 }
 
 func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
@@ -112,6 +115,7 @@ func (t *TrackEditor) SaveTrack(track SaveTrackDto) error {
 		Name:      track.Name,
 		Waypoints: wp,
 		Parents:   track.Parents,
+		Comment:   track.Comment,
 	}
 	err := t.service.SaveTrack(saveTrack)
 	shared.SendEvent(shared.TrackUpsertedEvent{SaveTrack: &saveTrack})

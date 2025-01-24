@@ -18,6 +18,7 @@ type trackDescriptor struct {
 	Id      string   `json:"id"`
 	Name    string   `json:"name"`
 	Parents []string `json:"parents"`
+	Comment string   `json:"comment"`
 }
 
 func (s *Service) ReadAllTracks(consumer func(track shared.Track)) error {
@@ -66,6 +67,7 @@ func (s *Service) ReadTrack(id string) (shared.Track, error) {
 		Id:        id,
 		Name:      baseDescriptor.Name,
 		Parents:   baseDescriptor.Parents,
+		Comment:   baseDescriptor.Comment,
 	}, nil
 }
 
@@ -97,7 +99,7 @@ func (s *Service) SaveTrack(track shared.SaveTrack) error {
 		return fmt.Errorf("could not create track directory %s: %v", trackDirectory, err)
 	}
 	infoFile := filepath.Join(trackDirectory, "info.json")
-	infoPayload, _ := json.Marshal(trackDescriptor{Name: track.Name, Id: track.Id, Parents: track.Parents})
+	infoPayload, _ := json.Marshal(trackDescriptor{Name: track.Name, Id: track.Id, Parents: track.Parents, Comment: track.Comment})
 	err = os.WriteFile(infoFile, infoPayload, 0666)
 	if err != nil {
 		return fmt.Errorf("could not save base information: %v", err)
