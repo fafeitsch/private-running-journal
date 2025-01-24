@@ -23,6 +23,7 @@ test('should load and display all available tracks and their information', async
   await expect(page.getByLabel('Streckenname')).toHaveValue('Farmrunde')
   await expect(page.getByLabel('Verwendungen')).toHaveValue('1')
   await expect(page.getByLabel('Streckenlänge')).toHaveValue('10,8')
+  await expect(page.getByLabel('Kommentar')).toHaveValue('bei Regen sehr matschig')
   await expect(page.getByLabel('Speichern')).toBeDisabled()
 });
 

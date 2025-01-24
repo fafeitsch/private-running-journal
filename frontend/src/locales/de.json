@@ -51,6 +51,7 @@
     "editModeBackward": "Rückwärts",
     "editModeDrag": "Anpassen",
     "usages": "Verwendungen",
+    "comment": "Kommentar",
     "changeJournalWarning": "Die Strecke wird in {count} Journal-Einträgen verwendet. Wenn Sie die Strecke speichern, werden diese Einträge aktualisiert. Sie können die Strecke stattdessen klonen.",
     "title": "Strecken",
     "variant": "Variante",

@@ -59,6 +59,7 @@ watch(
         id: "new",
         length: 0,
         name: "",
+        comment: "",
         usages: [],
         parents: [],
         waypoints: [],
@@ -108,6 +109,7 @@ async function saveTrack(event: any) {
   if (!choice) {
     return;
   }
+  console.log(track.value.comment);
   try {
     await tracksApi.saveTrack(
       new SaveTrackDto({
@@ -115,6 +117,7 @@ async function saveTrack(event: any) {
         name: track.value.name,
         parents: track.value.parents,
         waypoints: editedWaypoints.value,
+        comment: track.value.comment,
       }),
     );
     dirty.value = false;
@@ -171,6 +174,7 @@ useLeaveConfirmation(dirty);
         v-else
         :name="track!.name"
         :waypoints="editedWaypoints"
+        :comment="track.comment"
         @track-created="dirty = false"
       ></CreateTrackOverlay>
       <ConfirmPopup group="track">
@@ -190,7 +194,7 @@ useLeaveConfirmation(dirty);
       <MoveTrackOverlay v-if="selectedTrack?.id !== 'new'"></MoveTrackOverlay>
     </div>
     <div class="flex gap-2">
-      <InputGroup>
+      <InputGroup class="!w-1/3">
         <InputGroupAddon>
           <label for="nameInput">{{ t("tracks.name") }}</label>
         </InputGroupAddon>
@@ -200,34 +204,47 @@ useLeaveConfirmation(dirty);
           @update:model-value="dirty = true"
         ></InputText>
       </InputGroup>
-      <InputGroup class="grow-0 w-2/12">
+      <InputGroup class="!w-2/3">
         <InputGroupAddon>
-          <label for="usagesInput">{{ t("tracks.usages") }}</label>
+          <label for="comment">{{ t("tracks.comment") }}</label>
         </InputGroupAddon>
-        <InputText id="usagesInput" disabled :value="`${track!.usages.length}`"></InputText>
+        <InputText
+          id="comment"
+          v-model="track.comment"
+          @update:model-value="dirty = true"
+        ></InputText>
       </InputGroup>
     </div>
-    <div class="flex gap-2 items-center">
-      <InputGroup class="shrink grow w-auto">
+    <div class="flex flex-col lg:flex-row gap-2 items-center">
+      <InputGroup class="lg:!w-1/3 lg:!min-w-[250px]">
         <InputGroupAddon>
           <label for="lengthInput">{{ t("journal.details.length") }}</label>
         </InputGroupAddon>
         <InputText id="lengthInput" v-model="formattedLength" disabled></InputText>
         <InputGroupAddon>km</InputGroupAddon>
       </InputGroup>
-      <label for="editModeInput">{{ t("tracks.editMode") }}</label>
-      <SelectButton
-        id="editModeInput"
-        :options="[
-          { name: t('tracks.editModeBackward'), value: 'backward' },
-          { name: t('tracks.editModeDrag'), value: 'drag' },
-          { name: t('tracks.editModeForward'), value: 'forward' },
-        ]"
-        v-model="trackEditDirection"
-        option-value="value"
-        option-label="name"
-        :allow-empty="false"
-      ></SelectButton>
+      <InputGroup class="lg:w-2/12 lg:!min-w-[190px]">
+        <InputGroupAddon>
+          <label for="usagesInput">{{ t("tracks.usages") }}</label>
+        </InputGroupAddon>
+        <InputText id="usagesInput" disabled :value="`${track!.usages.length}`"></InputText>
+      </InputGroup>
+      <div class="flex gap-2 items-center self-start">
+        <label for="editModeInput" class="text-nowrap">{{ t("tracks.editMode") }}</label>
+        <SelectButton
+          class="text-nowrap"
+          id="editModeInput"
+          :options="[
+            { name: t('tracks.editModeBackward'), value: 'backward' },
+            { name: t('tracks.editModeDrag'), value: 'drag' },
+            { name: t('tracks.editModeForward'), value: 'forward' },
+          ]"
+          v-model="trackEditDirection"
+          option-value="value"
+          option-label="name"
+          :allow-empty="false"
+        ></SelectButton>
+      </div>
     </div>
     <div class="shrink grow">
       <TrackEditor
