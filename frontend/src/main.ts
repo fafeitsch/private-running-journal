@@ -5,7 +5,6 @@ import "./style.scss";
 import { createI18n } from "vue-i18n";
 import { de, en } from "./locales";
 import { createRouter, createWebHashHistory } from "vue-router";
-import Ripple from "primevue/ripple";
 import Tooltip from "primevue/tooltip";
 import JournalPage from "./journal/JournalPage.vue";
 import { createPinia } from "pinia";
@@ -15,13 +14,16 @@ import FocusTrap from "primevue/focustrap";
 import SettingsPage from "./settings/SettingsPage.vue";
 import { useSettingsStore } from "./store/settings-store";
 import AboutPage from "./about/AboutPage.vue";
-import ToastService from 'primevue/toastservice';
-import Aura from '@primevue/themes/aura';
+import ToastService from "primevue/toastservice";
+import Aura from "@primevue/themes/aura";
+import { dashboard } from "../wailsjs/go/models";
+import DashboardPage from "./dashboard/DashboardPage.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: "/", redirect: "journal" },
+    { path: "/", redirect: "dashboard" },
+    { path: "/dashboard", component: DashboardPage },
     {
       path: "/journal/:entryId?",
       component: JournalPage,
@@ -72,12 +74,12 @@ const i18n = createI18n({
 
 createApp(App)
   .use(PrimeVue, {
-    theme: {preset: Aura, prefix: 'p'},
+    theme: { preset: Aura, prefix: "p" },
     locale: { ...defaultOptions.locale, firstDayOfWeek: 1 },
     ripple: true,
     zIndex: {
-      overlay: 1000
-    }
+      overlay: 1000,
+    },
   })
   .use(i18n)
   .use(router)

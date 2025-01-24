@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"fmt"
+	"github.com/fafeitsch/private-running-journal/backend/application/dashboard"
 	"github.com/fafeitsch/private-running-journal/backend/application/journalEditor"
 	"github.com/fafeitsch/private-running-journal/backend/application/journalList"
 	"github.com/fafeitsch/private-running-journal/backend/application/trackEditor"
@@ -20,15 +21,16 @@ import (
 )
 
 type App struct {
-	ctx             context.Context
-	configDirectory string
-	trackEditor     *trackEditor.TrackEditor
-	journalEditor   *journalEditor.JournalEditor
-	journalList     *journalList.JournalList
-	settings        *settings.Settings
-	backup          *backup.Backup
-	cache           *projection.Projection
-	trackTree       *projection.TrackTree
+	ctx                context.Context
+	configDirectory    string
+	trackEditor        *trackEditor.TrackEditor
+	journalEditor      *journalEditor.JournalEditor
+	journalList        *journalList.JournalList
+	dashboardAssembler *dashboard.Assembler
+	settings           *settings.Settings
+	backup             *backup.Backup
+	cache              *projection.Projection
+	trackTree          *projection.TrackTree
 }
 
 func NewApp() *App {
@@ -61,6 +63,7 @@ func NewApp() *App {
 	a.journalEditor = journalEditor.New(service)
 	a.trackEditor = trackEditor.New(service, trackUsagesProjector)
 	a.journalList = journalList.New(service, sortedJournalProjector)
+	a.dashboardAssembler = dashboard.NewAssembler(sortedJournalProjector, service)
 	projectors := make([]projection.Projector, 0)
 	projectors = append(projectors, trackUsagesProjector)
 	projectors = append(projectors, a.trackTree)
@@ -154,4 +157,8 @@ func (a *App) GetSettings() settings.AppSettings {
 
 func (a *App) SaveSettings(settings settings.AppSettings) error {
 	return a.settings.SaveSettings(settings)
+}
+
+func (a *App) DashboardAssembler() *dashboard.Assembler {
+	return a.dashboardAssembler
 }
