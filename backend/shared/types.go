@@ -83,7 +83,6 @@ type DistanceMarker struct {
 type Track struct {
 	Waypoints Waypoints
 	Id        string   `json:"id"`
-	Length    int      `json:"length"`
 	Name      string   `json:"name"`
 	Parents   []string `json:"parents"`
 	Comment   string   `json:"string"`
@@ -92,7 +91,6 @@ type Track struct {
 type SaveTrack struct {
 	Waypoints Waypoints
 	Id        string
-	Length    int
 	Name      string
 	Comment   string
 	Parents   []string

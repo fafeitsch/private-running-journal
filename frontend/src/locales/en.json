@@ -4,7 +4,8 @@
     "journal": "Journal",
     "tracks": "Tracks",
     "settings": "Settings",
-    "about": "About"
+    "about": "About",
+    "dashboard": "Dashboard"
   },
   "journal": {
     "entries": "Entries",

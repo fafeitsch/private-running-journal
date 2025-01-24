@@ -29,6 +29,12 @@ watch(
 
 const navItems = computed(() => [
   {
+    label: t("sidenav.dashboard"),
+    icon: "pi pi-home",
+    link: `/dashboard`,
+    testId: "dashboard-tab",
+  },
+  {
     label: t("sidenav.journal"),
     icon: "pi pi-list",
     link: `/journal/${encodeURIComponent(journalStoreRef.selectedEntryId.value || "")}`,
