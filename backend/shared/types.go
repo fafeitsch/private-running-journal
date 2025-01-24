@@ -86,6 +86,7 @@ type Track struct {
 	Length    int      `json:"length"`
 	Name      string   `json:"name"`
 	Parents   []string `json:"parents"`
+	Comment   string   `json:"string"`
 }
 
 type SaveTrack struct {
@@ -93,6 +94,7 @@ type SaveTrack struct {
 	Id        string
 	Length    int
 	Name      string
+	Comment   string
 	Parents   []string
 }
 
