@@ -2,9 +2,7 @@
 import { useI18n } from "vue-i18n";
 import Card from "primevue/card";
 import Tag from "primevue/tag";
-import Badge from "primevue/badge";
 import Breadcrumb from "primevue/breadcrumb";
-import { MenuItem } from "primevue/menuitem";
 
 const { t } = useI18n();
 const props = defineProps<{
