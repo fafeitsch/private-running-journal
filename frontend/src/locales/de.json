@@ -120,5 +120,12 @@
     "license": "Diese Projekt wurde unter der MIT-Lizenz veröffentlicht.",
     "copyright": "Copyright © 2024 – jetzt, Fabian Feitsch",
     "issuesAndQuestions": "Jegliche Mitarbeit am Projekt ist willkommen: "
+  },
+  "dashboard": {
+    "totalDistance": "Gesamtlänge",
+    "totalRuns": "Läufe",
+    "average": "Durchschnitt",
+    "median": "Median",
+    "monthlyAnalytics": "Monatliche Auswertung"
   }
 }
