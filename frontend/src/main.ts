@@ -16,7 +16,6 @@ import { useSettingsStore } from "./store/settings-store";
 import AboutPage from "./about/AboutPage.vue";
 import ToastService from "primevue/toastservice";
 import Aura from "@primevue/themes/aura";
-import { dashboard } from "../wailsjs/go/models";
 import DashboardPage from "./dashboard/DashboardPage.vue";
 
 const router = createRouter({

@@ -1,27 +1,49 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { dashboard } from "../../wailsjs/go/models";
 import { useDashboardApi } from "../api/dasboard";
-import DashboardDto = dashboard.DashboardDto;
-import { Splitter, Slider } from "primevue";
-import DataView from "primevue/dataview";
-import Card from "primevue/card";
+import { Slider, Splitter } from "primevue";
 import Divider from "primevue/divider";
 import ProgressSpinner from "primevue/progressspinner";
 import MonthChooser from "./MonthChooser.vue";
 import TopTrack from "./TopTrack.vue";
-import { useDashboardStore, getEndOfMonth } from "../store/dashboard-store";
+import { getEndOfMonth, useDashboardStore } from "../store/dashboard-store";
+import { useI18n } from "vue-i18n";
+import MonthlyAnalytics from "./MonthlyAnalytics.vue";
+import DashboardDto = dashboard.DashboardDto;
 
-const data = ref<DashboardDto | undefined>(undefined);
+const data = ref<DashboardDto>(
+  new DashboardDto({
+    totalRuns: 0,
+    totalDistance: 0,
+    analytics: [],
+    medianDistance: 0,
+    averageDistance: 0,
+    topTracks: [],
+  }),
+);
 const failed = ref<boolean>(false);
 const loading = ref<boolean>(true);
 
 const dashboardStore = useDashboardStore();
 const { selectedStartDate, selectedEndDate, topTracksCount } = storeToRefs(dashboardStore);
+const { t, d, n } = useI18n();
+
+const formattedTotal = computed(
+  () => n(data.value?.totalDistance / 1000, { maximumFractionDigits: 0 }) + " km",
+);
+
+const formattedAverage = computed(
+  () => n(data.value?.averageDistance / 1000, { maximumFractionDigits: 0 }) + " km",
+);
+
+const formattedMedian = computed(
+  () => n(data.value?.medianDistance / 1000, { maximumFractionDigits: 0 }) + " km",
+);
 
 onMounted(async () => {
-  refresh();
+  await refresh();
 });
 
 // Still as watcher because on update:model-value it called
@@ -30,10 +52,11 @@ watch(topTracksCount, (value) => refresh());
 
 async function refresh() {
   loading.value = true;
-  const start = selectedStartDate.value;
+  const start = new Date(selectedStartDate.value.getTime());
+  start.setMinutes(start.getMinutes() - start.getTimezoneOffset())
   const end = getEndOfMonth(selectedEndDate.value);
+  end.setMinutes(end.getMinutes() - end.getTimezoneOffset())
   try {
-    // throw new Error("Boom")
     data.value = await useDashboardApi().loadDashboardApi(start, end, topTracksCount.value);
     failed.value = false;
     loading.value = false;
@@ -48,6 +71,7 @@ async function refresh() {
   <Splitter>
     <SplitterPanel class="flex justify-between flex-col" :size="20">
       <div class="flex flex-col gap-2 p-2">
+        {{selectedStartDate}}
         <span class="text-xl">Von</span>
         <MonthChooser v-model="selectedStartDate" @update:model-value="refresh()"></MonthChooser>
         <span class="text-xl">Bis</span>
@@ -69,21 +93,27 @@ async function refresh() {
       <template v-else-if="loading">
         <ProgressSpinner />
       </template>
-      <template v-else>
-        <div class="flex p-2 gap-2">
-          <Card>
-            <template #title>Total Distance</template>
-            <template #content>
-              <p>{{ data?.totalDistance }} m</p>
-            </template>
-          </Card>
-          <Card>
-            <template #title>Total Runs</template>
-            <template #content>
-              <p>{{ data?.totalRuns }}</p>
-            </template>
-          </Card>
+      <div class="flex flex-col gap-2 p-2" v-else>
+        <div class="flex p-2 gap-2 w-full">
+          <Panel class="flex-grow w-1/2" :header="t('dashboard.totalDistance')">{{
+            formattedTotal
+          }}</Panel>
+          <Panel class="flex-grow w-1/2" :header="t('dashboard.totalRuns')">
+            {{ data?.totalRuns }}
+          </Panel>
+          <Panel class="flex-grow w-1/2" :header="t('dashboard.average')">
+            {{ formattedAverage }}
+          </Panel>
+          <Panel class="flex-grow w-1/2" :header="t('dashboard.median')">
+            {{ formattedMedian }}
+          </Panel>
         </div>
+        <h2 class="text-2xl">{{t("dashboard.monthlyAnalytics")}}</h2>
+        <Carousel :value="data.analytics" :num-visible="4" :show-navigators="data.analytics.length > 4">
+          <template #item="item">
+            <MonthlyAnalytics :data="item.data" />
+          </template>
+        </Carousel>
         <Divider />
         <div>
           <label class="text-xl p-2">Top Tracks:</label>
@@ -100,7 +130,7 @@ async function refresh() {
             ></TopTrack>
           </div>
         </div>
-      </template>
+      </div>
     </SplitterPanel>
   </Splitter>
 </template>
