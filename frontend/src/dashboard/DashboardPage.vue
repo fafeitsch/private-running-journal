@@ -53,9 +53,9 @@ watch(topTracksCount, (value) => refresh());
 async function refresh() {
   loading.value = true;
   const start = new Date(selectedStartDate.value.getTime());
-  start.setMinutes(start.getMinutes() - start.getTimezoneOffset())
+  start.setMinutes(start.getMinutes() - start.getTimezoneOffset());
   const end = getEndOfMonth(selectedEndDate.value);
-  end.setMinutes(end.getMinutes() - end.getTimezoneOffset())
+  end.setMinutes(end.getMinutes() - end.getTimezoneOffset());
   try {
     data.value = await useDashboardApi().loadDashboardApi(start, end, topTracksCount.value);
     failed.value = false;
@@ -71,7 +71,7 @@ async function refresh() {
   <Splitter>
     <SplitterPanel class="flex justify-between flex-col" :size="20">
       <div class="flex flex-col gap-2 p-2">
-        {{selectedStartDate}}
+        {{ selectedStartDate }}
         <span class="text-xl">Von</span>
         <MonthChooser v-model="selectedStartDate" @update:model-value="refresh()"></MonthChooser>
         <span class="text-xl">Bis</span>
@@ -108,8 +108,17 @@ async function refresh() {
             {{ formattedMedian }}
           </Panel>
         </div>
-        <h2 class="text-2xl">{{t("dashboard.monthlyAnalytics")}}</h2>
-        <Carousel :value="data.analytics" :num-visible="4" :show-navigators="data.analytics.length > 4">
+        <h2 class="text-2xl">{{ t("dashboard.monthlyAnalytics") }}</h2>
+        <Carousel
+          :value="data.analytics"
+          :num-visible="4"
+          :show-navigators="data.analytics.length > 4"
+          :responsive-options="[
+            { breakpoint: '8000px', numVisible: 4, numScroll: 1 },
+            { breakpoint: '1200px', numVisible: 2, numScroll: 1 },
+            { breakpoint: '700px', numVisible: 1, numScroll: 1 },
+          ]"
+        >
           <template #item="item">
             <MonthlyAnalytics :data="item.data" />
           </template>
