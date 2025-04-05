@@ -2,6 +2,8 @@
 import { useI18n } from "vue-i18n";
 import DatePicker from "primevue/datepicker";
 
+defineProps<{hideBorder?: boolean}>()
+
 const { t } = useI18n();
 const selectedMonth = defineModel<Date>({ required: true });
 
@@ -29,7 +31,7 @@ function previousMonth() {
       class="grow"
       show-button-bar
       :pt="{
-        pcInputText: { root: { 'data-testid': 'month-chooser-component-input' }},
+        pcInputText: { root: { 'data-testid': 'month-chooser-component-input', style: hideBorder ? 'border: none' : ''}},
         pcTodayButton: {
           root: { 'data-testid': 'month-chooser-component-today-button' },
         },

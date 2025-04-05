@@ -7,7 +7,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useJournalStore } from "../store/journal-store";
 import { storeToRefs } from "pinia";
-import MonthChooser from "./MonthChooser.vue";
+import MonthChooser from '../shared/MonthChooser.vue';
 
 const { t, d, n, locale } = useI18n();
 const loading = ref(false);
@@ -60,7 +60,7 @@ const entries = computed(() => {
 <template>
   <div class="h-full overflow-hidden flex flex-col gap-2">
     <header class="flex justify-between items-center">
-      <span class="text-2xl">{{ $t("journal.entries") }}</span>
+      <span class="text-2xl">{{ t("journal.entries") }}</span>
       <Button
         icon="pi pi-plus"
         @click="router.push('/journal/new')"

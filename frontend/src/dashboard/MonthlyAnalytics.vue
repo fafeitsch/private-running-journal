@@ -21,7 +21,7 @@ const formattedMedian = computed(
 </script>
 
 <template>
-  <Panel :header="formattedMonth + '/' + data.year" class="mx-2">
+  <Panel :header="formattedMonth + '/' + data.year" class="mx-2" data-testid="dashboard-monthly-panel">
     <p>{{ t("dashboard.totalDistance") }}: {{ formattedTotal }}</p>
     <p>{{ t("dashboard.totalRuns") }}: {{ data.totalRuns }}</p>
     <p>{{ t("dashboard.average") }}: {{ formattedAverage }}</p>

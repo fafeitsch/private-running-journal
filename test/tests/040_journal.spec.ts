@@ -8,10 +8,12 @@ test('should load and display all available journal entries and filter with the 
   await page.getByTestId(globalSelectors.journalTab).click()
   await expect(page.getByTestId(globalSelectors.journalTab)).toContainText("Tagebuch")
 
+  await goToDate(page, "February 2025", 0);
+
   let journalItem = page.getByTestId(journalSelectors.journalEntryItem);
   await expect(journalItem).toHaveCount(0)
 
-  await goToMay2024(page);
+  await goToDate(page, "May 2024", 1);
 
   await journalItem.nth(0).click()
   await expect(page.getByLabel('Kommentar')).toHaveValue('Regnerisch')
@@ -32,9 +34,8 @@ test('it should not display journal entry if in wrong month', async ({page}) => 
   await expect(page.getByTestId(globalSelectors.journalTab)).toContainText("Tagebuch")
 
   let journalItem = page.getByTestId(journalSelectors.journalEntryItem);
-  await expect(journalItem).toHaveCount(0)
 
-  await goToMay2024(page)
+  await goToDate(page, "May 2024", 1)
 
   await expect(page.getByTestId(journalSelectors.emptyState)).toBeVisible()
   await page.getByLabel("Hinzufügen").click()
@@ -43,15 +44,15 @@ test('it should not display journal entry if in wrong month', async ({page}) => 
   await expect (page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(2)
   await page.getByTestId(journalSelectors.trackSelectionItem).nth(1).click()
   await page.getByTestId(journalSelectors.entryDateInput).click()
-  await page.getByTestId(journalSelectors.todayButton).click()
+  await page.getByTestId(journalSelectors.entryDateInputField).clear()
+  await page.getByTestId(journalSelectors.entryDateInputField).fill("12.12.2024")
+  await page.keyboard.press("Enter")
   await page.getByLabel("Speichern").click()
 
   await expect(journalItem).toHaveCount(1)
 
   await page.getByTestId(globalSelectors.monthInput.input).clear()
-  await page.getByTestId(globalSelectors.monthInput.todayButton).click()
-
-  await expect(journalItem).toHaveCount(1)
+  await goToDate(page, "December 2024", 1)
 
   await page.getByLabel("Hinzufügen").click()
 
@@ -60,7 +61,7 @@ test('it should not display journal entry if in wrong month', async ({page}) => 
   await page.getByLabel('Höchberg').getByTestId('track-tree-selection-node-toggler').click()
   await page.getByTestId(journalSelectors.trackSelectionItem).nth(1).click()
   await page.getByTestId(journalSelectors.entryDateInput).click()
-  await page.getByTestId(journalSelectors.todayButton).click()
+  await page.getByTestId(journalSelectors.entryDateInputField).fill("13.12.2024")
   await page.getByLabel("Speichern").click()
   await expect(journalItem).toHaveCount(2)
 
@@ -76,7 +77,9 @@ test('it should not display journal entry if in wrong month', async ({page}) => 
 
 test('should save file and live-update journal list after updating an entry', async ({page}) => {
   await page.goto('/');
-  await goToMay2024(page)
+  await page.getByTestId(globalSelectors.journalTab).click()
+
+  await goToDate(page, "May 2024", 1)
   const journalItem = page.getByTestId(journalSelectors.journalEntryItem);
   await journalItem.nth(0).click()
   await page.getByTestId(journalSelectors.lapsInput).clear()
@@ -100,7 +103,8 @@ test('should save file and live-update journal list after updating an entry', as
 
 test('should correctly load and display entries with overwritten length', async ( {page}) => {
   await page.goto('/');
-  await goToJune2024(page)
+  await page.getByTestId(globalSelectors.journalTab).click()
+  await goToDate(page, "June 2024", 1)
   const journalItem = page.getByTestId(journalSelectors.journalEntryItem);
   await journalItem.nth(0).click()
   await expect(page.getByTestId(journalSelectors.lapsInput)).toHaveValue('2')
@@ -149,7 +153,7 @@ test('should be possible to add new entry if there is an load error', async ({pa
 
 test('should be possible to view other entry on error and then create new entry and jump to current month', async ({page}) => {
   await page.goto('#/journal/does-not-exist');
-  await goToMay2024(page)
+  await goToDate(page, "May 2024", 1)
   await expect(page.getByTestId(journalSelectors.loadError)).toHaveCount(1)
   await page.getByTestId(journalSelectors.journalEntryItem).nth(0).click()
   await expect(page.getByLabel("Kommentar")).toHaveValue("Regnerisch")
@@ -163,15 +167,14 @@ test('should be possible to view other entry on error and then create new entry 
   const day = `${new Date().getDate()}`.padStart(2, "0");
   await expect(page.getByTestId(journalSelectors.entryDateInput).getByRole('combobox')).toHaveValue(`${day}.${month}.${year}`)
   await page.getByTestId(journalSelectors.trackSelection).getByRole('button').click()
-  await expect(page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(4)
+  await expect(page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(5)
   await page.getByLabel('Höchberg').getByTestId('track-tree-selection-node-toggler').nth(0).click()
   await page.getByTestId(journalSelectors.trackSelectionItem).nth(1).click()
   await page.getByTestId(journalSelectors.entryDateInput).click()
   await page.getByTestId(journalSelectors.todayButton).click()
   await page.getByLabel("Speichern").click()
 
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toHaveCount(1)
-  await expect(page.getByTestId(journalSelectors.journalEntryItem)).toContainText(`${day}.${month}.${year}`)
+  await expect(page.getByTestId(journalSelectors.journalEntryItem).getByText(`${day}.${month}.${year}Dummy` )).toBeVisible()
 
   await page.getByLabel("Löschen").nth(0).click()
   await expect(page.getByTestId(journalSelectors.deleteEntryConfirmation)).toContainText('Der Eintrag wird gelöscht.')
@@ -179,7 +182,8 @@ test('should be possible to view other entry on error and then create new entry 
 })
 
 test('should not be possible to save journal entry without track', async ({page}) => {
-  await page.goto('/');
+  await page.goto('#/journal/does-not-exist');
+  await goToDate(page, "May 2024", 1)
   await page.getByLabel("Hinzufügen").click()
   await page.getByLabel("Kommentar").fill("Sehr warm")
   await expect(page.getByLabel("Speichern")).toBeDisabled()
@@ -190,18 +194,10 @@ test('should not be possible to save journal entry without track', async ({page}
   await expect(page.getByLabel("Speichern")).toBeEnabled()
 })
 
-async function goToMay2024(page: Page) {
+async function goToDate(page: Page, target: string, entries: number) {
   await (page.getByTestId(globalSelectors.monthInput.input)).clear()
-  await (page.getByTestId(globalSelectors.monthInput.input)).fill('May 2024')
+  await (page.getByTestId(globalSelectors.monthInput.input)).fill(target)
   await (page.getByTestId(globalSelectors.monthInput.input)).press('Enter')
   const journalItem = page.getByTestId(journalSelectors.journalEntryItem);
-  await expect(journalItem).toHaveCount(1)
-}
-
-async function goToJune2024(page: Page) {
-  await (page.getByTestId(globalSelectors.monthInput.input)).clear()
-  await (page.getByTestId(globalSelectors.monthInput.input)).fill('June 2024')
-  await (page.getByTestId(globalSelectors.monthInput.input)).press('Enter')
-  const journalItem = page.getByTestId(journalSelectors.journalEntryItem);
-  await expect(journalItem).toHaveCount(1)
+  await expect(journalItem).toHaveCount(entries)
 }

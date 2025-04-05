@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { dashboard } from "../../wailsjs/go/models";
 import { useDashboardApi } from "../api/dasboard";
-import { Slider, Splitter } from "primevue";
-import Divider from "primevue/divider";
 import ProgressSpinner from "primevue/progressspinner";
-import MonthChooser from "./MonthChooser.vue";
 import TopTrack from "./TopTrack.vue";
 import { getEndOfMonth, useDashboardStore } from "../store/dashboard-store";
 import { useI18n } from "vue-i18n";
 import MonthlyAnalytics from "./MonthlyAnalytics.vue";
+import DistancePerMonthChart from "./DistancePerMonthChart.vue";
+import RunsPerMonthChart from "./RunsPerMonthChart.vue";
+import DateRangeSelection from "./DateRangeSelection.vue";
 import DashboardDto = dashboard.DashboardDto;
 
 const data = ref<DashboardDto>(
@@ -46,10 +46,6 @@ onMounted(async () => {
   await refresh();
 });
 
-// Still as watcher because on update:model-value it called
-// refresh not only on step change
-watch(topTracksCount, (value) => refresh());
-
 async function refresh() {
   loading.value = true;
   const start = new Date(selectedStartDate.value.getTime());
@@ -68,69 +64,62 @@ async function refresh() {
 </script>
 
 <template>
-  <Splitter>
-    <SplitterPanel class="flex justify-between flex-col" :size="20">
-      <div class="flex flex-col gap-2 p-2">
-        {{ selectedStartDate }}
-        <span class="text-xl">Von</span>
-        <MonthChooser v-model="selectedStartDate" @update:model-value="refresh()"></MonthChooser>
-        <span class="text-xl">Bis</span>
-        <MonthChooser v-model="selectedEndDate" @update:model-value="refresh()"></MonthChooser>
-        <div class="flex justify-between flex-col gap-2">
-          <span class="text-xl">TopTracks</span>
-          <div class="flex flex-col items-center gap-2">
-            <label>{{ topTracksCount }}</label>
-            <Slider class="w-[80%]" v-model="topTracksCount" :step="1" :min="1" :max="10"></Slider>
+  <div class="flex flex-col p-2 gap-2 overflow-hidden">
+    <div class="flex flex-col lg:flex-row-reverse justify-start gap-2 lg:items-center items-end">
+      <DateRangeSelection class="grow-0"
+        v-model:from-date="selectedStartDate"
+        v-model:to-date="selectedEndDate"
+        @update:from-date="refresh"
+        @update:to-date="refresh"
+      />
+      <div v-if="!loading && !failed" class="flex flex-col sm:flex-row gap-2" data-testid="dashboard-general-statistics">
+        <span><span class="font-bold">{{t('dashboard.totalDistance')}}:</span> {{formattedTotal}}</span>
+        <span><span class="font-bold">{{t('dashboard.totalRuns')}}:</span> {{data?.totalRuns}}</span>
+        <span><span class="font-bold">{{t('dashboard.average')}}:</span> {{formattedAverage}}</span>
+        <span><span class="font-bold">{{t('dashboard.median')}}:</span> {{formattedMedian}}</span>
+      </div>
+    </div>
+    <template v-if="failed">
+      <Message severity="error">{{t("dashboard.error")}}</Message>
+    </template>
+    <template v-else-if="loading">
+      <ProgressSpinner />
+    </template>
+    <div class="flex flex-col grow shrink gap-2 lg:overflow-hidden overflow-auto" v-else>
+      <h2 class="text-2xl">{{ t("dashboard.monthlyAnalytics") }}</h2>
+      <Carousel
+        :value="data.analytics"
+        :num-visible="4"
+        :show-navigators="data.analytics.length > 4"
+        :responsive-options="[
+          { breakpoint: '8000px', numVisible: 6, numScroll: 1 },
+          { breakpoint: '1400px', numVisible: 4, numScroll: 1 },
+          { breakpoint: '1000px', numVisible: 2, numScroll: 1 },
+          { breakpoint: '600px', numVisible: 1, numScroll: 1 },
+        ]"
+      >
+        <template #item="item">
+          <MonthlyAnalytics :data="item.data" />
+        </template>
+      </Carousel>
+      <div class="flex flex-col lg:flex-row lg:grow lg:shrink lg:overflow-hidden gap-6">
+        <div class="flex flex-col !min-h-[300px] lg:grow lg:shrink overflow-hidden">
+          <h2 class="text-2xl">{{ t("dashboard.distancePerMonth") }}</h2>
+          <div class="grow shrink overflow-hidden h-1/2">
+            <DistancePerMonthChart :data="data.analytics" />
+          </div>
+          <h2 class="text-2xl">{{ t("dashboard.runsPerMonth") }}</h2>
+          <div class="grow shrink overflow-hidden h-1/2">
+            <RunsPerMonthChart :data="data.analytics" />
           </div>
         </div>
-      </div>
-    </SplitterPanel>
-
-    <SplitterPanel :size="80" class="flex flex-col">
-      <template v-if="failed">
-        <Message severity="error">Error on API call</Message>
-      </template>
-      <template v-else-if="loading">
-        <ProgressSpinner />
-      </template>
-      <div class="flex flex-col gap-2 p-2" v-else>
-        <div class="flex p-2 gap-2 w-full">
-          <Panel class="flex-grow w-1/2" :header="t('dashboard.totalDistance')">{{
-            formattedTotal
-          }}</Panel>
-          <Panel class="flex-grow w-1/2" :header="t('dashboard.totalRuns')">
-            {{ data?.totalRuns }}
-          </Panel>
-          <Panel class="flex-grow w-1/2" :header="t('dashboard.average')">
-            {{ formattedAverage }}
-          </Panel>
-          <Panel class="flex-grow w-1/2" :header="t('dashboard.median')">
-            {{ formattedMedian }}
-          </Panel>
-        </div>
-        <h2 class="text-2xl">{{ t("dashboard.monthlyAnalytics") }}</h2>
-        <Carousel
-          :value="data.analytics"
-          :num-visible="4"
-          :show-navigators="data.analytics.length > 4"
-          :responsive-options="[
-            { breakpoint: '8000px', numVisible: 4, numScroll: 1 },
-            { breakpoint: '1200px', numVisible: 2, numScroll: 1 },
-            { breakpoint: '700px', numVisible: 1, numScroll: 1 },
-          ]"
-        >
-          <template #item="item">
-            <MonthlyAnalytics :data="item.data" />
-          </template>
-        </Carousel>
-        <Divider />
-        <div>
-          <label class="text-xl p-2">Top Tracks:</label>
-        </div>
-        <div class="flex flex-wrap overflow-auto grow shrink gap-2">
-          <div class="w-[300px]" v-for="track in data?.topTracks">
+        <div class="flex flex-col gap-2 lg:w-[520px]">
+          <span class="text-2xl">{{ t("dashboard.topTracks") }}</span>
+          <div class="flex flex-wrap overflow-auto lg:grow lg:shrink gap-2 lg:content-start">
             <TopTrack
-              class=""
+              v-for="track in data?.topTracks"
+              :key="track.id"
+              class="lg:w-[250px] w-full"
               :id="track.id"
               :name="track.name"
               :parents="track.parents"
@@ -140,8 +129,8 @@ async function refresh() {
           </div>
         </div>
       </div>
-    </SplitterPanel>
-  </Splitter>
+    </div>
+  </div>
 </template>
 
 <style scoped></style>

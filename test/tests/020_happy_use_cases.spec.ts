@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import {expect, Page, test} from '@playwright/test';
 import { globalSelectors } from '../selectors/global-selectors';
 import { trackSelectors } from '../selectors/track-selectors';
 import * as fs from 'fs';
@@ -48,11 +48,15 @@ test('should create new track and create journal entry with it, and delete track
 
   await page.goto('/');
   await page.getByTestId(globalSelectors.journalTab).click();
+  await goToJanuary2024(page);
 
   await expect(page.getByTestId(journalSelectors.emptyState)).toBeVisible();
   await page.getByLabel('Hinzufügen').click();
 
   await page.getByTestId(journalSelectors.trackSelection).getByRole('button').click();
+  await page.getByTestId(journalSelectors.entryDateInputField).clear()
+  await page.getByTestId(journalSelectors.entryDateInputField).fill("05.01.2024")
+  await page.keyboard.press('Enter')
   await expect(page.getByTestId(journalSelectors.trackSelectionItem)).toHaveCount(3);
   await page.getByTestId(journalSelectors.trackSelectionItem).nth(2).click();
   await page.getByLabel('Speichern').click();
@@ -81,3 +85,11 @@ test('should create new track and create journal entry with it, and delete track
 
   await expect(page.getByTestId(journalSelectors.emptyState)).toBeVisible();
 });
+
+async function goToJanuary2024(page: Page) {
+  await (page.getByTestId(globalSelectors.monthInput.input)).clear()
+  await (page.getByTestId(globalSelectors.monthInput.input)).fill('January 2024')
+  await (page.getByTestId(globalSelectors.monthInput.input)).press('Enter')
+  const journalItem = page.getByTestId(journalSelectors.journalEntryItem);
+  await expect(journalItem).toHaveCount(0)
+}

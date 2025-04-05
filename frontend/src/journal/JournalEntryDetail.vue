@@ -20,11 +20,11 @@ import { useLeaveConfirmation } from "../shared/use-leave-confirmation";
 import { useConfirm } from "primevue/useconfirm";
 import ConfirmPopup from "primevue/confirmpopup";
 import DatePicker from "primevue/datepicker";
+import { createUniqueId } from "../shared/id-generator";
 import TrackDto = trackEditor.TrackDto;
 import SaveEntryDto = journalEditor.SaveEntryDto;
 import EntryDto = journalEditor.EntryDto;
 import TrackTreeEntry = projection.TrackTreeEntry;
-import { createUniqueId } from "../shared/id-generator";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -38,7 +38,7 @@ const dirty = ref(false);
 const customLengthEnabled = ref(false);
 const journalEntryLength = ref<number | undefined>(undefined);
 const selectedEntry = ref<journalEditor.EntryDto | undefined>(undefined);
-const selectedTrack = ref<TrackTreeEntry | undefined>(undefined)
+const selectedTrack = ref<TrackTreeEntry | undefined>(undefined);
 const selectedDate = ref<Date>(new Date());
 const journalStore = useJournalStore();
 const { selectedEntryId } = storeToRefs(journalStore);
@@ -65,7 +65,7 @@ async function loadEntry(entryId: string | undefined) {
       comment: "",
       laps: 1,
       time: "",
-      trackId: undefined
+      trackId: undefined,
     });
     selectedDate.value = new Date();
     return;
@@ -132,7 +132,9 @@ async function saveEntry() {
       const month = `${selectedDate.value.getMonth() + 1}`.padStart(2, "0");
       const day = `${selectedDate.value.getDate()}`.padStart(2, "0");
       value.date = `${year}-${month}-${day}`;
-      const result = await journalApi.saveEntry(new SaveEntryDto({...value, trackId: selectedTrack.value.id, id: createUniqueId()}));
+      const result = await journalApi.saveEntry(
+        new SaveEntryDto({ ...value, trackId: selectedTrack.value.id, id: createUniqueId() }),
+      );
       journalStore.addEntryToList({
         date: value.date,
         trackName: selectedTrack.value.name,
@@ -144,7 +146,7 @@ async function saveEntry() {
       router.replace("/journal/" + encodeURIComponent(result.id));
       return;
     }
-    await journalApi.saveEntry(new SaveEntryDto({...value, trackId: selectedTrack.value.id}));
+    await journalApi.saveEntry(new SaveEntryDto({ ...value, trackId: selectedTrack.value.id }));
     journalStore.updateEntry({
       ...value,
       trackName: selectedTrack.value.name,
@@ -197,12 +199,12 @@ function onChangeCustomLengthEnabled() {
 }
 
 function onTrackSelectionChanged() {
-  if(!selectedEntry.value) {
-    return
+  if (!selectedEntry.value) {
+    return;
   }
   calculateLength();
-  if(selectedEntry.value.trackId === selectedTrack.value?.id || !selectedTrack.value) {
-    return
+  if (selectedEntry.value.trackId === selectedTrack.value?.id || !selectedTrack.value) {
+    return;
   }
   selectedEntry.value.trackId = selectedTrack.value?.id;
   dirty.value = true;
@@ -286,6 +288,9 @@ useLeaveConfirmation(dirty);
           :pt="{
             pcTodayButton: {
               root: { 'data-testid': 'journal-entry-today-button' },
+            },
+            pcInputText: {
+              root: { 'data-testid': 'journal-entry-date-input' },
             },
           }"
           :disabled="selectedEntry?.id !== 'new'"

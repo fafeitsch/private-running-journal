@@ -4,6 +4,7 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/projection"
 	"github.com/fafeitsch/private-running-journal/backend/shared"
+	"github.com/labstack/gommon/log"
 	"math"
 	"slices"
 	"strconv"
@@ -61,6 +62,7 @@ type entry struct {
 func (a *Assembler) LoadDashboard(options Options) (*DashboardDto, error) {
 	runsPerDay, tracks, err := a.readRunsPerDay(options)
 	if err != nil {
+		log.Errorf("%v", err)
 		return nil, err
 	}
 	trackCounter := make(map[string]int)
@@ -201,10 +203,10 @@ func createAnalytics(entries map[string][]int) []MonthlyAnalytics {
 func compareTracks(track1 Track, track2 Track) int {
 	compare := track2.Count - track1.Count
 	if compare == 0 {
-		compare = strings.Compare(track2.Name, track1.Name)
+		compare = strings.Compare(track1.Name, track2.Name)
 	}
 	if compare == 0 {
-		compare = strings.Compare(strings.Join(track2.Parents, ""), strings.Join(track1.Parents, ""))
+		compare = strings.Compare(strings.Join(track1.Parents, ""), strings.Join(track2.Parents, ""))
 	}
 	return compare
 }

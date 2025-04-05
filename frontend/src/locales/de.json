@@ -126,6 +126,12 @@
     "totalRuns": "Läufe",
     "average": "Durchschnitt",
     "median": "Median",
-    "monthlyAnalytics": "Monatliche Auswertung"
+    "monthlyAnalytics": "Monatliche Auswertung",
+    "distancePerMonth": "Distanz pro Monat",
+    "runsPerMonth": "Läufe pro Monat",
+    "topTracks": "Top 10 Strecken",
+    "from": "Von",
+    "to": "Bis",
+    "error": "Das Dashboard konnte nicht geladen werden. Bitte über die Kommandozeile starten und Logs überprüfen."
   }
 }
