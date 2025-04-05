@@ -6,7 +6,7 @@ import DashboardDto = dashboard.DashboardDto;
 
 
 export const useDashboardStore = defineStore("dashboard", () => {
-  const selectedStartDate = ref<Date>(getCurrentMonth());
+  const selectedStartDate = ref<Date>(getDefaultStart());
   const selectedEndDate = ref<Date>(getCurrentMonthEnd());
   const topTracksCount = ref<number>(10);
 
@@ -17,9 +17,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
   };
 });
 
-function getCurrentMonth() {
+function getDefaultStart() {
   const date = new Date();
-  return new Date(date.getFullYear(), date.getMonth(), 1);
+  return new Date(date.getFullYear(), date.getMonth() - 6, 1);
 }
 
 function getCurrentMonthEnd() {

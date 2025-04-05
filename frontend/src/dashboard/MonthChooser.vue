@@ -29,7 +29,7 @@ function previousMonth() {
       class="grow"
       show-button-bar
       :pt="{
-        pcInputText: { root: { 'data-testid': 'month-chooser-component-input' }},
+        pcInputText: { root: { 'data-testid': 'month-chooser-component-input', style: 'border: none' }},
         pcTodayButton: {
           root: { 'data-testid': 'month-chooser-component-today-button' },
         },
