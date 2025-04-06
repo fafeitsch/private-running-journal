@@ -130,6 +130,7 @@
     "runsPerMonth": "Läufe pro Monat",
     "topTracks": "Top 10 Strecken",
     "from": "Von",
-    "to": "Bis"
+    "to": "Bis",
+    "error": "Das Dashboard konnte nicht geladen werden. Bitte über die Kommandozeile starten und Logs überprüfen."
   }
 }

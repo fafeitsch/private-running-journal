@@ -130,6 +130,7 @@
     "runsPerMonth": "Runs per months",
     "topTracks": "Top 10 tracks",
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "error": "The dashboard could not be loaded. Please restart via command line and check logs."
   }
 }

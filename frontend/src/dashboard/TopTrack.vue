@@ -9,7 +9,7 @@
 </script>
 
 <template>
-  <Panel :pt="{header: {style: 'padding-bottom: 0'}}">
+  <Panel :pt="{header: {style: 'padding-bottom: 0'}}" data-testid="dashboard-top-track-panel" class="max-h-[80px]">
     <template #header>
       <div class="font-bold w-full flex justify-between">
         <span class="overflow-hidden overflow-ellipsis whitespace-nowrap" v-tooltip="{showDelay: 500, value: name}">{{name}}</span>

@@ -72,7 +72,7 @@ async function refresh() {
         @update:from-date="refresh"
         @update:to-date="refresh"
       />
-      <div v-if="!loading && !failed" class="flex flex-col sm:flex-row gap-2">
+      <div v-if="!loading && !failed" class="flex flex-col sm:flex-row gap-2" data-testid="dashboard-general-statistics">
         <span><span class="font-bold">{{t('dashboard.totalDistance')}}:</span> {{formattedTotal}}</span>
         <span><span class="font-bold">{{t('dashboard.totalRuns')}}:</span> {{data?.totalRuns}}</span>
         <span><span class="font-bold">{{t('dashboard.average')}}:</span> {{formattedAverage}}</span>
@@ -80,7 +80,7 @@ async function refresh() {
       </div>
     </div>
     <template v-if="failed">
-      <Message severity="error">Error on API call</Message>
+      <Message severity="error">{{t("dashboard.error")}}</Message>
     </template>
     <template v-else-if="loading">
       <ProgressSpinner />
@@ -115,7 +115,7 @@ async function refresh() {
         </div>
         <div class="flex flex-col gap-2 lg:w-[520px]">
           <span class="text-2xl">{{ t("dashboard.topTracks") }}</span>
-          <div class="flex flex-wrap overflow-auto lg:grow lg:shrink gap-2">
+          <div class="flex flex-wrap overflow-auto lg:grow lg:shrink gap-2 lg:content-start">
             <TopTrack
               v-for="track in data?.topTracks"
               :key="track.id"

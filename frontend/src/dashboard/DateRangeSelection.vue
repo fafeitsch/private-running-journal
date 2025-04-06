@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputGroup from "primevue/inputgroup";
-import MonthChooser from "./MonthChooser.vue";
 import { useI18n } from "vue-i18n";
+import MonthChooser from '../shared/MonthChooser.vue';
 
 const { t } = useI18n();
 const fromDate = defineModel<Date>("fromDate", { required: true });
@@ -15,7 +15,7 @@ const toDate = defineModel<Date>("toDate", { required: true });
         ><label for="from">{{ t("dashboard.from") }}</label></InputGroupAddon
       >
       <InputGroupAddon>
-        <MonthChooser id="from" v-model="fromDate"></MonthChooser>
+        <MonthChooser id="from" v-model="fromDate" hide-border></MonthChooser>
       </InputGroupAddon>
     </InputGroup>
     <InputGroup class="!w-[300px]">
@@ -23,7 +23,7 @@ const toDate = defineModel<Date>("toDate", { required: true });
         ><label for="to"> {{ t("dashboard.to") }}</label></InputGroupAddon
       >
       <InputGroupAddon>
-        <MonthChooser id="to" v-model="toDate"></MonthChooser>
+        <MonthChooser id="to" v-model="toDate" hide-border></MonthChooser>
       </InputGroupAddon>
     </InputGroup>
   </div>

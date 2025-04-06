@@ -91,8 +91,12 @@ func (j *JournalEditor) SaveJournalEntry(entry SaveEntryDto) (SaveJournalEntryRe
 
 func (j *JournalEditor) DeleteJournalEntry(id string) error {
 	existing, err := j.fileService.ReadJournalEntry(id)
+	if err != nil {
+		return err
+	}
+	err = j.fileService.DeleteJournalEntry(id)
 	if err == nil {
 		shared.SendEvent(shared.JournalEntryDeletedEvent{JournalEntry: &existing})
 	}
-	return j.fileService.DeleteJournalEntry(id)
+	return err
 }
