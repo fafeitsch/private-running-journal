@@ -31,20 +31,24 @@ func (s *SortedJournalEntries) Init(message json.RawMessage, writer func()) {
 			s.handleUpsertEvent(k)
 		},
 	)
-	shared.Listen(shared.JournalEntryDeletedEvent{}, func(k shared.JournalEntryDeletedEvent) {
-		s.handleDeleteEvent(k.Date, k.Id)
-	})
+	shared.Listen(
+		shared.JournalEntryDeletedEvent{}, func(k shared.JournalEntryDeletedEvent) {
+			s.handleDeleteEvent(k.Date, k.Id)
+		},
+	)
 }
 
 func (s *SortedJournalEntries) AddTrack(track shared.Track) {
 }
 
 func (s *SortedJournalEntries) AddJournalEntry(entry shared.JournalEntry) {
-	s.handleUpsertEvent(shared.JournalEntryUpsertedEvent{
-		JournalEntry: &entry,
-		OldTrackId:   "",
-		OldDate:      nil,
-	})
+	s.handleUpsertEvent(
+		shared.JournalEntryUpsertedEvent{
+			JournalEntry: &entry,
+			OldTrackId:   "",
+			OldDate:      nil,
+		},
+	)
 }
 
 func (s *SortedJournalEntries) Get() map[string]string {
@@ -57,7 +61,7 @@ func (s *SortedJournalEntries) GetData() any {
 
 func (s *SortedJournalEntries) handleDeleteEvent(date time.Time, id string) {
 	split := strings.Split(date.Format(time.DateOnly), "-")
-	path := filepath.Join(s.Directory, sortedJournalEntriesDirectory, split[0], split[1], split[2], id)
+	path := filepath.Join(s.Directory, ".projection", sortedJournalEntriesDirectory, split[0], split[1], split[2], id)
 	err := os.Remove(path)
 	if err != nil {
 		log.Printf("error removing file %s: %s", path, err)
@@ -71,7 +75,10 @@ func (s *SortedJournalEntries) handleUpsertEvent(event shared.JournalEntryUpsert
 	split := strings.Split(event.Date.Format(time.DateOnly), "-")
 	path := filepath.Join(s.Directory, ".projection", sortedJournalEntriesDirectory, split[0], split[1], split[2])
 	os.MkdirAll(path, 0755)
-	err := os.Symlink(filepath.Join("..", "..", "..", "..", "..", "journal", event.Id[0:2], event.Id), filepath.Join(path, event.Id))
+	err := os.Symlink(
+		filepath.Join("..", "..", "..", "..", "..", "journal", event.Id[0:2], event.Id),
+		filepath.Join(path, event.Id),
+	)
 	if err != nil {
 		log.Printf("could not link journal entry: %v", err)
 	}

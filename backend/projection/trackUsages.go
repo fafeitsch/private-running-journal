@@ -25,6 +25,22 @@ func (t *TrackUsages) Init(message json.RawMessage, writer func()) {
 		t.content = make(map[string][]string)
 	}
 	shared.Listen(
+		shared.JournalEntryDeletedEvent{}, func(event shared.JournalEntryDeletedEvent) {
+			t.Lock()
+			if _, ok := t.content[event.TrackId]; !ok {
+				t.Unlock()
+				return
+			}
+			t.content[event.TrackId] = slices.DeleteFunc(
+				t.content[event.TrackId], func(s string) bool {
+					return event.Id == s
+				},
+			)
+			t.Unlock()
+			writer()
+		},
+	)
+	shared.Listen(
 		shared.JournalEntryUpsertedEvent{}, func(event shared.JournalEntryUpsertedEvent) {
 			t.Lock()
 			old := event.OldTrackId
