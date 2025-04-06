@@ -9,7 +9,7 @@ const fromDate = defineModel<Date>("fromDate", { required: true });
 const toDate = defineModel<Date>("toDate", { required: true });
 </script>
 <template>
-  <div class="flex gap-2">
+  <div class="flex gap-2 flex-col sm:flex-row">
     <InputGroup class="!w-[300px]">
       <InputGroupAddon
         ><label for="from">{{ t("dashboard.from") }}</label></InputGroupAddon

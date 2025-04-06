@@ -64,20 +64,20 @@ async function refresh() {
 </script>
 
 <template>
-  <div class="flex flex-col p-2 gap-2">
-    <div class="flex justify-end gap-2 items-center">
-      <div v-if="!loading && !failed" class="flex gap-2">
-        <span><span class="font-bold">{{t('dashboard.totalDistance')}}:</span> {{formattedTotal}}</span>
-        <span><span class="font-bold">{{t('dashboard.totalRuns')}}:</span> {{data?.totalRuns}}</span>
-        <span><span class="font-bold">{{t('dashboard.average')}}:</span> {{formattedAverage}}</span>
-        <span><span class="font-bold">{{t('dashboard.median')}}:</span> {{formattedMedian}}</span>
-      </div>
+  <div class="flex flex-col p-2 gap-2 overflow-hidden">
+    <div class="flex flex-col lg:flex-row-reverse justify-start gap-2 lg:items-center items-end">
       <DateRangeSelection class="grow-0"
         v-model:from-date="selectedStartDate"
         v-model:to-date="selectedEndDate"
         @update:from-date="refresh"
         @update:to-date="refresh"
       />
+      <div v-if="!loading && !failed" class="flex flex-col sm:flex-row gap-2">
+        <span><span class="font-bold">{{t('dashboard.totalDistance')}}:</span> {{formattedTotal}}</span>
+        <span><span class="font-bold">{{t('dashboard.totalRuns')}}:</span> {{data?.totalRuns}}</span>
+        <span><span class="font-bold">{{t('dashboard.average')}}:</span> {{formattedAverage}}</span>
+        <span><span class="font-bold">{{t('dashboard.median')}}:</span> {{formattedMedian}}</span>
+      </div>
     </div>
     <template v-if="failed">
       <Message severity="error">Error on API call</Message>
@@ -85,7 +85,7 @@ async function refresh() {
     <template v-else-if="loading">
       <ProgressSpinner />
     </template>
-    <div class="flex flex-col grow shrink gap-2 overflow-hidden" v-else>
+    <div class="flex flex-col grow shrink gap-2 lg:overflow-hidden overflow-auto" v-else>
       <h2 class="text-2xl">{{ t("dashboard.monthlyAnalytics") }}</h2>
       <Carousel
         :value="data.analytics"
@@ -102,7 +102,7 @@ async function refresh() {
           <MonthlyAnalytics :data="item.data" />
         </template>
       </Carousel>
-      <div class="flex flex-col lg:flex-row grow shrink overflow-hidden gap-6">
+      <div class="flex flex-col lg:flex-row lg:grow lg:shrink lg:overflow-hidden gap-6">
         <div class="flex flex-col !min-h-[300px] lg:grow lg:shrink overflow-hidden">
           <h2 class="text-2xl">{{ t("dashboard.distancePerMonth") }}</h2>
           <div class="grow shrink overflow-hidden h-1/2">
@@ -113,13 +113,13 @@ async function refresh() {
             <RunsPerMonthChart :data="data.analytics" />
           </div>
         </div>
-        <div class="flex flex-col gap-2 w-[610px]">
+        <div class="flex flex-col gap-2 lg:w-[520px]">
           <span class="text-2xl">{{ t("dashboard.topTracks") }}</span>
-          <div class="flex flex-wrap overflow-auto grow shrink gap-2">
+          <div class="flex flex-wrap overflow-auto lg:grow lg:shrink gap-2">
             <TopTrack
               v-for="track in data?.topTracks"
               :key="track.id"
-              class="w-[300px]"
+              class="lg:w-[250px] w-full"
               :id="track.id"
               :name="track.name"
               :parents="track.parents"

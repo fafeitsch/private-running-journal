@@ -6,6 +6,7 @@ export const journalSelectors = {
   trackSelectionItem: "track-tree-selection-node",
   todayButton: 'journal-entry-today-button',
   entryDateInput: 'entry-date-input',
+  entryDateInputField: 'journal-entry-date-input',
   journalEntryItem: 'journal-entry-item',
   deleteEntryConfirmation: 'delete-journal-entry-confirmation',
   lapsInput: 'laps-input',
