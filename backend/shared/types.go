@@ -46,30 +46,35 @@ func distanceBetweenTwoPoints(latDeg1, lonDeg1, latDeg2, lonDeg2 float64) float6
 
 func (w Waypoints) DistanceMarkers() []DistanceMarker {
 	result := make([]DistanceMarker, 0)
-	steps := float64(1000)
-	total := 0.0
+	stepSize := float64(1000) // 1km in meters
+	accumulatedDistance := 0.0
+
 	for index := 0; index < len(w)-1; index++ {
-		distance := distanceBetweenTwoPoints(
+		segmentDistance := distanceBetweenTwoPoints(
 			w[index].Latitude, w[index].Longitude, w[index+1].Latitude, w[index+1].Longitude,
 		) * 1000 // convert to meters
 
-		if total+distance < steps {
-			total = total + distance
-			continue
-		}
-		remainingDistance := steps - total
-		ratio := remainingDistance / distance
+		remainingInSegment := segmentDistance
+		segmentProgress := 0.0
 
-		lat := w[index].Latitude + ratio*(w[index+1].Latitude-w[index].Latitude)
-		lon := w[index].Longitude + ratio*(w[index+1].Longitude-w[index].Longitude)
+		for accumulatedDistance+remainingInSegment >= stepSize {
+			distanceNeeded := stepSize - accumulatedDistance
+			ratio := (segmentProgress + distanceNeeded) / segmentDistance
 
-		result = append(
-			result, DistanceMarker{
+			lat := w[index].Latitude + ratio*(w[index+1].Latitude-w[index].Latitude)
+			lon := w[index].Longitude + ratio*(w[index+1].Longitude-w[index].Longitude)
+
+			result = append(result, DistanceMarker{
 				Coordinates: Coordinates{Latitude: lat, Longitude: lon},
-				Distance:    (len(result) + 1) * int(steps),
-			},
-		)
-		total = distance - remainingDistance
+				Distance:    len(result)*1000 + 1000,
+			})
+
+			remainingInSegment -= distanceNeeded
+			segmentProgress += distanceNeeded
+			accumulatedDistance = 0
+		}
+
+		accumulatedDistance += remainingInSegment
 	}
 
 	return result
