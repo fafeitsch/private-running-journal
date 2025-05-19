@@ -43,7 +43,8 @@
     "delete": "Delete",
     "gitError": "Error while executing Git.",
     "previousMonth": "Previous Month",
-    "nextMonth": "Next Month"
+    "nextMonth": "Next Month",
+    "clone": "Clone"
   },
   "tracks": {
     "name": "Track name",

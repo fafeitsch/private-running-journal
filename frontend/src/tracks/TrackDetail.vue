@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { computed, ref, watch } from "vue";
 import { useTrackStore } from "../store/track-store";
 import { storeToRefs } from "pinia";
@@ -20,6 +20,7 @@ import CoordinateDto = trackEditor.CoordinateDto;
 import SaveTrackDto = trackEditor.SaveTrackDto;
 
 const route = useRoute();
+const router = useRouter();
 const tracksStore = useTrackStore();
 const { selectedTrack } = storeToRefs(tracksStore);
 const { t, n } = useI18n();
@@ -54,7 +55,7 @@ watch(
         waypoints: selectedTrack.value.waypoints,
         distanceMarkers: selectedTrack.value.distanceMarkers,
       };
-    } else {
+    } else if (!selectedTrack.value || selectedTrack.value.id !== "new") {
       selectedTrack.value = new TrackDto({
         id: "new",
         length: 0,
@@ -156,6 +157,23 @@ async function deleteTrack(event: Event) {
   }
 }
 
+function cloneTrack() {
+  if (!selectedTrack.value) {
+    return;
+  }
+  selectedTrack.value = new TrackDto({
+    id: "new",
+    name: "",
+    length: selectedTrack.value.length,
+    comment: selectedTrack.value.comment,
+    usages: [],
+    parents: selectedTrack.value.parents,
+    waypoints: selectedTrack.value.waypoints,
+    distanceMarkers: selectedTrack.value.distanceMarkers,
+  });
+  router.push('/tracks/new');
+}
+
 useLeaveConfirmation(dirty);
 </script>
 
@@ -169,6 +187,14 @@ useLeaveConfirmation(dirty);
         @click="saveTrack"
         v-tooltip="{ value: t('shared.save'), showDelay: 500 }"
         :aria-label="t('shared.save')"
+      ></Button>
+      <Button
+        v-if="selectedTrack?.id !== 'new'"
+        icon="pi pi-copy"
+        @click="cloneTrack"
+        v-tooltip="{ value: t('shared.clone'), showDelay: 500 }"
+        :disabled="dirty"
+        :aria-label="t('shared.clone')"
       ></Button>
       <CreateTrackOverlay
         v-else

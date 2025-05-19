@@ -43,7 +43,8 @@
     "delete": "Löschen",
     "gitError": "Fehler beim Ausführen von Git.",
     "previousMonth": "Vorheriger Monat",
-    "nextMonth": "Nächster Monat"
+    "nextMonth": "Nächster Monat",
+    "clone": "Klonen"
   },
   "tracks": {
     "name": "Streckenname",
