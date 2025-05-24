@@ -7,8 +7,8 @@ import CoordinateDto = trackEditor.CoordinateDto;
 import TrackTreeNode = projection.TrackTreeNode;
 
 export function useTracksApi() {
-  async function getTrackTree(): Promise<TrackTreeNode> {
-    return GetTrackTree();
+  async function getTrackTree(name: string = ""): Promise<TrackTreeNode> {
+    return GetTrackTree(name);
   }
   async function getTrack(id: string): Promise<TrackDto> {
     return await GetTrack(id);

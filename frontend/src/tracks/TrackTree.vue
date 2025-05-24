@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useTrackStore } from "../store/track-store";
 import { storeToRefs } from "pinia";
 import type { TreeNode } from "primevue/treenode";
@@ -8,10 +8,28 @@ import { TreeSelectionKeys } from "primevue/tree";
 import { useI18n } from "vue-i18n";
 import { tracksToTreeNodes } from "../shared/track-utils";
 import Button from "primevue/button";
+import InputText from "primevue/inputtext";
 
 const trackStore = useTrackStore();
 const { trackTree, selectedTrackId } = storeToRefs(trackStore);
 const { t } = useI18n();
+
+const filterValue = ref("");
+let debounceTimeout: number | null = null;
+const isFiltering = ref(false);
+
+function applyFilter(value: string) {
+  if (debounceTimeout) {
+    clearTimeout(debounceTimeout);
+  }
+
+  debounceTimeout = setTimeout(() => {
+    isFiltering.value = true;
+    trackStore.loadTracks(value).finally(() => {
+      isFiltering.value = false;
+    });
+  }, 300);
+}
 
 const selectableTracks = computed(() => tracksToTreeNodes(trackTree.value, true));
 
@@ -30,7 +48,9 @@ const expansion = ref<TreeSelectionKeys>({ root: true });
 watch(
   () => ({ trackId: selectedTrackId.value, tracks: selectableTracks.value }),
   ({ tracks, trackId }) => {
-    expansion.value = { root: true };
+    if (!isFiltering.value) {
+      expansion.value = { root: true };
+    }
     if (!trackId || !tracks) {
       return;
     }
@@ -58,7 +78,7 @@ function selectNode(node: TreeNode) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col overflow-hidden gap-2">
+  <div class="flex h-full flex-col overflow-hidden gap-4">
     <header class="flex justify-between items-center">
       <span class="text-2xl">{{ t("tracks.title") }}</span>
       <Button
@@ -68,8 +88,15 @@ function selectNode(node: TreeNode) {
         v-tooltip="{ value: t('shared.add'), showDelay: 500 }"
       ></Button>
     </header>
+    <InputText
+      v-model="filterValue"
+      @input="applyFilter(filterValue)"
+      :placeholder="t('shared.search')"
+      class="w-full"
+      data-testid="track-filter-input"
+    />
     <Tree
-      class="grow shrink overflow-auto"
+      class="grow shrink overflow-auto !pt-0"
       :value="selectableTracks"
       v-model:selection-keys="selection"
       v-model:expanded-keys="expansion"

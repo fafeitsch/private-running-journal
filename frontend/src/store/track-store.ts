@@ -12,8 +12,8 @@ export const useTrackStore = defineStore("tacks", () => {
 
   const selectedTrackId = computed(() => selectedTrack.value?.id);
 
-  async function loadTracks() {
-    trackTree.value = await trackApi.getTrackTree();
+  async function loadTracks(filter: string = "") {
+    trackTree.value = await trackApi.getTrackTree(filter);
   }
 
   return {

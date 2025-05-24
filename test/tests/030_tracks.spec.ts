@@ -95,3 +95,42 @@ test('should clone a track, verify it exists, delete it, and verify it was delet
 
   await expect(deletedTrack).not.toBeVisible();
 });
+
+test('should filter tracks based on search input', async ({page}) => {
+  await page.goto('/');
+  await page.getByTestId(globalSelectors.tracksTab).click();
+  await expect(page.getByTestId(globalSelectors.tracksTab)).toContainText("Strecken");
+
+  let trackNodes = page.getByTestId(trackSelectors.trackNode);
+  await expect(trackNodes).toHaveCount(2); // Root nodes: Höchberg and Dummy
+
+  await page.getByTestId(trackSelectors.toggler).nth(0).click();
+  trackNodes = page.getByTestId(trackSelectors.trackNode);
+  await expect(trackNodes).toHaveCount(5); // After expansion: Höchberg, Farmrunde, Stadtrunde, Waldweg, Dummy
+
+  await page.getByTestId('track-filter-input').fill('Farm');
+
+  trackNodes = page.getByTestId(trackSelectors.trackNode);
+  await expect(trackNodes).toHaveCount(2); // Höchberg and Farmrunde
+  await expect(trackNodes.nth(0)).toContainText('Höchberg');
+  await expect(trackNodes.nth(1)).toContainText('Farmrunde');
+
+  await page.getByTestId('track-filter-input').fill('farm');
+
+  trackNodes = page.getByTestId(trackSelectors.trackNode);
+  await expect(trackNodes).toHaveCount(2); // Höchberg and Farmrunde
+  await expect(trackNodes.nth(0)).toContainText('Höchberg');
+  await expect(trackNodes.nth(1)).toContainText('Farmrunde');
+
+  await page.getByTestId('track-filter-input').fill('Stadt');
+
+  trackNodes = page.getByTestId(trackSelectors.trackNode);
+  await expect(trackNodes).toHaveCount(2);
+  await expect(trackNodes.nth(0)).toContainText('Höchberg');
+  await expect(trackNodes.nth(1)).toContainText('Stadtrunde');
+
+  await page.getByTestId('track-filter-input').fill('');
+
+  trackNodes = page.getByTestId(trackSelectors.trackNode);
+  await expect(trackNodes).toHaveCount(5);
+});

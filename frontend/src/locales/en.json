@@ -44,7 +44,8 @@
     "gitError": "Error while executing Git.",
     "previousMonth": "Previous Month",
     "nextMonth": "Next Month",
-    "clone": "Clone"
+    "clone": "Clone",
+    "search": "Search …"
   },
   "tracks": {
     "name": "Track name",

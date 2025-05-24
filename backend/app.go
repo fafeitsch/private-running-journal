@@ -7,6 +7,7 @@ import (
 	"github.com/fafeitsch/private-running-journal/backend/application/journalEditor"
 	"github.com/fafeitsch/private-running-journal/backend/application/journalList"
 	"github.com/fafeitsch/private-running-journal/backend/application/trackEditor"
+	"github.com/fafeitsch/private-running-journal/backend/application/trackTree"
 	"github.com/fafeitsch/private-running-journal/backend/backup"
 	"github.com/fafeitsch/private-running-journal/backend/filebased"
 	"github.com/fafeitsch/private-running-journal/backend/httpapi"
@@ -30,7 +31,7 @@ type App struct {
 	settings           *settings.Settings
 	backup             *backup.Backup
 	cache              *projection.Projection
-	trackTree          *projection.TrackTree
+	trackTree          *trackTree.TrackTree
 }
 
 func NewApp() *App {
@@ -59,20 +60,22 @@ func NewApp() *App {
 	}
 	trackUsagesProjector := &projection.TrackUsages{}
 	sortedJournalProjector := &projection.SortedJournalEntries{Directory: a.configDirectory}
-	a.trackTree = &projection.TrackTree{}
+	trackTreeProjector := &projection.TrackTree{}
 	a.journalEditor = journalEditor.New(service)
 	a.trackEditor = trackEditor.New(service, trackUsagesProjector)
 	a.journalList = journalList.New(service, sortedJournalProjector)
 	a.dashboardAssembler = dashboard.NewAssembler(sortedJournalProjector, service)
 	projectors := make([]projection.Projector, 0)
 	projectors = append(projectors, trackUsagesProjector)
-	projectors = append(projectors, a.trackTree)
+	projectors = append(projectors, trackTreeProjector)
 	projectors = append(projectors, sortedJournalProjector)
 	a.cache = projection.New(filepath.Join(a.configDirectory, ".projection"), service, projectors...)
 	err = a.cache.Build()
 	if err != nil {
 		log.Fatalf("could not initialize projections: %v", err)
 	}
+
+	a.trackTree = trackTree.New(trackTreeProjector)
 
 	return a
 }
@@ -139,8 +142,8 @@ func (a *App) GetJournalListEntries(start string, end string) ([]journalList.Lis
 	return a.journalList.ReadListEntries(startDate, endDate)
 }
 
-func (a *App) GetTrackTree() projection.TrackTreeNode {
-	return a.trackTree.Get()
+func (a *App) GetTrackTree(name string) projection.TrackTreeNode {
+	return a.trackTree.GetTrackTree(name)
 }
 
 func (a *App) TrackEditor() *trackEditor.TrackEditor {
